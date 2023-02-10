@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "android-strings-converter"
+version = "0.1.0"
+description = "Android strings.xml file converter to any file type supported by the package."
+authors = ["José Carlos López <henestrosaconh@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "android_strings_converter"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ezodf = "^0.3.2"
+oauth2client = "^4.1.3"
+pyyaml = "^6.0"
+xlsxwriter = "^3.0.8"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
