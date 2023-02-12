@@ -200,5 +200,5 @@ I've made use of the following resources to make this project:
 [issues-shield]: https://img.shields.io/github/issues/HenestrosaConH/android-strings-converter.svg?style=for-the-badge
 [issues-url]: https://github.com/HenestrosaConH/android-strings-converter/issues
 [license-shield]: https://img.shields.io/github/license/HenestrosaConH/android-strings-converter.svg?style=for-the-badge
-[license-url]: https://github.com/HenestrosaConH/android-strings-converter/blob/master/LICENSE.txt
+[license-url]: https://github.com/HenestrosaConH/android-strings-converter/blob/master/LICENSE
 [linkedin-url]: https://linkedin.com/in/henestrosaconh
