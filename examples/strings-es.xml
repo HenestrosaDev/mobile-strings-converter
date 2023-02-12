@@ -1,0 +1,7 @@
+<resources>
+  <string name="app_name">Mi aplicación</string>
+  <string name="hello_world">¡Hola mundo!</string>
+  <string name="action_settings">Ajustes</string>
+  <string name="title_activity_main">Actividad principal</string>
+  <string name="welcome_message">Bienvenido a mi aplicación</string>
+</resources>
