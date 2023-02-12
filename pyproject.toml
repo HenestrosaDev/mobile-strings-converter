@@ -1,18 +1,44 @@
 [tool.poetry]
 name = "android-strings-converter"
-version = "0.1.0"
+version = "0.1.2"
 description = "Android strings.xml file converter to any file type supported by the package."
 authors = ["José Carlos López <henestrosaconh@gmail.com>"]
 license = "MIT"
+classifiers=[
+    "Intended Audience :: Developers",
+    "Environment :: Console",
+    "Topic :: Text Processing :: General",
+    "Topic :: Utilities",
+    "Operating System :: OS Independent",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Other OS",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+keywords=[
+    "android",
+    "strings.xml",
+    "strings",
+    "converter",
+    "csv",
+    "xlsx",
+    "yaml",
+    "html",
+    "json",
+    "ods",
+]
+repository="https://github.com/HenestrosaConH/android-strings-converter"
 readme = "README.md"
-packages = [{include = "android_strings_converter"}]
+packages = [{include = "android_strings_converter", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ezodf = "^0.3.2"
-oauth2client = "^4.1.3"
 pyyaml = "^6.0"
-xlsxwriter = "^3.0.8"
+protobuf = "^4.21.12"
+gspread = "^5.7.2"
+openpyxl = "^3.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
