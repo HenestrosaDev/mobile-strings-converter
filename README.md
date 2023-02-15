@@ -13,7 +13,6 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![CC0-1.0 license][license-shield]][license-url]
 
 <!-- PROJECT LOGO -->
 <br />
