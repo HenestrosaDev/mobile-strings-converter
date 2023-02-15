@@ -1,16 +1,22 @@
+import sys
 from pathlib import Path
 from unittest import main
 
+# https://stackoverflow.com/a/34938623/15675885
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 import pandas as pd
-from android_strings_converter.converter import to_ods
+from android_strings_converter import to_ods
 from base_converter_test import BaseConverterTest
-from constants import ODS_FILEPATHS
 
 
 class TestOds(BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepaths = ODS_FILEPATHS
+        self.template_filepaths = [
+            Path(__file__).parent / "files/ods/strings-en.ods",
+            Path(__file__).parent / "files/ods/strings-es.ods",
+            Path(__file__).parent / "files/ods/strings-zh.ods",
+        ]
         self.output_filepath = Path("strings.ods")
 
     # Overriding abstract method

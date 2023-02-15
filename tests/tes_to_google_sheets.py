@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 import gspread
-from android_strings_converter.converter import to_google_sheets
+from android_strings_converter import to_google_sheets
 from google.oauth2.credentials import Credentials
 
 

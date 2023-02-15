@@ -1,15 +1,21 @@
+import sys
 from pathlib import Path
 from unittest import main
 
-from android_strings_converter.converter import to_html
+# https://stackoverflow.com/a/34938623/15675885
+sys.path.append(str(Path(__file__).parent.parent / "src"))
+from android_strings_converter import to_html
 from base_converter_test import BaseConverterTest
-from constants import HTML_FILEPATHS
 
 
 class TestHtml(BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepaths = HTML_FILEPATHS
+        self.template_filepaths = [
+            Path(__file__).parent / "files/html/strings-en.html",
+            Path(__file__).parent / "files/html/strings-es.html",
+            Path(__file__).parent / "files/html/strings-zh.html",
+        ]
         self.output_filepath = Path("strings.html")
 
     # Overriding abstract method

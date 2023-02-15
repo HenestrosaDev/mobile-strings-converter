@@ -1,11 +1,16 @@
 import unittest
 from pathlib import Path
 
-from android_strings_converter.converter import get_xml_data
+from android_strings_converter import get_xml_data
 
 
 class TestXml(unittest.TestCase):
     def setUp(self):
+        self.template_filepaths = [
+            Path("files/xml/strings-en.xml"),
+            Path("files/xml/strings-es.xml"),
+            Path("files/xml/strings-zh.xml"),
+        ]
         self.xml_filepath = Path("tests/files/strings.xml")
 
     def tearDown(self):
