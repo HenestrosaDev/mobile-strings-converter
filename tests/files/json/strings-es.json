@@ -1,0 +1,22 @@
+[
+  {
+    "name": "app_name",
+    "value": "Mi aplicación"
+  },
+  {
+    "name": "hello_world",
+    "value": "¡Hola mundo!"
+  },
+  {
+    "name": "action_settings",
+    "value": "Ajustes"
+  },
+  {
+    "name": "title_activity_main",
+    "value": "Actividad principal"
+  },
+  {
+    "name": "welcome_message",
+    "value": "Bienvenido a mi aplicación"
+  }
+]

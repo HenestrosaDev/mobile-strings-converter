@@ -118,14 +118,14 @@ To execute the script, you can follow these steps:
 1. Make sure you have the [latest version](https://github.com/HenestrosaConH/android-strings-converter/releases) of the script installed.
 2. Open the command line and run the following command: 
     ```
-    path/to/python path/to/__main__.py path/to/strings.xml -o path/to/strings.<FILE TYPE EXTENSION SUPPORTED>
+    path/to/python path/to/android_strings_converter.py path/to/strings.xml -o path/to/strings.<FILE TYPE EXTENSION SUPPORTED>
     ```
     This will generate a file named `strings` in the desired path.  
     <br>
 
 If you want to generate a Google Sheet, run the following command:
 ```
-path/to/python path/to/__main__.py path/to/strings.xml -gs <SHEET NAME> -c path/to/service_account.json
+path/to/python path/to/android_strings_converter.py path/to/strings.xml -gs <SHEET NAME> -c path/to/service_account.json
 ```
 Please note that you will have to generate the `service_account.json` yourself. To do it, you can do the following:
 
