@@ -45,4 +45,7 @@ class BaseConverterTest(unittest.TestCase):
             with open(self.output_filepath, "rb") as test_file, open(
                 template_filepath, "rb"
             ) as template_file:
-                self.assertEqual(test_file.read(), template_file.read())
+                self.assertEqual(
+                    test_file.read().decode("utf-8").replace("\r\n", "\n"),
+                    template_file.read().decode("utf-8").replace("\r\n", "\n"),
+                )
