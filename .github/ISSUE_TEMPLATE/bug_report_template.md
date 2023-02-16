@@ -1,9 +1,9 @@
 ---
-name: Issue Form — Must fill in this form with every new issue submitted. 
-about: This form contains the information needed to help you solve your problem
-title: "[Enhancement/Bug/Question] "
+name: Bug Report 
+about: Create a report to help us improve
+title: "[Bug] "
 labels: ''
-assignees: 
+assignees: HenestrosaConH
 ---
 
 Steps to reproduce
