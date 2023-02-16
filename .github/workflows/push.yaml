@@ -28,7 +28,7 @@ jobs:
           python -m pip install -e .
 
       - name: Run tests
-        run: python -m unittest discover tests
+        run: poetry run python -m unittest discover tests
 
       - name: Check code style
         run: pre-commit run --all-files
