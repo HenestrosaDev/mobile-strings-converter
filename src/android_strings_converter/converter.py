@@ -18,7 +18,10 @@ def get_xml_data(xml_filepath: Path):
     pattern = r'<string name="(.*?)">(.*?)</string>'
     data = re.findall(pattern, xml_data)
 
-    return data
+    if len(data) >= 1:
+        return data
+    else:
+        raise ValueError("The XML file provided is not a valid Android strings file.")
 
 
 def to_google_sheets(xml_filepath: Path, sheet_name: str, credentials_filepath: Path):
