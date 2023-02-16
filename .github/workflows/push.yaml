@@ -21,8 +21,9 @@ jobs:
       - name: Install dependencies
         run: |
           pip install poetry
-          poetry install --with test
+          poetry install
           python -m pip install -e .
+          pip install pandas
 
       - name: Run tests
         run: python -m unittest discover tests
