@@ -9,10 +9,13 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 
+[![PyPI package][pypi-shield]][pypi-url]
+[![Python versions supported][versions-shield]][versions-url]
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
+[![License][license-shield]][license-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -170,8 +173,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-<a href="https://www.linkedin.com/in/henestrosaconh/" target="blank"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
-<a href="mailto:henestrosaconh@gmail.com" target="_blank"><img alt="Gmail" src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
+[![LinkedIn][linkedin-shield]][linkedin-url]
+[![henestrosaconh@gmail.com][gmail-shield]][gmail-url]
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -187,9 +190,15 @@ I've made use of the following resources to make this project:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- MARKDOWN LINKS & IMAGES -->
+<!-- BADGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
+[pypi-shield]: https://img.shields.io/pypi/v/android-strings-converter.svg?style=for-the-badge
+[pypi-url]: https://pypi.org/project/android-strings-converter/
+[push-shield]: https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/push.yaml/badge.svg
+[push-url]: https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/push.yaml
+[versions-shield]: https://img.shields.io/pypi/pyversions/android-strings-converter.svg?style=for-the-badge
+[versions-url]: https://pypi.org/project/android-strings-converter/
 [contributors-shield]: https://img.shields.io/github/contributors/HenestrosaConH/android-strings-converter.svg?style=for-the-badge
 [contributors-url]: https://github.com/HenestrosaConH/android-strings-converter/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/HenestrosaConH/android-strings-converter.svg?style=for-the-badge
@@ -200,4 +209,7 @@ I've made use of the following resources to make this project:
 [issues-url]: https://github.com/HenestrosaConH/android-strings-converter/issues
 [license-shield]: https://img.shields.io/github/license/HenestrosaConH/android-strings-converter.svg?style=for-the-badge
 [license-url]: https://github.com/HenestrosaConH/android-strings-converter/blob/main/LICENSE
+[linkedin-shield]: https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
 [linkedin-url]: https://linkedin.com/in/henestrosaconh
+[gmail-shield]: https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white
+[gmail-url]: mailto:henestrosaconh@gmail.com
