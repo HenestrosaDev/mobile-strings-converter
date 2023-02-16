@@ -34,7 +34,7 @@ readme = "README.md"
 packages = [{include = "android_strings_converter", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 pyyaml = "^6.0"
 protobuf = "^4.21.12"
 gspread = "^5.7.2"
