@@ -1,7 +1,10 @@
+import sys
 import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+# https://stackoverflow.com/a/34938623/15675885
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 from android_strings_converter.converter import get_xml_data
 
 
