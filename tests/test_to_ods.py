@@ -1,9 +1,6 @@
-import sys
 from pathlib import Path
 from unittest import main
 
-# https://stackoverflow.com/a/34938623/15675885
-sys.path.append(str(Path(__file__).parent.parent / "src"))
 import pandas as pd
 from android_strings_converter import to_ods
 from base_converter_test import BaseConverterTest

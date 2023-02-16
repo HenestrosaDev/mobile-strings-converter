@@ -1,9 +1,6 @@
-import sys
 from pathlib import Path
 from unittest import main
 
-# https://stackoverflow.com/a/34938623/15675885
-sys.path.append(str(Path(__file__).parent.parent / "src"))
 from android_strings_converter import to_json
 from base_converter_test import BaseConverterTest
 
