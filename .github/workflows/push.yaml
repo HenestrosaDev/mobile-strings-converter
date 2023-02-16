@@ -22,7 +22,7 @@ jobs:
         run: |
           pip install poetry
           poetry install
-          pip install .
+          python -m pip install -e .
 
       - name: Run tests
         run: python -m unittest discover tests
