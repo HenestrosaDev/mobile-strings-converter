@@ -1,3 +1,11 @@
+---
+name: Issue Form — Must fill in this form with every new issue submitted. 
+about: This form contains the information needed to help you solve your problem
+title: "[Enhancement/Bug/Question] "
+labels: ''
+assignees: 
+---
+
 Steps to reproduce
 ------------------
 
@@ -24,10 +32,10 @@ System information
 
 (Delete all statements that don't apply.)
 
-- **System**: (INSERT VERSION HERE) (For example, "Ubuntu 20.04 LTS x64", "Windows 11 x64", or "macOS Monterey".)
-- **Python version**: (INSERT VERSION HERE) (You can check this by running `python -V`.)
-- **Pip version**: (INSERT VERSION HERE) (You can check this by running `pip -V`.)
-- **android-strings-converter package version**: (INSERT VERSION HERE) (You can check this by running `pip show android-strings-converter`.)
+- **System**: (For example, "Ubuntu 20.04 LTS x64", "Windows 11 x64", or "macOS Monterey")
+- **Python version**: (You can check this by running `python -V`.)
+- **Pip version**: (You can check this by running `pip -V`.)
+- **android-strings-converter package version**: (You can check this by running `pip show android-strings-converter`.)
 
 
 Code To Duplicate
@@ -38,9 +46,7 @@ A **short** program that isolates and demonstrates the problem (Do not paste you
 This pre-formatted code block is all set for you to paste in your bit of code:
 
 ```python
-
 # Paste your code here
-
 ```
 
 Screenshot, Sketch, or Drawing
