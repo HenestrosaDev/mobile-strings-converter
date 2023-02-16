@@ -1,7 +1,8 @@
-import sys
 import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+
+from android_strings_converter.converter import get_xml_data
 
 
 class TestXml(unittest.TestCase):
