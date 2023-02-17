@@ -1,8 +1,9 @@
 name: Build and publish
+
 on:
   release:
-    types: [ published ]
-    branches: [ main ]
+    types: [published]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -10,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout sources
+      - name: Checkout sources  # Clones your repository into the machine running the action
         uses: actions/checkout@v3
 
       - name: Setup Python
