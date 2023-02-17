@@ -25,8 +25,8 @@
           <img alt="Python versions support" src="https://img.shields.io/pypi/pyversions/android-strings-converter" />
         </a>
         <br />
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/push.yaml">
-          <img alt="GitHub action: Push" src="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/push.yaml/badge.svg" />
+        <a href="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/main-branch-build.yaml">
+          <img alt="GitHub action: Main branch build" src="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/main-branch-build.yaml/badge.svg" />
         </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/graphs/contributors">
           <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/android-strings-converter" />
