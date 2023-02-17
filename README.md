@@ -31,17 +31,18 @@
         <a href="https://codecov.io/gh/HenestrosaConH/android-strings-converter/">
           <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/android-strings-converter/branch/main/graph/badge.svg" />
         </a>
+        <br />
         <a href="https://github.com/HenestrosaConH/android-strings-converter/graphs/contributors">
           <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/android-strings-converter" />
+        </a>
+        <a href="https://github.com/HenestrosaConH/android-strings-converter/blob/main/LICENSE">
+          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/android-strings-converter" />
         </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/android-strings-converter">
           <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/android-strings-converter" />
         </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/pulls">
           <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaConH/android-strings-converter" />
-        </a>
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/blob/main/LICENSE">
-          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/android-strings-converter" />
         </a>
         <br />
         <br />
