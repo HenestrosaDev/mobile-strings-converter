@@ -15,7 +15,7 @@
     <img src="docs/icon.png" alt="Logo" width="156" height="156" style="margin-bottom:-40px">
     <h2 align="center">Android strings converter</h2>
     <p align="center">
-        A Python package that converts Android strings.xml file to any file type supported by the package.
+        A Python package that converts Android strings.xml files to any file type supported by the package.
         <br />
         <br />
         <a href="https://pypi.org/project/android-strings-converter/">
@@ -38,7 +38,7 @@
         <a href="https://github.com/HenestrosaConH/android-strings-converter/blob/main/LICENSE">
           <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/android-strings-converter" />
         </a>
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/android-strings-converter">
+        <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">
           <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/android-strings-converter" />
         </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/pulls">
@@ -46,7 +46,7 @@
         </a>
         <br />
         <br />
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">Report Bug</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">Request Feature</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/discussions">Ask Question</a>
+        <a href="https://github.com/HenestrosaConH/android-strings-converter/issues/new/choose">Report Bug</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/issues/new/choose">Request Feature</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/discussions">Ask Question</a>
     </p>
 </div>
 
@@ -69,7 +69,7 @@
 
 ## About The Project
 
-I tried to do the whole process of converting a **strings.xml** into a spreadsheet in Google Sheets by hand and, even though you can do it with the option **Data > Split text to columns**, 
+I tried to do the whole process of converting a **strings.xml** file into a spreadsheet in Google Sheets by hand and, even though you can do it with the option **Data > Split text to columns**, 
 it involves wasting your time generating the spreadsheet manually instead of the more time-efficient solution of running a Python script to achieve that with any file format supported by the package
 
 Moreover, not only this program can be executed on its own, it also can be installed as a package via **PyPI**.
@@ -168,7 +168,7 @@ Alternatively, you can create an XLSX file and open it in Google Sheets if you d
 - [ ] Make an iOS version.
 - [ ] Make a web version with Django/Flask.
 
-You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/android-strings-converter/issues).
+You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/android-strings-converter/new/choose).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
