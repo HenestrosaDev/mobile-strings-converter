@@ -161,6 +161,7 @@ Alternatively, you can create an XLSX file and open it in Google Sheets if you d
 ## Roadmap
 
 - [ ] Try to lower Python version to make it compatible with Python 3.8
+- [ ] Do iOS version.
 - [ ] Do a web version with Django/Flask.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/android-strings-converter/issues).
