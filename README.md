@@ -20,34 +20,29 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <h3 align="center">Android strings converter</h3>
+  <h2 align="center">Android strings converter</h2>
 
   <p align="center">
     A Python package that converts Android strings.xml file to any file type supported by the package. 
     <br />
-    <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">Report Bug</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">Request Feature</a>
+    <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">Report Bug</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">Request Feature</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/discussions">Ask Question</a>
   </p>
 </div>
 
 <!-- TABLE OF CONTENTS -->
-<details>
-   <summary>Table of Contents</summary>
-   <ol>
-      <li>
-         <a href="#about-the-project">About The Project</a>
-         <ul>
-            <li><a href="#project-structure">Project Structure</a></li>
-            <li><a href="#built-with">Built With</a></li>
-         </ul>
-      </li>
-      <li><a href="#getting-started">Getting Started</a></li>
-      <li><a href="#usage">Usage</a></li>
-      <li><a href="#contributing">Contributing</a></li>
-      <li><a href="#license">License</a></li>
-      <li><a href="#contact">Contact</a></li>
-      <li><a href="#acknowledgments">Acknowledgments</a></li>
-   </ol>
-</details>
+
+## Table of Contents
+
+- [About The Project](#about-the-project)
+    - [Project Structure](#project-structure)
+    - [Built With](#built-with)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
 
 <!-- ABOUT THE PROJECT -->
 
@@ -143,6 +138,14 @@ Please note that you will have to generate the `service_account.json` yourself. 
 Alternatively, you can create an XLSX file and open it in Google Sheets if you don't want to go through the hassle of generating the `service_account.json` file.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+## Roadmap
+
+- [ ] Do a web version with Django/Flask.
+
+You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/android-strings-converter/issues).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
 
