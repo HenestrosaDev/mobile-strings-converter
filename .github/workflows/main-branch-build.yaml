@@ -1,4 +1,4 @@
-name: Push
+name: Main branch build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  test:
+  main-branch-build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
