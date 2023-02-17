@@ -28,6 +28,9 @@
         <a href="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/main-branch-build.yaml">
           <img alt="GitHub action: Main branch build" src="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/main-branch-build.yaml/badge.svg" />
         </a>
+        <a href="https://codecov.io/gh/HenestrosaConH/android-strings-converter/">
+          <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/android-strings-converter/branch/main/graph/badge.svg" />
+        </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/graphs/contributors">
           <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/android-strings-converter" />
         </a>
