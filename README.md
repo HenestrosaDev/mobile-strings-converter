@@ -35,7 +35,7 @@
           <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/android-strings-converter" />
         </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/pulls">
-          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaConH/audiotext" />
+          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaConH/android-strings-converter" />
         </a>
         <a href="https://github.com/HenestrosaConH/android-strings-converter/blob/main/LICENSE">
           <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/android-strings-converter" />
