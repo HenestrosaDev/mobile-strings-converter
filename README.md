@@ -15,7 +15,7 @@
     <img src="docs/icon.png" alt="Logo" width="156" height="156" style="margin-bottom:-40px">
     <h2 align="center">Android strings converter</h2>
     <p align="center">
-        A Python package that converts Android strings.xml files to any file type supported by the package.
+        A Python package that converts Android strings.xml files to any supported file type.
         <br />
         <br />
         <a href="https://pypi.org/project/android-strings-converter/">
