@@ -28,6 +28,10 @@ keywords=[
     "html",
     "json",
     "ods",
+    "pdf",
+    "md",
+    "ios",
+    "Localizable.strings"
 ]
 repository="https://github.com/HenestrosaConH/android-strings-converter"
 readme = "README.md"
