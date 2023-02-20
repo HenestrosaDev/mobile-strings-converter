@@ -63,16 +63,20 @@ def main():
 
         if output_path.suffix == ".csv":
             conv.to_csv(input_path, output_path)
-        elif output_path.suffix == ".xlsx":
-            conv.to_xlsx(input_path, output_path)
+        elif output_path.suffix == ".xlsx" or output_path.suffix == ".ods":
+            conv.to_xlsx_ods(input_path, output_path)
         elif output_path.suffix == ".json":
             conv.to_json(input_path, output_path)
-        elif output_path.suffix == ".ods":
-            conv.to_ods(input_path, output_path)
         elif output_path.suffix == ".yaml":
             conv.to_yaml(input_path, output_path)
         elif output_path.suffix == ".html":
             conv.to_html(input_path, output_path)
+        elif output_path.suffix == ".strings":
+            conv.to_ios(input_path, output_path)
+        elif output_path.suffix == ".pdf":
+            conv.to_pdf(input_path, output_path)
+        elif output_path.suffix == ".md":
+            conv.to_md(input_path, output_path)
         else:
             print(
                 f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
