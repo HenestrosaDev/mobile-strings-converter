@@ -9,23 +9,23 @@ import yaml
 from google.oauth2.credentials import Credentials
 
 
-def get_xml_data(xml_filepath: Path):
+def get_xml_strings(xml_filepath: Path):
     # Open the string.xml file
     with open(xml_filepath, "r", encoding="utf-8") as file:
         xml_data = file.read()
 
     # Extract the "name" attribute and content of the tag
     pattern = r'<string name="(.*?)">(.*?)</string>'
-    data = re.findall(pattern, xml_data)
+    strings = re.findall(pattern, xml_data)
 
-    if len(data) >= 1:
-        return data
+    if len(strings) >= 1:
+        return strings
     else:
         raise ValueError("The XML file provided is not a valid Android strings file.")
 
 
 def to_google_sheets(xml_filepath: Path, sheet_name: str, credentials_filepath: Path):
-    data = get_xml_data(xml_filepath)
+    strings = get_xml_strings(xml_filepath)
 
     # Authenticate with Google Sheets API
     scope = [
@@ -42,12 +42,12 @@ def to_google_sheets(xml_filepath: Path, sheet_name: str, credentials_filepath: 
     sheet.clear()
 
     # Write the data to the sheet
-    for row in data:
-        sheet.append_row(row)
+    for string in strings:
+        sheet.append_row(string)
 
 
 def to_csv(xml_filepath: Path, csv_filepath: Path):
-    data = get_xml_data(xml_filepath)
+    strings = get_xml_strings(xml_filepath)
 
     # Create a CSV file
     with open(csv_filepath, "w", encoding="utf-8", newline="") as file:
@@ -58,12 +58,12 @@ def to_csv(xml_filepath: Path, csv_filepath: Path):
         writer.writerow(header)
 
         # Write the data to the file
-        for name, value in data:
+        for name, value in strings:
             writer.writerow([name, value])
 
 
-def to_xlsx(xml_filepath: Path, xlsx_filepath: Path):
-    data = get_xml_data(xml_filepath)
+def to_xlsx_ods(xml_filepath: Path, xlsx_filepath: Path):
+    strings = get_xml_strings(xml_filepath)
 
     # Create a new workbook
     workbook = openpyxl.Workbook()
@@ -76,7 +76,7 @@ def to_xlsx(xml_filepath: Path, xlsx_filepath: Path):
     sheet.cell(row=1, column=2, value="VALUE")
 
     # Write the data to the sheet
-    for i, (name, value) in enumerate(data, start=2):
+    for i, (name, value) in enumerate(strings, start=2):
         sheet.cell(row=i, column=1, value=name)
         sheet.cell(row=i, column=2, value=value)
 
@@ -85,11 +85,11 @@ def to_xlsx(xml_filepath: Path, xlsx_filepath: Path):
 
 
 def to_json(xml_filepath: Path, json_filepath: Path):
-    data = get_xml_data(xml_filepath)
+    strings = get_xml_strings(xml_filepath)
 
     # Create a list of dictionaries to store the data
     data_list = []
-    for name, value in data:
+    for name, value in strings:
         data_list.append({"name": name, "value": value})
 
     # Write the data to the JSON file
@@ -97,41 +97,19 @@ def to_json(xml_filepath: Path, json_filepath: Path):
         json.dump(data_list, file, ensure_ascii=False, indent=2)
 
 
-def to_ods(xml_filepath: Path, ods_filepath: Path):
-    data = get_xml_data(xml_filepath)
-
-    # Create a new workbook
-    workbook = openpyxl.Workbook()
-
-    # Create a new sheet
-    sheet = workbook.active
-
-    # Write the header row
-    sheet.cell(row=1, column=1, value="NAME")
-    sheet.cell(row=1, column=2, value="VALUE")
-
-    # Write the data to the sheet
-    for i, (name, value) in enumerate(data, start=2):
-        sheet.cell(row=i, column=1, value=name)
-        sheet.cell(row=i, column=2, value=value)
-
-    # Save the file
-    workbook.save(ods_filepath)
-
-
 def to_yaml(xml_filepath: Path, yaml_filepath: Path):
-    data = get_xml_data(xml_filepath)
+    strings = get_xml_strings(xml_filepath)
 
     # Convert the data to a dictionary
-    data_dict = {name: value for name, value in data}
+    strings_dict = {name: value for name, value in strings}
 
     # Write the data to the YAML file
     with open(yaml_filepath, "w", encoding="utf-8") as file:
-        yaml.dump(data_dict, file, default_flow_style=False, allow_unicode=True)
+        yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
 
 
 def to_html(xml_filepath: Path, html_filepath: Path):
-    data = get_xml_data(xml_filepath)
+    strings = get_xml_strings(xml_filepath)
 
     # Create an HTML file
     with open(html_filepath, "w", encoding="utf-8") as file:
@@ -148,7 +126,7 @@ def to_html(xml_filepath: Path, html_filepath: Path):
         file.write("\t<tbody>\n")
 
         # Write the data to the HTML file
-        for name, value in data:
+        for name, value in strings:
             file.write("\t\t<tr>\n")
             file.write(f"\t\t\t<td>{name}</td>\n")
             file.write(f"\t\t\t<td>{value}</td>\n")
@@ -156,3 +134,11 @@ def to_html(xml_filepath: Path, html_filepath: Path):
 
         file.write("\t</tbody>\n")
         file.write("</table>\n")
+
+
+def to_ios(xml_filepath: Path, localizable_filepath: Path):
+    strings = get_xml_strings(xml_filepath)
+
+    with open(localizable_filepath, "w", encoding="utf-8") as file:
+        for string in strings:
+            file.write(f'"{string[0]}" = "{string[1]}";\n')
