@@ -48,7 +48,6 @@ arabic-reshaper = "^3.0.0"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.0.4"
 codecov = "^2.1.12"
-aspose-words = "^23.2.0"
 
 [tool.poetry.group.test.dependencies]
 pandas = "^1.5.3"
