@@ -124,16 +124,17 @@ Besides those directories, there are also these files in the root (apart from th
 
 ## Getting Started
 
-If you want to execute the script:
-- Go to [releases](https://github.com/HenestrosaConH/android-strings-converter/releases) and download the latest one.
+To execute the script:
+- See [Usage](#usage) section down below.
 
-If you want to import the package into your project:
+To import the package into your project:
 1. Run `pip install android-strings-converter`
 2. Import the package with this line of code: `from android_strings_converter import <FUNCTION>`
 - For example, if you were to import the `to_csv` function: `from android_strings_converter import to_csv`
 
-If you want to open the code:
-- Clone the project with the `git clone https://github.com/HenestrosaConH/android-strings-converter.git` command and then open it with your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/)).
+To open the code:
+1. Clone the project with the `git clone https://github.com/HenestrosaConH/android-strings-converter.git` command.
+2. Open it in your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/))
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -141,11 +142,13 @@ If you want to open the code:
 
 ## Usage
 
-To execute the script, you can follow these steps:
-1. Make sure you have the [latest version](https://github.com/HenestrosaConH/android-strings-converter/releases) of the script installed.
-2. Open the command line and run the following command: 
+To execute the script:
+1. Go to [releases](https://github.com/HenestrosaConH/android-strings-converter/releases) 
+2. Download the latest one.
+3. Open the command line and execute `pip install -r requirements.txt` to install the required packages to execute the program.
+4. Run the following command: 
     ```
-    path/to/python path/to/android_strings_converter.py path/to/strings.xml -o path/to/strings.<FILE TYPE EXTENSION SUPPORTED>
+    path/to/python path/to/android_strings_converter.py path/to/strings.xml -o path/to/strings.<SUPPORTED FILE TYPE EXTENSION>
     ```
     This will generate a file named `strings` in the desired path.  
     <br>
