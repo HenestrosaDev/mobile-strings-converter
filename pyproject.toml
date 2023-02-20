@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "android-strings-converter"
-version = "0.1.31"
-description = "Android strings.xml file converter to any file type supported by the package."
+name = "mobile-strings-converter"
+version = "0.1.0"
+description = "A Python package that converts Android & iOS strings files to any supported file type."
 authors = ["José Carlos López <henestrosaconh@gmail.com>"]
 license = "MIT"
 classifiers=[
@@ -33,9 +33,9 @@ keywords=[
     "ios",
     "Localizable.strings"
 ]
-repository="https://github.com/HenestrosaConH/android-strings-converter"
+repository="https://github.com/HenestrosaConH/mobile-strings-converter"
 readme = "README.md"
-packages = [{include = "android_strings_converter", from = "src"}]
+packages = [{include = "mobile_strings_converter", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
