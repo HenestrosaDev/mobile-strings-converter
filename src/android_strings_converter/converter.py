@@ -1,6 +1,9 @@
 import csv
 import json
+import os
 import re
+import warnings
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import gspread
@@ -149,6 +152,10 @@ def to_ios(xml_filepath: Path, localizable_filepath: Path):
 
 
 def to_pdf(xml_filepath: Path, pdf_filepath: Path):
+    # Ignore the following warning when adding a font already added:
+    # UserWarning: Core font or font already added 'dejavusanscondensed': doing nothing
+    warnings.filterwarnings("ignore", category=UserWarning)
+
     def add_font(font_name, size=12):
         root_dir = Path(__file__).parent
         pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
@@ -245,8 +252,12 @@ def to_pdf(xml_filepath: Path, pdf_filepath: Path):
 
                 pdf.set_xy(x + (c_width * (j + 1)), y)
             except (Exception,):
-                print(f"{string[1]} not supported")
-                pass
+                with open(
+                    pdf_filepath.parent / f"{pdf_filepath.stem}-errors.txt",
+                    "a",
+                    encoding="utf-8",
+                ) as f:
+                    f.write(f"{string[1]} not supported\n")
 
         for j in range(cells_in_row + 1):
             pdf.line(x + c_width * j, y, x + c_width * j, y + max_height)
@@ -262,8 +273,16 @@ def to_pdf(xml_filepath: Path, pdf_filepath: Path):
         ):
             pdf.add_page()
 
-    # Save the PDF file
-    pdf.output(str(pdf_filepath))
+    # Inside this context manager, all output to stdout and stderr will be suppressed
+    # This is done because in Windows, the following exception is raised if the
+    # strings.xml file contains unsupported characters:
+    #
+    # UnicodeEncodeError: 'charmap'
+    # codec can't encode characters in position 0-9: character maps to <undefined>
+    with open(os.devnull, "w") as devnull:
+        with redirect_stdout(devnull), redirect_stderr(devnull):
+            # Save the PDF file
+            pdf.output(str(pdf_filepath))
 
 
 def to_md(xml_filepath: Path, md_filepath: Path):
