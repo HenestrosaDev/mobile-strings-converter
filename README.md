@@ -145,7 +145,7 @@ To open the code:
 To execute the script:
 1. Go to [releases](https://github.com/HenestrosaConH/android-strings-converter/releases) 
 2. Download the latest one.
-3. Open the command line and execute `pip install -r requirements.txt`
+3. Open the command line and execute `pip install -r requirements.txt` to install the required packages to execute the program.
 4. Run the following command: 
     ```
     path/to/python path/to/android_strings_converter.py path/to/strings.xml -o path/to/strings.<SUPPORTED FILE TYPE EXTENSION>
