@@ -1,4 +1,4 @@
-| String Name | Translation |
+| NAME | VALUE |
 | ----------- | ----------- |
 | message_arabic | مرحبا بكم في طلبي |
 | message_armenian | վայելեք իմ հավելվածը |
