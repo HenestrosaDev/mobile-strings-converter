@@ -75,12 +75,16 @@ it involves wasting your time generating the spreadsheet manually instead of the
 Moreover, not only this program can be executed on its own, it also can be installed as a package via **PyPI**.
 
 The file types supported by the package are the following:
+- Google Sheets support
+- iOS strings format (Localizable.strings)
 - XLSX
 - ODS
 - HTML
 - CSV
 - YAML
 - JSON
+- PDF
+- MD
 
 <!-- PROJECT STRUCTURE -->
 
@@ -91,7 +95,7 @@ Directories:
 - `.github/workflows`: GitHub workflows. It also includes the templates for issues and pull requests, as well as the `depandabot.yml` file for Dependabot configuration.
 - `docs`: Contains files related to the documentation of the project.
 - `src/android_strings_converter`:  Contains the source code files.
-- `tests`: Contains unit tests to ensure the correct functionality of the package. It also includes the `files` directory, which contains a few demo files in different languages to use in the unit tests.
+- `tests`: Contains unit tests to ensure the correct functionality of the package. It also includes the `files` directory, which contains a few demo files in different formats to use in the unit tests.
 
 Besides those directories, there are also these files in the root (apart from the .gitignore, README.md and LICENSE):
 
@@ -110,6 +114,9 @@ Besides those directories, there are also these files in the root (apart from th
 - [gspread](https://pypi.org/project/gspread/): To generate Google Spreadsheets.
 - [protobuf](https://pypi.org/project/oauth2client/): Used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet, 
 - [PyYAML](https://pypi.org/project/PyYAML/): To generate YAML files.
+- [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/): To add arabic characters support for PDF files.
+- [fpdf2](https://pypi.org/project/fpdf2/): To generate PDF files.
+- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/): To recognize "value" language when writing a PDF in order to know what font to use.  
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -123,7 +130,7 @@ If you want to execute the script:
 If you want to import the package into your project:
 1. Run `pip install android-strings-converter`
 2. Import the package with this line of code: `from android_strings_converter import <FUNCTION>`
-- For example, if you were to import the `to_xlsx` function: `from android_strings_converter import to_xlsx`
+- For example, if you were to import the `to_csv` function: `from android_strings_converter import to_csv`
 
 If you want to open the code:
 - Clone the project with the `git clone https://github.com/HenestrosaConH/android-strings-converter.git` command and then open it with your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/)).
