@@ -245,7 +245,7 @@ def to_pdf(xml_filepath: Path, pdf_filepath: Path):
 
                 pdf.set_xy(x + (c_width * (j + 1)), y)
             except (Exception,):
-                print(f"{string[1].encode('utf-8')} not supported")
+                print(f"{string[1]} not supported")
                 pass
 
         for j in range(cells_in_row + 1):
