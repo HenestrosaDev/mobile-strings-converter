@@ -13,40 +13,40 @@
 <br />
 <div align="center">
     <img src="docs/icon.png" alt="Logo" width="156" height="156" style="margin-bottom:-40px">
-    <h2 align="center">Android strings converter</h2>
+    <h2 align="center">Mobile strings converter</h2>
     <p align="center">
-        A Python package that converts Android strings.xml files to any supported file type.
+        A Python package that converts Android & iOS strings files to any supported file type.
         <br />
         <br />
-        <a href="https://pypi.org/project/android-strings-converter/">
-          <img alt="PyPI version" src="https://img.shields.io/pypi/v/android-strings-converter" />
+        <a href="https://pypi.org/project/mobile-strings-converter/">
+          <img alt="PyPI version" src="https://img.shields.io/pypi/v/mobile-strings-converter" />
         </a>
-        <a href="https://pypi.org/project/android-strings-converter/">
-          <img alt="Python versions support" src="https://img.shields.io/pypi/pyversions/android-strings-converter" />
+        <a href="https://pypi.org/project/mobile-strings-converter/">
+          <img alt="Python versions support" src="https://img.shields.io/pypi/pyversions/mobile-strings-converter" />
         </a>
         <br />
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/build.yaml">
-          <img alt="GitHub action: Build" src="https://github.com/HenestrosaConH/android-strings-converter/actions/workflows/build.yaml/badge.svg" />
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/actions/workflows/build.yaml">
+          <img alt="GitHub action: Build" src="https://github.com/HenestrosaConH/mobile-strings-converter/actions/workflows/build.yaml/badge.svg" />
         </a>
         <a href="https://codecov.io/gh/HenestrosaConH/android-strings-converter/">
           <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/android-strings-converter/branch/main/graph/badge.svg" />
         </a>
         <br />
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/graphs/contributors">
-          <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/android-strings-converter" />
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/graphs/contributors">
+          <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/mobile-strings-converter" />
         </a>
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/blob/main/LICENSE">
-          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/android-strings-converter" />
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/LICENSE">
+          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/mobile-strings-converter" />
         </a>
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/issues">
-          <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/android-strings-converter" />
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues">
+          <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/mobile-strings-converter" />
         </a>
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/pulls">
-          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaConH/android-strings-converter" />
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/pulls">
+          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaConH/mobile-strings-converter" />
         </a>
         <br />
         <br />
-        <a href="https://github.com/HenestrosaConH/android-strings-converter/issues/new/choose">Report Bug</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/issues/new/choose">Request Feature</a> · <a href="https://github.com/HenestrosaConH/android-strings-converter/discussions">Ask Question</a>
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues/new/choose">Report Bug</a> · <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues/new/choose">Request Feature</a> · <a href="https://github.com/HenestrosaConH/mobile-strings-converter/discussions">Ask Question</a>
     </p>
 </div>
 
@@ -75,16 +75,17 @@ it involves wasting your time generating the spreadsheet manually instead of the
 Moreover, not only this program can be executed on its own, it also can be installed as a package via **PyPI**.
 
 The file types supported by the package are the following:
-- Google Sheets support
-- iOS strings format (Localizable.strings)
-- XLSX
-- ODS
-- HTML
+- Android strings format (strings.xml)
 - CSV
-- YAML
+- Google Sheets support
+- HTML
+- iOS strings format (Localizable.strings)
 - JSON
-- PDF
 - MD
+- ODS
+- PDF
+- XLSX
+- YAML
 
 <!-- PROJECT STRUCTURE -->
 
@@ -94,7 +95,7 @@ Directories:
 
 - `.github/workflows`: GitHub workflows. It also includes the templates for issues and pull requests, as well as the `depandabot.yml` file for Dependabot configuration.
 - `docs`: Contains files related to the documentation of the project.
-- `src/android_strings_converter`:  Contains the source code files.
+- `src/mobile_strings_converter`:  Contains the source code files.
 - `tests`: Contains unit tests to ensure the correct functionality of the package. It also includes the `files` directory, which contains a few demo files in different formats to use in the unit tests.
 
 Besides those directories, there are also these files in the root (apart from the .gitignore, README.md and LICENSE):
@@ -128,12 +129,12 @@ To execute the script:
 - See [Usage](#usage) section down below.
 
 To import the package into your project:
-1. Run `pip install android-strings-converter`
-2. Import the package with this line of code: `from android_strings_converter import <FUNCTION>`
-- For example, if you were to import the `to_csv` function: `from android_strings_converter import to_csv`
+1. Run `pip install mobile-strings-converter`
+2. Import the package with this line of code: `from mobile_strings_converter import <FUNCTION>`
+- For example, if you were to import the `to_csv` function: `from mobile_strings_converter import to_csv`
 
 To open the code:
-1. Clone the project with the `git clone https://github.com/HenestrosaConH/android-strings-converter.git` command.
+1. Clone the project with the `git clone https://github.com/HenestrosaConH/mobile-strings-converter.git` command.
 2. Open it in your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/))
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -143,19 +144,19 @@ To open the code:
 ## Usage
 
 To execute the script:
-1. Go to [releases](https://github.com/HenestrosaConH/android-strings-converter/releases) 
+1. Go to [releases](https://github.com/HenestrosaConH/mobile-strings-converter/releases) 
 2. Download the latest one.
 3. Open the command line and execute `pip install -r requirements.txt` to install the required packages to execute the program.
 4. Run the following command: 
     ```
-    path/to/python path/to/android_strings_converter.py path/to/strings.xml -o path/to/strings.<SUPPORTED FILE TYPE EXTENSION>
+    path/to/python path/to/mobile_strings_converter.py path/to/strings.xml -o path/to/strings.<SUPPORTED FILE TYPE EXTENSION>
     ```
     This will generate a file named `strings` in the desired path.  
     <br>
 
 If you want to generate a Google Sheet, run the following command:
 ```
-path/to/python path/to/android_strings_converter.py path/to/strings.xml -gs <SHEET NAME> -c path/to/service_account.json
+path/to/python path/to/mobile_strings_converter.py path/to/strings.xml -gs <SHEET NAME> -c path/to/service_account.json
 ```
 Please note that you will have to generate the `service_account.json` yourself. To do it, you can do the following:
 
@@ -174,10 +175,9 @@ Alternatively, you can create an XLSX file and open it in Google Sheets if you d
 
 ## Roadmap
 
-- [ ] Make an iOS version.
 - [ ] Make a web version with Django/Flask.
 
-You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/android-strings-converter/new/choose).
+You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/mobile-strings-converter/new/choose).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -186,7 +186,7 @@ You can propose a new feature creating an [issue](https://github.com/HenestrosaC
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaConH/android-strings-converter/blob/main/.github/CONTRIBUTING.md) file, where you can find more detailed information about how to contribute to the project.
+Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/.github/CONTRIBUTING.md) file, where you can find more detailed information about how to contribute to the project.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -204,7 +204,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - HenestrosaConH <henestrosaconh@gmail.com> (José Carlos López)
 
-See also the list of [contributors](https://github.com/HenestrosaConH/android-strings-converter/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/HenestrosaConH/mobile-strings-converter/contributors) who participated in this project.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
