@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  main-branch-build:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
