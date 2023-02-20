@@ -16,6 +16,19 @@ files = [
 with-fonttools = ["fonttools (>=4.0)"]
 
 [[package]]
+name = "aspose-words"
+version = "23.2.0"
+description = "Aspose.Words for Python is a Document Processing library that allows developers to work with documents in many popular formats without needing Office Automation."
+category = "dev"
+optional = false
+python-versions = ">=3.5,<3.12"
+files = [
+    {file = "aspose_words-23.2.0-py3-none-manylinux1_x86_64.whl", hash = "sha256:4650306877ba8ad9e2bd8fd83b8f073176e463bf589c5d9b13e12cb4c0918edf"},
+    {file = "aspose_words-23.2.0-py3-none-win32.whl", hash = "sha256:c00d677325c714e292bfeba280a4cd5c1dc134dcdc7ab1bad1992484b7af7079"},
+    {file = "aspose_words-23.2.0-py3-none-win_amd64.whl", hash = "sha256:b3d4741560a250a9da8399b30c5b749161c18246e1cbed73cd14a3ad953d21fd"},
+]
+
+[[package]]
 name = "cachetools"
 version = "5.3.0"
 description = "Extensible memoizing collections and decorators"
@@ -551,6 +564,7 @@ files = [
 
 [package.dependencies]
 numpy = [
+    {version = ">=1.20.3", markers = "python_version < \"3.10\""},
     {version = ">=1.21.0", markers = "python_version >= \"3.10\""},
     {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
 ]
@@ -1052,5 +1066,5 @@ test = ["covdefaults (>=2.2.2)", "coverage (>=7.1)", "coverage-enable-subprocess
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "29c770fa1d4516b34978abba832bc0a92b41d0ff468a5472708bc81df1bbdd65"
+python-versions = ">=3.8, <3.12"
+content-hash = "566e134a1457bcaed4dd51f5e846fc88459392fb8e99f54e12077df7de00513a"
