@@ -5,14 +5,10 @@ from android_strings_converter import to_yaml
 from base_converter_test import BaseConverterTest
 
 
-class TestYaml(BaseConverterTest):
+class TestToYaml(BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepaths = [
-            Path(__file__).parent / "files/yaml/strings-en.yaml",
-            Path(__file__).parent / "files/yaml/strings-es.yaml",
-            Path(__file__).parent / "files/yaml/strings-zh.yaml",
-        ]
+        self.template_filepath = Path(__file__).parent / "files/strings.yaml"
         self.output_filepath = Path("strings.yaml")
 
     # Overriding abstract method

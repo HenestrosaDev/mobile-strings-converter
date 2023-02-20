@@ -5,14 +5,10 @@ from android_strings_converter import to_html
 from base_converter_test import BaseConverterTest
 
 
-class TestHtml(BaseConverterTest):
+class TestToHtml(BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepaths = [
-            Path(__file__).parent / "files/html/strings-en.html",
-            Path(__file__).parent / "files/html/strings-es.html",
-            Path(__file__).parent / "files/html/strings-zh.html",
-        ]
+        self.template_filepath = Path(__file__).parent / "files/strings.html"
         self.output_filepath = Path("strings.html")
 
     # Overriding abstract method

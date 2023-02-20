@@ -5,14 +5,10 @@ from android_strings_converter import to_csv
 from base_converter_test import BaseConverterTest
 
 
-class TestCsv(BaseConverterTest):
+class TestToCsv(BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepaths = [
-            Path(__file__).parent / "files/csv/strings-en.csv",
-            Path(__file__).parent / "files/csv/strings-es.csv",
-            Path(__file__).parent / "files/csv/strings-zh.csv",
-        ]
+        self.template_filepath = Path(__file__).parent / "files/strings.csv"
         self.output_filepath = Path("strings.csv")
 
     # Overriding abstract method

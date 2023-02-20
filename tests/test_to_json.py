@@ -5,14 +5,10 @@ from android_strings_converter import to_json
 from base_converter_test import BaseConverterTest
 
 
-class TestJson(BaseConverterTest):
+class TestToJson(BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepaths = [
-            Path(__file__).parent / "files/json/strings-en.json",
-            Path(__file__).parent / "files/json/strings-es.json",
-            Path(__file__).parent / "files/json/strings-zh.json",
-        ]
+        self.template_filepath = Path(__file__).parent / "files/strings.json"
         self.output_filepath = Path("strings.json")
 
     # Overriding abstract method

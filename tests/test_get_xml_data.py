@@ -2,10 +2,10 @@ import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from android_strings_converter.converter import get_xml_data
+from android_strings_converter.converter import get_xml_strings
 
 
-class TestXml(unittest.TestCase):
+class TestGetXmlData(unittest.TestCase):
     def test_valid_xml_file(self):
         # Create a temporary file with valid XML data
         xml_data = """
@@ -20,7 +20,7 @@ class TestXml(unittest.TestCase):
 
         # Call the function and check the output
         expected_output = [("app_name", "MyApp")]
-        self.assertEqual(get_xml_data(xml_filepath), expected_output)
+        self.assertEqual(get_xml_strings(xml_filepath), expected_output)
 
         # Clean up the temporary file
         xml_filepath.unlink()
@@ -51,7 +51,7 @@ class TestXml(unittest.TestCase):
 
         # Call the function and check that it raises a ValueError
         with self.assertRaises(ValueError):
-            get_xml_data(xml_filepath)
+            get_xml_strings(xml_filepath)
 
         # Clean up the temporary file
         xml_filepath.unlink()
