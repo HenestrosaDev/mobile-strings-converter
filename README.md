@@ -62,7 +62,7 @@
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
-- [Contact](#contact)
+- [Authors](#authors)
 - [Acknowledgments](#acknowledgments)
 
 <!-- ABOUT THE PROJECT -->
@@ -196,12 +196,13 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- CONTACT -->
+<!-- AUTHORS -->
 
-## Contact
+## Authors
 
-[![LinkedIn][linkedin-shield]][linkedin-url]
-[![henestrosaconh@gmail.com][gmail-shield]][gmail-url]
+- HenestrosaConH <henestrosaconh@gmail.com> (José Carlos López)
+
+See also the list of [contributors](https://github.com/HenestrosaConH/android-strings-converter/contributors) who participated in this project.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -217,11 +218,3 @@ I've made use of the following resources to make this project:
 - [Icon created by Midjourney](https://www.midjourney.com/app/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- BADGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
-[linkedin-shield]: https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
-[linkedin-url]: https://linkedin.com/in/henestrosaconh
-[gmail-shield]: https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white
-[gmail-url]: mailto:henestrosaconh@gmail.com
