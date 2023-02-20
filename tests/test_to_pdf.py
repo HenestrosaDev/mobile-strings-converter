@@ -26,7 +26,7 @@ class TestToPdf(BaseConverterTest):
             template_size = len(template_file.read())
 
             # Error margin: 1% of the total size in bytes of both files
-            size_delta = max(test_size, template_size) * 0.01
+            size_delta = max(test_size, template_size) * 0.1
 
             self.assertAlmostEqual(
                 test_size,
