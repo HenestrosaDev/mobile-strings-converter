@@ -6,7 +6,11 @@ from pathlib import Path
 import gspread
 import openpyxl
 import yaml
+from arabic_reshaper import reshape
+from bidi.algorithm import get_display
+from fpdf import FPDF
 from google.oauth2.credentials import Credentials
+from lingua import LanguageDetectorBuilder
 
 
 def get_xml_strings(xml_filepath: Path):
@@ -142,3 +146,121 @@ def to_ios(xml_filepath: Path, localizable_filepath: Path):
     with open(localizable_filepath, "w", encoding="utf-8") as file:
         for string in strings:
             file.write(f'"{string[0]}" = "{string[1]}";\n')
+
+
+def to_pdf(xml_filepath: Path, pdf_filepath: Path):
+    def add_font(font_name, size=12):
+        root_dir = Path(__file__).parent
+        pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
+        pdf.set_font(font_name, size=size)
+
+    strings = get_xml_strings(xml_filepath)
+
+    # Create a new PDF file
+    pdf = FPDF(orientation="P", format="A4")
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 12)
+
+    # Cell properties
+    c_width = 95
+    c_height = 10
+
+    # Add headers to table
+    pdf.cell(c_width, c_height, "NAME", border=1)
+    pdf.cell(c_width, c_height, "VALUE", border=1)
+    pdf.ln()
+
+    detector = (
+        LanguageDetectorBuilder.from_all_languages()
+        .with_preloaded_language_models()
+        .build()
+    )
+
+    # Add table data
+    # https://stackoverflow.com/questions/53526311/fpdf-multicell-same-height
+    for i, string in enumerate(strings):
+        x = pdf.get_x()
+        y = pdf.get_y()
+
+        max_height = 0
+        cells_in_row = 2
+
+        for j in range(cells_in_row):
+            language_code = None
+            try:
+                if j % 2 == 0:  # Prevents 'name' language detection
+                    add_font("DejaVuSansCondensed")
+                else:
+                    language_code = detector.detect_language_of(
+                        string[j]
+                    ).iso_code_639_1.name.lower()
+
+                    if language_code in [
+                        "bn",  # Bengali
+                        "hi",  # Hindi
+                        "kn",  # Kannada
+                        "ml",  # Malayalam
+                        "mr",  # Marathi
+                        "or",  # Oriya
+                        "bo",  # Tibetan
+                    ]:
+                        add_font("gargi")
+                    elif language_code == "gu":  # Gujarati
+                        add_font("Aakar")
+                    elif language_code == "te":  # Telugu
+                        add_font("AnekTelugu-VariableFont_wdth,wght")
+                    elif language_code == "ta":  # Tamil
+                        add_font("latha")
+                    elif language_code == "pa":  # Punjabi, Panjabi
+                        add_font("Gurvetica_a8_Heavy")
+                    elif language_code == "zh" or language_code == "ja":
+                        # Chinese or Japanese
+                        add_font("fireflysung")
+                    elif language_code == "ko":  # Korean
+                        add_font("Eunjin")
+                    elif language_code == "th":  # Thai
+                        add_font("Waree")
+                    else:
+                        add_font("DejaVuSansCondensed")
+
+                if language_code in [
+                    # RTL languages
+                    "ar",  # Arabic
+                    "he",  # Hebrew
+                    "dv",  # Dhivehi
+                    "ku",  # Kurdish (sorani)
+                    "ps",  # Pashto
+                    "fa",  # Persian
+                    "sd",  # Sindhi
+                    "ur",  # Urdu
+                    "ug",  # Uyghur
+                    "yi",  # Yiddish
+                ]:
+                    pdf.multi_cell(c_width, c_height, get_display(reshape(string[j])))
+                else:
+                    pdf.multi_cell(c_width, c_height, string[j])
+
+                if pdf.get_y() - y > max_height:
+                    max_height = pdf.get_y() - y
+
+                pdf.set_xy(x + (c_width * (j + 1)), y)
+            except (Exception,):
+                print(f"{string[1].encode('utf-8')} not supported")
+                pass
+
+        for j in range(cells_in_row + 1):
+            pdf.line(x + c_width * j, y, x + c_width * j, y + max_height)
+
+        pdf.line(x, y, x + c_width * cells_in_row, y)
+        pdf.line(x, y + max_height, x + c_width * cells_in_row, y + max_height)
+
+        pdf.ln()
+
+        if (
+            i < len(strings) - 1
+            and pdf.get_y() + (max_height * cells_in_row) > pdf.h - 10
+        ):
+            pdf.add_page()
+
+    # Save the PDF file
+    pdf.output(str(pdf_filepath))
