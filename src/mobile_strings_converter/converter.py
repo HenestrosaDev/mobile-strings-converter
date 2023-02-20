@@ -5,6 +5,7 @@ import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from typing import List
 
 import gspread
 import openpyxl
@@ -16,24 +17,23 @@ from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
 
 
-def get_xml_strings(xml_filepath: Path):
-    # Open the string.xml file
-    with open(xml_filepath, "r", encoding="utf-8") as file:
-        xml_data = file.read()
+def get_strings(filepath: Path, pattern: str):
+    # Open the Localizable.strings file
+    with open(filepath, "r", encoding="utf-8") as file:
+        strings_data = file.read()
 
-    # Extract the "name" attribute and content of the tag
-    pattern = r'<string name="(.*?)">(.*?)</string>'
-    strings = re.findall(pattern, xml_data)
+    # Extract the strings using a regular expression
+    strings = re.findall(pattern, strings_data)
 
     if len(strings) >= 1:
         return strings
     else:
-        raise ValueError("The XML file provided is not a valid Android strings file.")
+        raise ValueError(
+            "The file provided is not a valid Localizable.strings nor strings.xml file."
+        )
 
 
-def to_google_sheets(xml_filepath: Path, sheet_name: str, credentials_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
+def to_google_sheets(strings: List[str], sheet_name: str, credentials_filepath: Path):
     # Authenticate with Google Sheets API
     scope = [
         "https://spreadsheets.google.com/feeds",
@@ -53,10 +53,7 @@ def to_google_sheets(xml_filepath: Path, sheet_name: str, credentials_filepath: 
         sheet.append_row(string)
 
 
-def to_csv(xml_filepath: Path, csv_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
-    # Create a CSV file
+def to_csv(strings: List[str], csv_filepath: Path):
     with open(csv_filepath, "w", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
 
@@ -69,9 +66,7 @@ def to_csv(xml_filepath: Path, csv_filepath: Path):
             writer.writerow([name, value])
 
 
-def to_xlsx_ods(xml_filepath: Path, xlsx_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
+def to_xlsx_ods(strings: List[str], xlsx_filepath: Path):
     # Create a new workbook
     workbook = openpyxl.Workbook()
 
@@ -91,9 +86,7 @@ def to_xlsx_ods(xml_filepath: Path, xlsx_filepath: Path):
     workbook.save(xlsx_filepath)
 
 
-def to_json(xml_filepath: Path, json_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
+def to_json(strings: List[str], json_filepath: Path):
     # Create a list of dictionaries to store the data
     data_list = []
     for name, value in strings:
@@ -104,9 +97,7 @@ def to_json(xml_filepath: Path, json_filepath: Path):
         json.dump(data_list, file, ensure_ascii=False, indent=2)
 
 
-def to_yaml(xml_filepath: Path, yaml_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
+def to_yaml(strings: List[str], yaml_filepath: Path):
     # Convert the data to a dictionary
     strings_dict = {name: value for name, value in strings}
 
@@ -115,9 +106,7 @@ def to_yaml(xml_filepath: Path, yaml_filepath: Path):
         yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
 
 
-def to_html(xml_filepath: Path, html_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
+def to_html(strings: List[str], html_filepath: Path):
     # Create an HTML file
     with open(html_filepath, "w", encoding="utf-8") as file:
         file.write("<head>\n")
@@ -143,15 +132,22 @@ def to_html(xml_filepath: Path, html_filepath: Path):
         file.write("</table>\n")
 
 
-def to_ios(xml_filepath: Path, localizable_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
+def to_ios(strings: List[str], localizable_filepath: Path):
     with open(localizable_filepath, "w", encoding="utf-8") as file:
         for string in strings:
             file.write(f'"{string[0]}" = "{string[1]}";\n')
 
 
-def to_pdf(xml_filepath: Path, pdf_filepath: Path):
+def to_android(strings: List[str], xml_filepath: Path):
+    with open(xml_filepath, "w", encoding="utf-8") as file:
+        file.write("<resources>\n")
+        for string in strings:
+            file.write(f'\t<string name="{string[0]}">{string[1]}</string>\n')
+
+        file.write("</resources>")
+
+
+def to_pdf(strings: List[str], pdf_filepath: Path):
     # Ignore the following warning when adding a font already added:
     # UserWarning: Core font or font already added 'dejavusanscondensed': doing nothing
     warnings.filterwarnings("ignore", category=UserWarning)
@@ -160,8 +156,6 @@ def to_pdf(xml_filepath: Path, pdf_filepath: Path):
         root_dir = Path(__file__).parent
         pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
         pdf.set_font(font_name, size=size)
-
-    strings = get_xml_strings(xml_filepath)
 
     # Create a new PDF file
     pdf = FPDF(orientation="P", format="A4")
@@ -285,10 +279,7 @@ def to_pdf(xml_filepath: Path, pdf_filepath: Path):
             pdf.output(str(pdf_filepath))
 
 
-def to_md(xml_filepath: Path, md_filepath: Path):
-    strings = get_xml_strings(xml_filepath)
-
-    # Create a new Markdown file
+def to_md(strings: List[str], md_filepath: Path):
     with open(md_filepath, "w", encoding="utf-8") as f:
         # Write each string to the Markdown file in a table format
         f.write("| NAME | VALUE |\n")

@@ -10,7 +10,7 @@ def main():
     parser.add_argument(
         "input_filepath",
         type=str,
-        help="Input XML filepath with the Android strings.",
+        help=".xml or .strings filepath that contains the strings.",
     )
     parser.add_argument(
         "-o",
@@ -39,6 +39,21 @@ def main():
     )
     args = parser.parse_args()
 
+    input_path = Path(args.input_filepath)
+
+    if input_path.suffix == ".strings":
+        strings = conv.get_strings(input_path, pattern=r'"([^"]+)"\s*=\s*"([^"]*)";')
+    elif input_path.suffix == ".xml":
+        strings = conv.get_strings(
+            input_path, pattern=r'<string name="(.*?)">(.*?)</string>'
+        )
+    else:
+        print(
+            f"{ConsoleStyle.RED}Invalid input file. Its extension must be .strings "
+            f"for iOS strings or .xml for Android strings.{ConsoleStyle.RED}"
+        )
+        return
+
     if args.google_sheets and not args.credentials:
         print(
             f"{ConsoleStyle.RED}Error: You need to pass the path of the "
@@ -53,45 +68,45 @@ def main():
         return
     elif args.google_sheets and args.credentials:
         conv.to_google_sheets(
-            Path(args.input_filepath), args.google_sheets, Path(args.credentials)
+            strings,
+            sheet_name=args.google_sheets,
+            credentials_filepath=Path(args.credentials),
         )
 
     if args.output_filepath:
-        input_path = Path(args.input_filepath)
         output_path = Path(args.output_filepath)
 
-        should_print_success = True
-
         if output_path.suffix == ".csv":
-            conv.to_csv(input_path, output_path)
+            conv.to_csv(strings, output_path)
         elif output_path.suffix == ".xlsx" or output_path.suffix == ".ods":
-            conv.to_xlsx_ods(input_path, output_path)
+            conv.to_xlsx_ods(strings, output_path)
         elif output_path.suffix == ".json":
-            conv.to_json(input_path, output_path)
+            conv.to_json(strings, output_path)
         elif output_path.suffix == ".yaml":
-            conv.to_yaml(input_path, output_path)
+            conv.to_yaml(strings, output_path)
         elif output_path.suffix == ".html":
-            conv.to_html(input_path, output_path)
+            conv.to_html(strings, output_path)
         elif output_path.suffix == ".strings":
-            conv.to_ios(input_path, output_path)
+            conv.to_ios(strings, output_path)
+        elif output_path.suffix == ".xml":
+            conv.to_android(strings, output_path)
         elif output_path.suffix == ".pdf":
-            conv.to_pdf(input_path, output_path)
+            conv.to_pdf(strings, output_path)
         elif output_path.suffix == ".md":
-            conv.to_md(input_path, output_path)
+            conv.to_md(strings, output_path)
         else:
             print(
                 f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
-                f"an issue here (https://github.com/HenestrosaConH/android-strings"
+                f"an issue here (https://github.com/HenestrosaConH/mobile-strings"
                 f"-converter/issues) if you want the file type to be supported by the "
                 f"package.{ConsoleStyle.END}"
             )
-            should_print_success = False
+            return
 
-        if should_print_success:
-            print(
-                f"{ConsoleStyle.GREEN}Data successfully written to {output_path}"
-                f"{ConsoleStyle.END}"
-            )
+        print(
+            f"{ConsoleStyle.GREEN}Data successfully written to {output_path}"
+            f"{ConsoleStyle.END}"
+        )
 
 
 if __name__ == "__main__":
