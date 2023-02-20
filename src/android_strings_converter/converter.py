@@ -264,3 +264,15 @@ def to_pdf(xml_filepath: Path, pdf_filepath: Path):
 
     # Save the PDF file
     pdf.output(str(pdf_filepath))
+
+
+def to_md(xml_filepath: Path, md_filepath: Path):
+    strings = get_xml_strings(xml_filepath)
+
+    # Create a new Markdown file
+    with open(md_filepath, "w", encoding="utf-8") as f:
+        # Write each string to the Markdown file in a table format
+        f.write("| NAME | VALUE |\n")
+        f.write("| ----------- | ----------- |\n")
+        for name, translation in strings:
+            f.write(f"| {name} | {translation} |\n")
