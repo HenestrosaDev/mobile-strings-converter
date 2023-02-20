@@ -1,4 +1,4 @@
-name: Build and publish
+name: Publish
 
 on:
   release:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
