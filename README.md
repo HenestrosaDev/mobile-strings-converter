@@ -171,7 +171,6 @@ Alternatively, you can create an XLSX file and open it in Google Sheets if you d
 
 ## Roadmap
 
-- [ ] Try to lower Python version to make it compatible with Python 3.8
 - [ ] Make an iOS version.
 - [ ] Make a web version with Django/Flask.
 
