@@ -18,7 +18,8 @@ def main():
         required=False,
         type=str,
         help="Output filepath with the strings properly arranged. It can be a JSON, "
-        "CSV, YAML, HTML, XLS, XLSX, Google Sheet and ODS.",
+        "CSV, YAML, HTML, XLS, XLSX, Google Sheet, MD, PDF, iOS strings file or ODS "
+        "file.",
     )
     parser.add_argument(
         "-gs",
