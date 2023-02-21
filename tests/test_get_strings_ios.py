@@ -2,10 +2,13 @@ import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from android_strings_converter.converter import get_xml_strings
+from mobile_strings_converter.converter import get_strings
 
 
-class TestGetXmlData(unittest.TestCase):
+class TestGetStringsAndroid(unittest.TestCase):
+    def setUp(self):
+        self.android_pattern = r'<string name="(.*?)">(.*?)</string>'
+
     def test_valid_xml_file(self):
         # Create a temporary file with valid XML data
         xml_data = """
@@ -20,7 +23,10 @@ class TestGetXmlData(unittest.TestCase):
 
         # Call the function and check the output
         expected_output = [("app_name", "MyApp")]
-        self.assertEqual(get_xml_strings(xml_filepath), expected_output)
+        self.assertEqual(
+            get_strings(xml_filepath, self.android_pattern),
+            expected_output,
+        )
 
         # Clean up the temporary file
         xml_filepath.unlink()
@@ -51,7 +57,7 @@ class TestGetXmlData(unittest.TestCase):
 
         # Call the function and check that it raises a ValueError
         with self.assertRaises(ValueError):
-            get_xml_strings(xml_filepath)
+            get_strings(xml_filepath, self.android_pattern)
 
         # Clean up the temporary file
         xml_filepath.unlink()

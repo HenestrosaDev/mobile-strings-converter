@@ -42,7 +42,9 @@ def main():
     input_path = Path(args.input_filepath)
 
     if input_path.suffix == ".strings":
-        strings = conv.get_strings(input_path, pattern=r'"([^"]+)"\s*=\s*"([^"]*)";')
+        strings = conv.get_strings(
+            input_path, pattern=r'^(?!//)"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"'
+        )
     elif input_path.suffix == ".xml":
         strings = conv.get_strings(
             input_path, pattern=r'<string name="(.*?)">(.*?)</string>'
