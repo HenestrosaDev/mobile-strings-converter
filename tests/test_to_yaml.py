@@ -1,23 +1,14 @@
-from pathlib import Path
 from unittest import main
 
-from android_strings_converter import to_yaml
-from base_converter_test import BaseConverterTest
+from base_tests import BaseTests
+from mobile_strings_converter import to_yaml
 
 
-class TestToYaml(BaseConverterTest):
+class TestToYaml(BaseTests.BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepath = Path(__file__).parent / "files/strings.yaml"
-        self.output_filepath = Path("strings.yaml")
-
-    # Overriding abstract method
-    def test_converter_creates_file(self):
-        super().converter_creates_file_helper(to_yaml)
-
-    # Overriding abstract method
-    def test_converter_writes_correct_data(self):
-        super().converter_writes_correct_data_helper(to_yaml)
+        self.file_name = "strings.yaml"
+        self.converter_func = to_yaml
 
 
 if __name__ == "__main__":

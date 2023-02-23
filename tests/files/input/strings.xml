@@ -1,6 +1,10 @@
 <resources>
   <string name="message_arabic">مرحبا بكم في طلبي</string>
+  <!--<string name="comment_1">comment 1</string>-->
+  <!--<string name="comment_2">comment 2</string>-->
+  <!--<string name="comment_3">comment 3</string>-->
   <string name="message_armenian">վայելեք իմ հավելվածը</string>
+  <!--<string name="comment_4">comment 4</string>-->
   <string name="message_azerbaijani">tətbiqimdən həzz alın</string>
   <string name="message_bambara">aw ka n ka app diyabɔ</string>
   <string name="message_bengali">আমার অ্যাপ উপভোগ করুন</string>

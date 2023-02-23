@@ -1,23 +1,25 @@
-# Copyright (c) 2023 android-strings-converter
+# Copyright (c) 2023 mobile-strings-converter
 
 # @license: http://www.opensource.org/licenses/mit-license.php
 # @author: José Carlos López Henestrosa
 
-"""Imports for the android-strings-converter package."""
+"""Imports for the mobile-strings-converter package."""
 from .converter import (
+    to_android,
     to_csv,
     to_google_sheets,
     to_html,
     to_ios,
     to_json,
     to_md,
+    to_ods,
     to_pdf,
-    to_xlsx_ods,
+    to_xlsx,
     to_yaml,
 )
 
 # Constants
-__version__ = "0.1.31"
+__version__ = "0.1.0"
 
 __author__ = "José Carlos López Henestrosa"
 __license = "MIT"

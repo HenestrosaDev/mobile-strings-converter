@@ -35,7 +35,7 @@ System information
 - **System**: (For example, "Ubuntu 20.04 LTS x64", "Windows 11 x64", or "macOS Monterey")
 - **Python version**: (You can check this by running `python -V`.)
 - **Pip version**: (You can check this by running `pip -V`.)
-- **android-strings-converter package version**: (You can check this by running `pip show android-strings-converter`.)
+- **mobile-strings-converter package version**: (You can check this by running `pip show mobile-strings-converter`.)
 
 
 Code To Duplicate

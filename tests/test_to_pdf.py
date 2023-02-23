@@ -1,31 +1,44 @@
 from pathlib import Path
 from unittest import main
 
-from android_strings_converter import to_pdf
-from base_converter_test import BaseConverterTest
+from base_tests import BaseTests
+from mobile_strings_converter import to_pdf
 
 
-class TestToPdf(BaseConverterTest):
+class TestToPdf(BaseTests.BaseConverterTest):
     def setUp(self):
         super().setUp()
-        self.template_filepath = Path(__file__).parent / "files/strings.pdf"
-        self.output_filepath = Path("strings.pdf")
+        self.file_name = "strings.pdf"
+        self.converter_func = to_pdf
+
+    def tearDown(self):
+        super().tearDown()
+        strings_errors_path = self.output_filepath.parent / "strings-errors.txt"
+        if strings_errors_path.exists():
+            strings_errors_path.unlink()
 
     # Overriding abstract method
-    def test_converter_creates_file(self):
-        super().converter_creates_file_helper(to_pdf)
-
-    # Overriding abstract method
-    def test_converter_writes_correct_data(self):
-        to_pdf(self.input_filepath, self.output_filepath)
+    def _converter_writes_correct_data(
+        self,
+        template_filepath: Path,
+        input_filepath: Path,
+        should_print_comments: bool,
+    ):
+        self.converter_func(input_filepath, self.output_filepath, should_print_comments)
 
         with open(self.output_filepath, "rb") as test_file, open(
-            self.template_filepath, "rb"
+            template_filepath, "rb"
         ) as template_file:
             test_size = len(test_file.read())
             template_size = len(template_file.read())
 
-            # Error margin: 1% of the total size in bytes of both files
+            # Error margin: 10% of the total size in bytes of both files. PDF is a
+            # very complex file format and, even if we write the exact same content
+            # in two files, there will be lots of differences between both. Through
+            # tests, I've come to realize that there is a 10% difference between two
+            # files with the same content, so I'll leave it at that. However,
+            # if you manage to find a package that compares the content of two PDFs,
+            # please do let me know.
             size_delta = max(test_size, template_size) * 0.1
 
             self.assertAlmostEqual(
