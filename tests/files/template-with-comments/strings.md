@@ -1,7 +1,11 @@
 | NAME | VALUE |
 | ----------- | ----------- |
 | message_arabic | مرحبا بكم في طلبي |
+| comment_1 | comment 1 |
+| comment_2 | comment 2 |
+| comment_3 | comment 3 |
 | message_armenian | վայելեք իմ հավելվածը |
+| comment_4 | comment 4 |
 | message_azerbaijani | tətbiqimdən həzz alın |
 | message_bambara | aw ka n ka app diyabɔ |
 | message_bengali | আমার অ্যাপ উপভোগ করুন |
