@@ -31,12 +31,12 @@
         <a href="https://codecov.io/gh/HenestrosaConH/mobile-strings-converter/">
           <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/mobile-strings-converter/branch/main/graph/badge.svg" />
         </a>
+        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/LICENSE">
+          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/mobile-strings-converter" />
+        </a>
         <br />
         <a href="https://github.com/HenestrosaConH/mobile-strings-converter/graphs/contributors">
           <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/mobile-strings-converter" />
-        </a>
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/LICENSE">
-          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/mobile-strings-converter" />
         </a>
         <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues">
           <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/mobile-strings-converter" />
