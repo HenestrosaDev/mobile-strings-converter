@@ -5,7 +5,6 @@ import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import List
 
 import gspread
 import openpyxl
@@ -17,13 +16,29 @@ from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
 
 
-def get_strings(filepath: Path, pattern: str):
+def get_strings(input_filepath: Path, should_print_comments: bool):
+    if input_filepath.suffix == ".strings":
+        if should_print_comments:
+            pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
+        else:
+            pattern = r'^(?!\s*//)\s*"(.+?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
+    elif input_filepath.suffix == ".xml":
+        if should_print_comments:
+            pattern = r'<string name="(.*?)">(.*?)</string>'
+        else:
+            pattern = r'^(?!\s*<!--)\s*<string name="(.*?)">(.*?)</string>(?!\s*-->)'
+    else:
+        raise ValueError(
+            "The extension of the provided file must be .strings for iOS or .xml "
+            "Android"
+        )
+
     # Open the Localizable.strings file
-    with open(filepath, "r", encoding="utf-8") as file:
+    with open(input_filepath, "r", encoding="utf-8") as file:
         strings_data = file.read()
 
     # Extract the strings using a regular expression
-    strings = re.findall(pattern, strings_data)
+    strings = re.findall(pattern, strings_data, re.MULTILINE)
 
     if len(strings) >= 1:
         return strings
@@ -33,7 +48,14 @@ def get_strings(filepath: Path, pattern: str):
         )
 
 
-def to_google_sheets(strings: List[str], sheet_name: str, credentials_filepath: Path):
+def to_google_sheets(
+    input_filepath: Path,
+    sheet_name: str,
+    credentials_filepath: Path,
+    should_print_comments: bool,
+):
+    strings = get_strings(input_filepath, should_print_comments)
+
     # Authenticate with Google Sheets API
     scope = [
         "https://spreadsheets.google.com/feeds",
@@ -53,8 +75,10 @@ def to_google_sheets(strings: List[str], sheet_name: str, credentials_filepath: 
         sheet.append_row(string)
 
 
-def to_csv(strings: List[str], csv_filepath: Path):
-    with open(csv_filepath, "w", encoding="utf-8", newline="") as file:
+def to_csv(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
+    with open(output_filepath, "w", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
 
         # Write the header row
@@ -66,7 +90,11 @@ def to_csv(strings: List[str], csv_filepath: Path):
             writer.writerow([name, value])
 
 
-def to_xlsx_ods(strings: List[str], xlsx_filepath: Path):
+def _write_to_sheet(
+    input_filepath: Path, output_filepath: Path, should_print_comments: bool
+):
+    strings = get_strings(input_filepath, should_print_comments)
+
     # Create a new workbook
     workbook = openpyxl.Workbook()
 
@@ -83,32 +111,46 @@ def to_xlsx_ods(strings: List[str], xlsx_filepath: Path):
         sheet.cell(row=i, column=2, value=value)
 
     # Save the file
-    workbook.save(xlsx_filepath)
+    workbook.save(output_filepath)
 
 
-def to_json(strings: List[str], json_filepath: Path):
+def to_xlsx(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    _write_to_sheet(input_filepath, output_filepath, should_print_comments)
+
+
+def to_ods(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    _write_to_sheet(input_filepath, output_filepath, should_print_comments)
+
+
+def to_json(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
     # Create a list of dictionaries to store the data
     data_list = []
     for name, value in strings:
         data_list.append({"name": name, "value": value})
 
     # Write the data to the JSON file
-    with open(json_filepath, "w", encoding="utf-8") as file:
+    with open(output_filepath, "w", encoding="utf-8") as file:
         json.dump(data_list, file, ensure_ascii=False, indent=2)
 
 
-def to_yaml(strings: List[str], yaml_filepath: Path):
+def to_yaml(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
     # Convert the data to a dictionary
     strings_dict = {name: value for name, value in strings}
 
     # Write the data to the YAML file
-    with open(yaml_filepath, "w", encoding="utf-8") as file:
+    with open(output_filepath, "w", encoding="utf-8") as file:
         yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
 
 
-def to_html(strings: List[str], html_filepath: Path):
+def to_html(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
     # Create an HTML file
-    with open(html_filepath, "w", encoding="utf-8") as file:
+    with open(output_filepath, "w", encoding="utf-8") as file:
         file.write("<head>\n")
         file.write('\t<meta charset="UTF-8">\n')
         file.write("</head>\n")
@@ -132,14 +174,20 @@ def to_html(strings: List[str], html_filepath: Path):
         file.write("</table>\n")
 
 
-def to_ios(strings: List[str], localizable_filepath: Path):
-    with open(localizable_filepath, "w", encoding="utf-8") as file:
+def to_ios(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
+    with open(output_filepath, "w", encoding="utf-8") as file:
         for string in strings:
             file.write(f'"{string[0]}" = "{string[1]}";\n')
 
 
-def to_android(strings: List[str], xml_filepath: Path):
-    with open(xml_filepath, "w", encoding="utf-8") as file:
+def to_android(
+    input_filepath: Path, output_filepath: Path, should_print_comments: bool
+):
+    strings = get_strings(input_filepath, should_print_comments)
+
+    with open(output_filepath, "w", encoding="utf-8") as file:
         file.write("<resources>\n")
         for string in strings:
             file.write(f'\t<string name="{string[0]}">{string[1]}</string>\n')
@@ -147,7 +195,9 @@ def to_android(strings: List[str], xml_filepath: Path):
         file.write("</resources>")
 
 
-def to_pdf(strings: List[str], pdf_filepath: Path):
+def to_pdf(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
     # Ignore the following warning when adding a font already added:
     # UserWarning: Core font or font already added 'dejavusanscondensed': doing nothing
     warnings.filterwarnings("ignore", category=UserWarning)
@@ -247,7 +297,7 @@ def to_pdf(strings: List[str], pdf_filepath: Path):
                 pdf.set_xy(x + (c_width * (j + 1)), y)
             except (Exception,):
                 with open(
-                    pdf_filepath.parent / f"{pdf_filepath.stem}-errors.txt",
+                    output_filepath.parent / f"{output_filepath.stem}-errors.txt",
                     "a",
                     encoding="utf-8",
                 ) as f:
@@ -276,11 +326,13 @@ def to_pdf(strings: List[str], pdf_filepath: Path):
     with open(os.devnull, "w") as devnull:
         with redirect_stdout(devnull), redirect_stderr(devnull):
             # Save the PDF file
-            pdf.output(str(pdf_filepath))
+            pdf.output(str(output_filepath))
 
 
-def to_md(strings: List[str], md_filepath: Path):
-    with open(md_filepath, "w", encoding="utf-8") as f:
+def to_md(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
+    strings = get_strings(input_filepath, should_print_comments)
+
+    with open(output_filepath, "w", encoding="utf-8") as f:
         # Write each string to the Markdown file in a table format
         f.write("| NAME | VALUE |\n")
         f.write("| ----------- | ----------- |\n")

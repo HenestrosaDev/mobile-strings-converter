@@ -6,7 +6,9 @@ from console_style import ConsoleStyle
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Takes input and output files from console."
+    )
     parser.add_argument(
         "input_filepath",
         type=str,
@@ -17,12 +19,11 @@ def main():
         "--output-filepath",
         required=False,
         type=str,
-        help="Output filepath with the strings properly arranged. It can be a JSON, "
-        "CSV, YAML, HTML, XLS, XLSX, Google Sheet, MD, PDF, iOS strings file or ODS "
-        "file.",
+        help="Output filepath where you want to store the converted file. It can be a "
+        "CSV, HTML, iOS strings file, MD, JSON, ODS, PDF, XLSX, XML or YAML file.",
     )
     parser.add_argument(
-        "-gs",
+        "-g",
         "--google-sheets",
         required=False,
         type=str,
@@ -37,19 +38,19 @@ def main():
         "spreadsheet in your Google account. You can learn how to generate "
         "it in the README.",
     )
+    parser.add_argument(
+        "-p",
+        "--print-comments",
+        required=False,
+        action="store_true",
+        help="If called, indicates that commented strings will be printed in the "
+        "output file.",
+    )
     args = parser.parse_args()
 
-    input_path = Path(args.input_filepath)
+    input_filepath = Path(args.input_filepath)
 
-    if input_path.suffix == ".strings":
-        strings = conv.get_strings(
-            input_path, pattern=r'^(?!//)"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"'
-        )
-    elif input_path.suffix == ".xml":
-        strings = conv.get_strings(
-            input_path, pattern=r'<string name="(.*?)">(.*?)</string>'
-        )
-    else:
+    if input_filepath.suffix not in [".strings", ".xml"]:
         print(
             f"{ConsoleStyle.RED}Invalid input file. Its extension must be .strings "
             f"for iOS strings or .xml for Android strings.{ConsoleStyle.RED}"
@@ -70,32 +71,32 @@ def main():
         return
     elif args.google_sheets and args.credentials:
         conv.to_google_sheets(
-            strings,
+            input_filepath,
             sheet_name=args.google_sheets,
             credentials_filepath=Path(args.credentials),
+            should_print_comments=args.print_comments,
         )
 
     if args.output_filepath:
+        conversion_functions = {
+            ".csv": conv.to_csv,
+            ".xlsx": conv.to_xlsx,
+            ".ods": conv.to_ods,
+            ".md": conv.to_md,
+            ".json": conv.to_json,
+            ".yaml": conv.to_yaml,
+            ".html": conv.to_html,
+            ".strings": conv.to_ios,
+            ".xml": conv.to_android,
+            ".pdf": conv.to_pdf,
+        }
+
         output_path = Path(args.output_filepath)
 
-        if output_path.suffix == ".csv":
-            conv.to_csv(strings, output_path)
-        elif output_path.suffix == ".xlsx" or output_path.suffix == ".ods":
-            conv.to_xlsx_ods(strings, output_path)
-        elif output_path.suffix == ".json":
-            conv.to_json(strings, output_path)
-        elif output_path.suffix == ".yaml":
-            conv.to_yaml(strings, output_path)
-        elif output_path.suffix == ".html":
-            conv.to_html(strings, output_path)
-        elif output_path.suffix == ".strings":
-            conv.to_ios(strings, output_path)
-        elif output_path.suffix == ".xml":
-            conv.to_android(strings, output_path)
-        elif output_path.suffix == ".pdf":
-            conv.to_pdf(strings, output_path)
-        elif output_path.suffix == ".md":
-            conv.to_md(strings, output_path)
+        if output_path.suffix in conversion_functions:
+            conversion_functions[output_path.suffix](
+                input_filepath, output_path, args.print_comments
+            )
         else:
             print(
                 f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "

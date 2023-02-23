@@ -5,14 +5,16 @@
 
 """Imports for the mobile-strings-converter package."""
 from .converter import (
+    to_android,
     to_csv,
     to_google_sheets,
     to_html,
     to_ios,
     to_json,
     to_md,
+    to_ods,
     to_pdf,
-    to_xlsx_ods,
+    to_xlsx,
     to_yaml,
 )
 
