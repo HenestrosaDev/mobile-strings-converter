@@ -28,8 +28,8 @@
         <a href="https://github.com/HenestrosaConH/mobile-strings-converter/actions/workflows/build.yaml">
           <img alt="GitHub action: Build" src="https://github.com/HenestrosaConH/mobile-strings-converter/actions/workflows/build.yaml/badge.svg" />
         </a>
-        <a href="https://codecov.io/gh/HenestrosaConH/android-strings-converter/">
-          <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/android-strings-converter/branch/main/graph/badge.svg" />
+        <a href="https://codecov.io/gh/HenestrosaConH/mobile-strings-converter/">
+          <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/mobile-strings-converter/branch/main/graph/badge.svg" />
         </a>
         <br />
         <a href="https://github.com/HenestrosaConH/mobile-strings-converter/graphs/contributors">
