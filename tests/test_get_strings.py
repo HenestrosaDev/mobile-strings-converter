@@ -6,7 +6,7 @@ from base_tests import BaseTests
 class TestGetStringsIos(BaseTests.BaseGetStringsTest):
     def setUp(self):
         self.data = """
-        //      "chinese" = "   欢迎来到我的申请 "   ;
+        //      "chinese" = "  欢迎来到我的申请  "   ;
             //"escaped_quote"="MyA\\\"pp";
         "hindi" = "मेरे ऐप का आनंद लें";
         "korean" = "내 앱을 즐기세요";
