@@ -55,33 +55,38 @@
 ## Table of Contents
 
 - [About the Project](#about-the-project)
-    - [Project Structure](#project-structure)
-    - [Built With](#built-with)
+  - [Project Structure](#project-structure)
+  - [Built With](#built-with)
+- [Release Files](#release-files)
 - [Usage](#usage)
-    - [To Execute the Script](#to-execute-the-script)
-    - [To Import the Package Into Your Project](#to-import-the-package-into-your-project)
-    - [To Open the Code](#to-open-the-code)
+  - [To Execute the Script](#to-execute-the-script)
+  - [To Import the Package Into Your Project](#to-import-the-package-into-your-project)
+  - [To Open the Code](#to-open-the-code)
+- [Notes](#notes)
+  - [List of Indic Languages Supported by PDF files](#list-of-indic-languages-supported-by-pdf-files)
+  - [List of Languages Not Supported by PDF files](#list-of-languages-not-supported-by-pdf-files)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
 - [Acknowledgments](#acknowledgments)
+- [Support](#support)
 
 <!-- ABOUT THE PROJECT -->
 
 ## About the Project
 
-I tried to do the whole process of converting a `strings.xml` file into a spreadsheet in Google Sheets by hand and, even though you can do it with the option **Data > Split text to columns**, 
-it involves wasting your time generating the spreadsheet manually instead of the more time-efficient solution of running a Python script to achieve that with any file type.
+I tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand and, even though you can do it with the option **Data > Split text to columns**, 
+it involves wasting your time generating the spreadsheet manually. Due to that, I decided to build a time-efficient solution, which consists on running a Python script in order to achieve that with any file type.
 
 Moreover, not only this script can be executed on its own, it also can be installed as a package via **PyPI** (more information [here](#to-import-the-package-into-your-project) about how to install it).
 
 The file types supported by the package are the following:
-- Android strings format (`strings.xml`)
+- Android strings format (`*.xml`)
 - CSV
 - Google Sheets support
 - HTML
-- iOS strings format (`Localizable.strings`)
+- iOS strings format (`*.strings`)
 - JSON
 - MD
 - ODS
@@ -126,6 +131,20 @@ The file types supported by the package are the following:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+<!-- RELEASE FILES -->
+
+## Release Files
+
+| File                                                                                                                                                         | Description                                                                                                 | Size       |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------|:-----------|
+| [mobile-strings-converter.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter.zip)             | Standard language support for PDF files (over 100 languages, including RTL)                                 | 0.32 MB    |
+| [mobile-strings-converter-indic.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-indic.zip) | PDF file support for Indic languages ([see list](#list-of-indic-languages-supported-by-pdf-files))          | 1.40 MB    |
+| [mobile-strings-converter-zh-ja.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-zh-ja.zip) | PDF file support for Japanese and Chinese (simplified and traditional)                                      | 7.17 MB MB |
+| [mobile-strings-converter-ko.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-ko.zip)       | PDF file support for Korean                                                                                 | 0.46 MB    |
+| [mobile-strings-converter-th.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-th.zip)       | PDF file support for Thai                                                                                   | 0.37 MB    |
+| [mobile-strings-converter-all.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-all.zip)     | PDF file support for almost all languages ([see exceptions](#list-of-languages-not-supported-by-pdf-files)) | 8.43 MB    |
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- USAGE -->
 
@@ -133,15 +152,12 @@ The file types supported by the package are the following:
 
 ### To Execute The Script
 
-1. Go to [releases](https://github.com/HenestrosaConH/mobile-strings-converter/releases). 
-2. Download the latest one.
-3. Open the command line and execute `pip install -r path/to/requirements.txt` to install the required packages to execute the program.
-4. Run the following command: 
+1. Download the [release](#release-files) that is best suited to your needs.
+2. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to execute the script.
+3. Example of a basic command to convert a `.xml` or `.strings` file to another file type: 
     ```
-    path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Localizable.strings> -o path/to/strings.<SUPPORTED FILE TYPE EXTENSION>
+    path/to/python path/to/mobile_strings_converter.py path/to/<*.xml | *.strings> -o path/to/*.<SUPPORTED FILE TYPE EXTENSION>
     ```
-    This will generate a file named `strings` in the desired path.  
-    <br>
 
 #### To generate a Spreadsheet in Google Sheets
 
@@ -172,8 +188,8 @@ path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Locali
 
 - `-h`, `--help`: Show help
 - `-o`, `--output-filepath`: Output filepath where you want to store the converted file. Its extension can be any of the file types listed [here](#about-the-project).
-- `-g`, `--google-sheets`: <spreadsheet name>: Creates a spreadsheet in Google Sheets with the name passed as argument.
-- `-c`, `--credentials`: `service_account.json` filepath. Mandatory if you want to generate a spreadsheet in your Google account.
+- `-g`, `--google-sheets` <spreadsheet name>: Creates a spreadsheet in Google Sheets with the name passed as argument.
+- `-c`, `--credentials` <`service_account.json` filepath>: Mandatory if you want to generate a spreadsheet in your Google account.
 - `-p`, `--print-comments`: If present, indicates that commented strings will be printed in the output file.
 
 ### To Import the Package Into Your Project
@@ -193,7 +209,18 @@ path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Locali
 
 ## Notes
 
-The following languages are not supported by the PDF format (as of today):
+### List of Indic Languages Supported by PDF files
+
+- Hindi
+- Marathu
+- Oriya
+- Tibetan
+- Gujarati
+- Telugu
+- Tamil
+- Punjabi
+
+### List of Languages Not Supported by PDF files
 
 - **Bengali** (not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))
 - **Dhivehi** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
@@ -213,6 +240,8 @@ The following languages are not supported by the PDF format (as of today):
 
 ## Roadmap
 
+- [ ] Add support for multiple `.xml`/`.strings` files input.
+- [ ] Add support for converting a file (not `.xml` nor `.strings`) to a strings resource file.
 - [ ] Make a web version.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/mobile-strings-converter/new/choose).
@@ -256,5 +285,13 @@ I have made use of the following resources to make this project:
 - [Img Shields](https://shields.io)
 - [How to create a Python package](https://mathspp.com/blog/how-to-create-a-python-package-in-2022#how-to-create-a-python-package)
 - [Icon created by Midjourney](https://www.midjourney.com/app/)
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+<!-- SUPPORT -->
+
+## Support
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U5J6COZ)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
