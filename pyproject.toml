@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mobile-strings-converter"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python package that converts Android & iOS strings files to any supported file type."
 authors = ["José Carlos López <henestrosaconh@gmail.com>"]
 license = "MIT"
