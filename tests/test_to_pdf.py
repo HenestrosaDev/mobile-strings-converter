@@ -2,14 +2,13 @@ from pathlib import Path
 from unittest import main
 
 from base_tests import BaseTests
-from mobile_strings_converter import to_pdf
+from mobile_strings_converter.converter import convert_strings
 
 
 class TestToPdf(BaseTests.BaseConverterTest):
     def setUp(self):
         super().setUp()
         self.file_name = "strings.pdf"
-        self.converter_func = to_pdf
 
     def tearDown(self):
         super().tearDown()
@@ -24,7 +23,7 @@ class TestToPdf(BaseTests.BaseConverterTest):
         input_filepath: Path,
         should_print_comments: bool,
     ):
-        self.converter_func(input_filepath, self.output_filepath, should_print_comments)
+        convert_strings(input_filepath, self.output_filepath, should_print_comments)
 
         with open(self.output_filepath, "rb") as test_file, open(
             template_filepath, "rb"

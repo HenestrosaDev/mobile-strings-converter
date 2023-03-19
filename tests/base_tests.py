@@ -1,15 +1,15 @@
 import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable
 
 import pandas as pd
-from mobile_strings_converter.converter import get_strings
+from mobile_strings_converter.converter import convert_strings, get_strings
 
 
 class BaseTests(object):
     class BaseConverterTest(unittest.TestCase):
         # Hook methods
+
         def setUp(self):
             self.files_path = "files"
             self._file_name: str | None = None
@@ -20,8 +20,6 @@ class BaseTests(object):
             self.input_filepath_ios = (
                 Path(__file__).parent / self.files_path / "input/Localizable.strings"
             )
-
-            self.converter_func: Callable[[Path, Path, bool], None] | None = None
 
         def tearDown(self):
             if self.output_filepath.exists():
@@ -113,9 +111,7 @@ class BaseTests(object):
             input_filepath: Path,
             should_print_comments: bool,
         ):
-            self.converter_func(
-                input_filepath, self.output_filepath, should_print_comments
-            )
+            convert_strings(input_filepath, self.output_filepath, should_print_comments)
             self.assertTrue(self.output_filepath.exists())
 
         def _converter_writes_correct_data(
@@ -124,9 +120,7 @@ class BaseTests(object):
             input_filepath: Path,
             should_print_comments: bool,
         ):
-            self.converter_func(
-                input_filepath, self.output_filepath, should_print_comments
-            )
+            convert_strings(input_filepath, self.output_filepath, should_print_comments)
 
             with open(self.output_filepath, "rb") as test_file, open(
                 template_filepath, "rb"
@@ -248,7 +242,7 @@ class BaseTests(object):
             # Clean up the temporary file
             filepath.unlink()
 
-    class BaseTestToXlsxOds(BaseConverterTest):
+    class BaseTestToSheet(BaseConverterTest):
         # Overrides
         def _converter_writes_correct_data(
             self,
@@ -256,9 +250,7 @@ class BaseTests(object):
             input_filepath: Path,
             should_print_comments: bool,
         ):
-            self.converter_func(
-                input_filepath, self.output_filepath, should_print_comments
-            )
+            convert_strings(input_filepath, self.output_filepath, should_print_comments)
 
             # Load the two Excel files into pandas dataframes
             df1 = pd.read_excel(template_filepath)
