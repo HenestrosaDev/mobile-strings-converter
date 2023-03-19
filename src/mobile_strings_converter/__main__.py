@@ -1,8 +1,8 @@
 import argparse
 from pathlib import Path
 
-import converter as conv
 from console_style import ConsoleStyle
+from converter import convert_strings, to_google_sheets
 
 
 def main():
@@ -70,46 +70,14 @@ def main():
         )
         return
     elif args.google_sheets and args.credentials:
-        conv.to_google_sheets(
+        to_google_sheets(
             input_filepath,
             sheet_name=args.google_sheets,
             credentials_filepath=Path(args.credentials),
             should_print_comments=args.print_comments,
         )
 
-    if args.output_filepath:
-        conversion_functions = {
-            ".csv": conv.to_csv,
-            ".xlsx": conv.to_xlsx,
-            ".ods": conv.to_ods,
-            ".md": conv.to_md,
-            ".json": conv.to_json,
-            ".yaml": conv.to_yaml,
-            ".html": conv.to_html,
-            ".strings": conv.to_ios,
-            ".xml": conv.to_android,
-            ".pdf": conv.to_pdf,
-        }
-
-        output_path = Path(args.output_filepath)
-
-        if output_path.suffix in conversion_functions:
-            conversion_functions[output_path.suffix](
-                input_filepath, output_path, args.print_comments
-            )
-        else:
-            print(
-                f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
-                f"an issue here (https://github.com/HenestrosaConH/mobile-strings"
-                f"-converter/issues) if you want the file type to be supported by the "
-                f"package.{ConsoleStyle.END}"
-            )
-            return
-
-        print(
-            f"{ConsoleStyle.GREEN}Data successfully written to {output_path}"
-            f"{ConsoleStyle.END}"
-        )
+    convert_strings(input_filepath, Path(args.output_path), args.print_comments)
 
 
 if __name__ == "__main__":

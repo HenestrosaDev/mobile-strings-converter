@@ -4,19 +4,7 @@
 # @author: José Carlos López Henestrosa
 
 """Imports for the mobile-strings-converter package."""
-from .converter import (
-    to_android,
-    to_csv,
-    to_google_sheets,
-    to_html,
-    to_ios,
-    to_json,
-    to_md,
-    to_ods,
-    to_pdf,
-    to_xlsx,
-    to_yaml,
-)
+from .converter import convert_strings, to_google_sheets
 
 # Constants
 __version__ = "0.1.0"

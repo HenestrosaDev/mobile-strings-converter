@@ -5,6 +5,7 @@ import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from typing import List
 
 import gspread
 import openpyxl
@@ -15,8 +16,80 @@ from fpdf import FPDF
 from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
 
+from .console_style import ConsoleStyle
+
+
+def convert_strings(
+    input_filepath: Path, output_filepath: Path, should_print_comments: bool
+):
+    """
+    Extracts strings from the input file in either .xml or .strings format and converts
+    them to the desired output file format. The output file format can be any of the
+    following:
+
+    - Android strings format (*.xml)
+    - CSV
+    - HTML
+    - iOS strings format (*.strings)
+    - JSON
+    - MD
+    - ODS
+    - PDF
+    - XLSX
+    - YAML
+
+    :param input_filepath: .strings or .xml file to extract the strings
+    :type input_filepath: Path
+    :param output_filepath: Name of the sheet to be generated
+    :type output_filepath: Path
+    :param should_print_comments: True if the user wants to print comments from
+        .strings/.xml to the output file
+    :type should_print_comments: bool
+    """
+
+    strings = get_strings(input_filepath, should_print_comments)
+
+    if output_filepath:
+        conversion_functions = {
+            ".csv": to_csv,
+            ".xlsx": to_sheet,
+            ".ods": to_sheet,
+            ".md": to_md,
+            ".json": to_json,
+            ".yaml": to_yaml,
+            ".html": to_html,
+            ".strings": to_ios,
+            ".xml": to_android,
+            ".pdf": to_pdf,
+        }
+
+        if output_filepath.suffix in conversion_functions:
+            conversion_functions[output_filepath.suffix](strings, output_filepath)
+
+            print(
+                f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
+                f"{ConsoleStyle.END}"
+            )
+        else:
+            raise ValueError(
+                f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
+                f"an issue here (https://github.com/HenestrosaConH/mobile-strings"
+                f"-converter/issues) if you want the file type to be supported by the "
+                f"package.{ConsoleStyle.END}"
+            )
+
 
 def get_strings(input_filepath: Path, should_print_comments: bool):
+    """
+    Creates a Google spreadsheet with the extracted strings from the input filepath
+
+    :param input_filepath: .strings or .xml file to extract the strings
+    :type input_filepath: Path
+    :param should_print_comments: True if the user wants to print comments from
+        .strings/.xml to the file
+    :type should_print_comments: bool
+    """
+
     if input_filepath.suffix == ".strings":
         if should_print_comments:
             pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
@@ -54,6 +127,21 @@ def to_google_sheets(
     credentials_filepath: Path,
     should_print_comments: bool,
 ):
+    """
+    Creates a Google spreadsheet with the extracted strings from the input filepath
+
+    :param input_filepath: .strings or .xml file to extract the strings
+    :type input_filepath: Path
+    :param sheet_name: Name of the sheet to be generated
+    :type sheet_name: str
+    :param credentials_filepath: Path to the service_account.json in order to be able
+        to create the sheet in the user's Google account
+    :type credentials_filepath: Path
+    :param should_print_comments: True if the user wants to print comments from
+        .strings/.xml to the sheet
+    :type should_print_comments: bool
+    """
+
     strings = get_strings(input_filepath, should_print_comments)
 
     # Authenticate with Google Sheets API
@@ -75,8 +163,15 @@ def to_google_sheets(
         sheet.append_row(string)
 
 
-def to_csv(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_csv(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .csv file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     with open(output_filepath, "w", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
@@ -90,10 +185,15 @@ def to_csv(input_filepath: Path, output_filepath: Path, should_print_comments: b
             writer.writerow([name, value])
 
 
-def _write_to_sheet(
-    input_filepath: Path, output_filepath: Path, should_print_comments: bool
-):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_sheet(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .xlsx / .ods file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     # Create a new workbook
     workbook = openpyxl.Workbook()
@@ -114,16 +214,15 @@ def _write_to_sheet(
     workbook.save(output_filepath)
 
 
-def to_xlsx(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    _write_to_sheet(input_filepath, output_filepath, should_print_comments)
+def to_json(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .json file
 
-
-def to_ods(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    _write_to_sheet(input_filepath, output_filepath, should_print_comments)
-
-
-def to_json(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     # Create a list of dictionaries to store the data
     data_list = []
@@ -135,8 +234,15 @@ def to_json(input_filepath: Path, output_filepath: Path, should_print_comments: 
         json.dump(data_list, file, ensure_ascii=False, indent=2)
 
 
-def to_yaml(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_yaml(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .yaml file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     # Convert the data to a dictionary
     strings_dict = {name: value for name, value in strings}
@@ -146,8 +252,15 @@ def to_yaml(input_filepath: Path, output_filepath: Path, should_print_comments: 
         yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
 
 
-def to_html(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_html(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .html file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     # Create an HTML file
     with open(output_filepath, "w", encoding="utf-8") as file:
@@ -174,18 +287,30 @@ def to_html(input_filepath: Path, output_filepath: Path, should_print_comments: 
         file.write("</table>\n")
 
 
-def to_ios(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_ios(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .strings file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     with open(output_filepath, "w", encoding="utf-8") as file:
         for string in strings:
             file.write(f'"{string[0]}" = "{string[1]}";\n')
 
 
-def to_android(
-    input_filepath: Path, output_filepath: Path, should_print_comments: bool
-):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_android(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .xml file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     with open(output_filepath, "w", encoding="utf-8") as file:
         file.write("<resources>\n")
@@ -195,8 +320,15 @@ def to_android(
         file.write("</resources>")
 
 
-def to_pdf(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_pdf(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .pdf file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     # Ignore the following warning when adding a font already added:
     # UserWarning: Core font or font already added 'dejavusanscondensed': doing nothing
@@ -329,8 +461,15 @@ def to_pdf(input_filepath: Path, output_filepath: Path, should_print_comments: b
             pdf.output(str(output_filepath))
 
 
-def to_md(input_filepath: Path, output_filepath: Path, should_print_comments: bool):
-    strings = get_strings(input_filepath, should_print_comments)
+def to_md(strings: List[str], output_filepath: Path):
+    """
+    Formats strings to a .md file
+
+    :param strings: Strings extracted from a .strings or .xml file
+    :type strings: List[str]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
 
     with open(output_filepath, "w", encoding="utf-8") as f:
         # Write each string to the Markdown file in a table format
