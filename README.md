@@ -159,7 +159,7 @@ The file types supported by the package are the following:
     path/to/python path/to/mobile_strings_converter.py path/to/<*.xml | *.strings> -o path/to/*.<SUPPORTED FILE TYPE EXTENSION>
     ```
 
-#### To generate a Spreadsheet in Google Sheets
+#### To Generate a Spreadsheet in Google Sheets
 
 Before going further into running the commands to do so, please note that you will have to generate a `service_account.json` file. You can do the following to get one:
 
@@ -195,8 +195,7 @@ path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Locali
 ### To Import the Package Into Your Project
 
 1. Run `pip install mobile-strings-converter`
-2. Import the package with this line of code: `from mobile_strings_converter import <FUNCTION>`
-   - For example, if you were to import the `to_csv` function: `from mobile_strings_converter import to_csv`
+2. Import the package and the wrapper function with this line of code: `from mobile_strings_converter import convert_strings`.
 
 ### To Open the Code
 
