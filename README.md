@@ -13,7 +13,7 @@
 <br />
 <div align="center">
     <img src="docs/icon.png" alt="Logo" width="156" height="156" style="margin-bottom:-40px">
-    <h2 align="center">Mobile strings converter</h2>
+    <h1 align="center">Mobile Strings Converter</h1>
     <p align="center">
         A Python package that converts Android & iOS strings files to any supported file type.
         <br />
