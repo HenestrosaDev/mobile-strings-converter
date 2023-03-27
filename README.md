@@ -58,10 +58,15 @@
   - [Project Structure](#project-structure)
   - [Built With](#built-with)
 - [Release Files](#release-files)
-- [Usage](#usage)
-  - [To Execute the Script](#to-execute-the-script)
+- [Getting Started](#getting-started)
+  - [To Download the Program](#to-download-the-program) 
   - [To Import the Package Into Your Project](#to-import-the-package-into-your-project)
   - [To Open the Code](#to-open-the-code)
+- [Usage](#usage)
+  - [To Run the Program](#to-run-the-program)
+  - [To Use the Package in Your Project](#to-use-the-package-in-your-project)
+  - [To Generate a Spreadsheet in Google Sheets](#to-generate-a-spreadsheet-in-google-sheets)
+  - [Script Flags](#script-flags)
 - [Notes](#notes)
   - [List of Indic Languages Supported by PDF files](#list-of-indic-languages-supported-by-pdf-files)
   - [List of Languages Not Supported by PDF files](#list-of-languages-not-supported-by-pdf-files)
@@ -146,20 +151,54 @@ The file types supported by the package are the following:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+<!-- GETTING STARTED -->
+
+## Getting Started
+
+### To Download the Program
+
+1. Download the [release](#release-files) that is best suited to your needs.
+2. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to execute the script.
+
+### To Import the Package Into Your Project
+
+1. Run `pip install mobile-strings-converter`
+2. Import the package and the wrapper function with this line of code: `from mobile_strings_converter import convert_strings`.
+
+### To Open the Code
+
+1. Clone the project with the `git clone https://github.com/HenestrosaConH/mobile-strings-converter.git` command.
+2. Open it in your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/))
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
 <!-- USAGE -->
 
 ## Usage
 
-### To Execute The Script
+### To Run the Program
 
-1. Download the [release](#release-files) that is best suited to your needs.
-2. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to execute the script.
-3. Example of a basic command to convert a `.xml` or `.strings` file to another file type: 
-    ```
-    path/to/python path/to/mobile_strings_converter.py path/to/<*.xml | *.strings> -o path/to/*.<SUPPORTED FILE TYPE EXTENSION>
-    ```
+Run the program
+ 
+```
+python path/to/mobile_strings_converter.py <*.xml | *.strings> -o <*.SUPPORTED FILE TYPE EXTENSION>
+```
 
-#### To Generate a Spreadsheet in Google Sheets
+### To Use the Package in Your Project
+
+Once you have followed the steps indicated in the [Getting Started](#getting-started) section, you just have to use the `convert_strings` function. Here is an example:
+
+```python
+convert_strings(
+    input_filepath=Path("strings.xml"), 
+    output_filepath=Path("strings-en.xlsx"), 
+    should_print_comments=True
+)
+```
+
+### To Generate a Spreadsheet in Google Sheets
+
+#### Running the program
 
 Before going further into running the commands to do so, please note that you will have to generate a `service_account.json` file. You can do the following to get one:
 
@@ -176,31 +215,36 @@ Alternatively, you can create an XLSX file and open it in Google Sheets if you d
 
 Once you have generated the `service_account.json` file, you can generate a spreadsheet in Google Sheets by running the following command:
 ```
-path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Localizable.strings> -gs <SHEET NAME> -c path/to/service_account.json 
+python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET NAME> -c path/to/service_account.json 
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
 ```
-path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Localizable.strings> -gs <SHEET NAME> -c path/to/service_account.json -o path/to/strings.<SUPPORTED FILE TYPE EXTENSION>
+python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET NAME> -c path/to/service_account.json -o <*.SUPPORTED FILE TYPE EXTENSION>
 ```
 
-#### Script flags
+#### Using the Package in Your Project
 
-- `-h`, `--help`: Show help
-- `-o`, `--output-filepath`: Output filepath where you want to store the converted file. Its extension can be any of the file types listed [here](#about-the-project).
-- `-g`, `--google-sheets` <spreadsheet name>: Creates a spreadsheet in Google Sheets with the name passed as argument.
-- `-c`, `--credentials` <`service_account.json` filepath>: Mandatory if you want to generate a spreadsheet in your Google account.
-- `-p`, `--print-comments`: If present, indicates that commented strings will be printed in the output file.
+If you are using the package in your project, here is an example of how to use the `to_google_sheets` function:
 
-### To Import the Package Into Your Project
+```python
+from mobile_strings_converter import to_google_sheets
 
-1. Run `pip install mobile-strings-converter`
-2. Import the package and the wrapper function with this line of code: `from mobile_strings_converter import convert_strings`.
+to_google_sheets(
+    input_filepath=Path("path/to/strings-file"),
+    sheet_name="MyProject strings",
+    credentials_filepath=Path("path/to/service_account.json"),
+    should_print_comments=True,
+)
+```
 
-### To Open the Code
+### Script flags
 
-1. Clone the project with the `git clone https://github.com/HenestrosaConH/mobile-strings-converter.git` command.
-2. Open it in your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/))
+- The option `-h` or `--help` displays the help documentation.
+- The option `-o` or `--output-filepath` specifies the filepath for storing the converted file. The file extension can be chosen from the list of supported file types mentioned [here](#about-the-project).
+- The option `-g` or `--google-sheets` followed by the name of the sheet as `<SHEET NAME>` creates a new Google Sheets spreadsheet with the specified name.
+- The option `-c` or `--credentials` followed by the path to your `service_account.json` file is mandatory if you want to generate a spreadsheet in your Google account.
+- By using the `-p` or `--print-comments` option, the output file will include any commented strings present in the original file.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -221,17 +265,17 @@ path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Locali
 
 ### List of Languages Not Supported by PDF files
 
-- **Bengali** (not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))
-- **Dhivehi** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Kannada** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Khmer** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Lao** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Malayalam** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Meiteilon (manipuri)** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Myanmar burmese** (not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))
-- **Odia (Oriya)** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Sinhala** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
-- **Tigrinya** (not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))
+- Bengali <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
+- Dhivehi <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Kannada <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Khmer <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Lao <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Malayalam <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Meiteilon (manipuri) <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Myanmar burmese <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
+- Odia (Oriya) <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub></sub>
+- Sinhala <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Tigrinya <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -245,7 +289,7 @@ path/to/python path/to/mobile_strings_converter.py path/to/<strings.xml | Locali
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/mobile-strings-converter/new/choose).
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
 
@@ -262,7 +306,7 @@ Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaConH/mobile-stri
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- AUTHORS -->
 
