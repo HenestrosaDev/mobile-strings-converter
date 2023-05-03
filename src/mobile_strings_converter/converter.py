@@ -12,11 +12,10 @@ import openpyxl
 import yaml
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
+from console_style import ConsoleStyle
 from fpdf import FPDF
 from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
-
-from .console_style import ConsoleStyle
 
 
 def convert_strings(
