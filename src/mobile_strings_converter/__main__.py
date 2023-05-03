@@ -77,7 +77,7 @@ def main():
             should_print_comments=args.print_comments,
         )
 
-    convert_strings(input_filepath, Path(args.output_path), args.print_comments)
+    convert_strings(input_filepath, Path(args.output_filepath), args.print_comments)
 
 
 if __name__ == "__main__":
