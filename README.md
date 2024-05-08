@@ -55,21 +55,21 @@
 ## Table of Contents
 
 - [About the Project](#about-the-project)
+  - [File Types Supported](#file-types-supported) 
   - [Project Structure](#project-structure)
   - [Built With](#built-with)
 - [Release Files](#release-files)
 - [Getting Started](#getting-started)
-  - [To Download the Program](#to-download-the-program) 
-  - [To Import the Package Into Your Project](#to-import-the-package-into-your-project)
-  - [To Open the Code](#to-open-the-code)
+  - [Script Installation](#script-installation)
+  - [Package Installation](#package-installation)
 - [Usage](#usage)
-  - [To Run the Program](#to-run-the-program)
-  - [To Use the Package in Your Project](#to-use-the-package-in-your-project)
-  - [To Generate a Spreadsheet in Google Sheets](#to-generate-a-spreadsheet-in-google-sheets)
+  - [Run the Program](#run-the-program)
+  - [Use the Package in Your Project](#use-the-package-in-your-project)
+  - [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets)
   - [Script Flags](#script-flags)
 - [Notes](#notes)
-  - [List of Indic Languages Supported by PDF files](#list-of-indic-languages-supported-by-pdf-files)
-  - [List of Languages Not Supported by PDF files](#list-of-languages-not-supported-by-pdf-files)
+  - [Indic Languages Supported by PDF files](#indic-languages-supported-by-pdf-files)
+  - [Indic Languages Not Supported by PDF files](#indic-languages-not-supported-by-pdf-files)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -86,7 +86,10 @@ it involves wasting your time generating the spreadsheet manually. Due to that, 
 
 Moreover, not only this script can be executed on its own, it also can be installed as a package via **PyPI** (more information [here](#to-import-the-package-into-your-project) about how to install it).
 
-The file types supported by the package are the following:
+<!-- FILE TYPES SUPPORTED -->
+
+### File Types Supported
+
 - Android strings format (`*.xml`)
 - CSV
 - Google Sheets support
@@ -215,13 +218,13 @@ The file types supported by the package are the following:
 
 ### Built With
 
-- [openpyxl](https://pypi.org/project/openpyxl/): To generate ODS and XLSX files.
-- [gspread](https://pypi.org/project/gspread/): To generate spreadsheets in Google Sheets.
-- [protobuf](https://pypi.org/project/oauth2client/): Used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets. 
-- [PyYAML](https://pypi.org/project/PyYAML/): To generate YAML files.
-- [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/): To add arabic characters support for PDF files.
-- [fpdf2](https://pypi.org/project/fpdf2/): To generate PDF files.
-- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/): To recognize the **value** language when writing a PDF in order to know what font to use.  
+- [openpyxl](https://pypi.org/project/openpyxl/) to generate ODS and XLSX files.
+- [gspread](https://pypi.org/project/gspread/) to generate spreadsheets in Google Sheets.
+- [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets. 
+- [PyYAML](https://pypi.org/project/PyYAML/) to generate YAML files.
+- [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/) to add arabic characters support for PDF files.
+- [fpdf2](https://pypi.org/project/fpdf2/) to generate PDF files.
+- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/) to recognize the **value** language when writing a PDF in order to know what font to use.  
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -244,20 +247,26 @@ The file types supported by the package are the following:
 
 ## Getting Started
 
-### To Download the Program
+### Script Installation
 
 1. Download the [release](#release-files) that is best suited to your needs.
-2. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to execute the script.
+2. (Optional but recommended) Create a Python virtual environment in the project root. If you're using `virtualenv`, you would run `virtualenv venv`.
+3. (Optional but recommended) Activate the virtual environment:
+   ```bash
+   # on Windows
+   . venv/Scripts/activate
+   # if you get the error `FullyQualifiedErrorId : UnauthorizedAccess`, run this:
+   Set-ExecutionPolicy Unrestricted -Scope Process
+   # and then . venv/Scripts/activate
+   
+   # on macOS and Linux
+   source venv/Scripts/activate
+   ```
+4. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to run the script.
 
-### To Import the Package Into Your Project
+### Package Installation
 
-1. Run `pip install mobile-strings-converter`
-2. Import the package and the wrapper function with this line of code: `from mobile_strings_converter import convert_strings`.
-
-### To Open the Code
-
-1. Clone the project with the `git clone https://github.com/HenestrosaConH/mobile-strings-converter.git` command.
-2. Open it in your favourite IDE (mine is [PyCharm](https://www.jetbrains.com/pycharm/))
+Install the PyPI package by running `pip install mobile-strings-converter`.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -265,29 +274,39 @@ The file types supported by the package are the following:
 
 ## Usage
 
-### To Run the Program
+### Run the Program
 
-Run the program
- 
+For a basic usage, you can run the following command:
+
 ```
-python path/to/mobile_strings_converter.py <*.xml | *.strings> -o <*.SUPPORTED FILE TYPE EXTENSION>
+python path/to/mobile_strings_converter.py <*.xml | *.strings> -o <*.[SUPPORTED_FILE_TYPE]>
 ```
 
-### To Use the Package in Your Project
+See [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets) to create a spreadsheet.
+
+### Use the Package in Your Project
 
 Once you have followed the steps indicated in the [Getting Started](#getting-started) section, you just have to use the `convert_strings` function. Here is an example:
 
-```python
-convert_strings(
-    input_filepath=Path("strings.xml"), 
-    output_filepath=Path("strings-en.xlsx"), 
-    should_print_comments=True
-)
-```
+1. Import the package and the wrapper function you wish to use
+   ```python
+   from mobile_strings_converter import [FUNCTION]
+   ```
+2. Use it in your package like this: 
+   ```python
+   # For example, using convert_strings function
+   from mobile_strings_converter import convert_strings  
+ 
+   convert_strings(
+       input_filepath=Path("strings.xml"), 
+       output_filepath=Path("strings-en.xlsx"), 
+       should_print_comments=True
+   )
+   ```
 
-### To Generate a Spreadsheet in Google Sheets
+### Generate a Spreadsheet in Google Sheets
 
-#### Running the program
+#### Set Up Google Account
 
 Before going further into running the commands to do so, please note that you will have to generate a `service_account.json` file. You can do the following to get one:
 
@@ -300,21 +319,19 @@ Before going further into running the commands to do so, please note that you wi
 7. Click on the **Create key** button, select the JSON format and download the `service_account.json` file.
 8. Share your Google Sheets file with the email address that is specified in the **client_email** field in the `service_account.json` file.
 
-Alternatively, you can create an XLSX file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
+Alternatively, you can create a `.xlsx` file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
 
 Once you have generated the `service_account.json` file, you can generate a spreadsheet in Google Sheets by running the following command:
 ```
-python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET NAME> -c path/to/service_account.json 
+python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET_NAME> -c path/to/service_account.json 
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
 ```
-python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET NAME> -c path/to/service_account.json -o <*.SUPPORTED FILE TYPE EXTENSION>
+python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET_NAME> -c path/to/service_account.json -o <*.SUPPORTED_FILE_TYPE>
 ```
 
-#### Using the Package in Your Project
-
-If you are using the package in your project, here is an example of how to use the `to_google_sheets` function:
+#### Using the `to_google_sheets` Function in Your Project
 
 ```python
 from mobile_strings_converter import to_google_sheets
@@ -343,7 +360,7 @@ to_google_sheets(
 
 ## Notes
 
-### List of Indic Languages Supported by PDF files
+### Indic Languages Supported by PDF files
 
 - Hindi
 - Marathu
@@ -354,7 +371,7 @@ to_google_sheets(
 - Tamil
 - Punjabi
 
-### List of Languages Not Supported by PDF files
+### Indic Languages Not Supported by PDF files
 
 - Bengali <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
 - Dhivehi <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
@@ -380,8 +397,6 @@ to_google_sheets(
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/mobile-strings-converter/new/choose).
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 <!-- CONTRIBUTING -->
 
 ## Contributing
@@ -389,25 +404,19 @@ You can propose a new feature creating an [issue](https://github.com/HenestrosaC
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/.github/CONTRIBUTING.md) file, where you can find more detailed information about how to contribute to the project.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 <!-- LICENSE -->
 
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 <!-- AUTHORS -->
 
 ## Authors
 
-- HenestrosaConH <henestrosaconh@gmail.com> (José Carlos López Henestrosa)
+- HenestrosaDev <henestrosadev@gmail.com> (José Carlos López Henestrosa)
 
 See also the list of [contributors](https://github.com/HenestrosaConH/mobile-strings-converter/contributors) who participated in this project.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- ACKNOWLEDGMENTS -->
 
@@ -415,17 +424,14 @@ See also the list of [contributors](https://github.com/HenestrosaConH/mobile-str
 
 I have made use of the following resources to make this project:
 
-- [Best-README-Template](https://github.com/othneildrew/Best-README-Template/)
-- [Img Shields](https://shields.io)
 - [How to create a Python package](https://mathspp.com/blog/how-to-create-a-python-package-in-2022#how-to-create-a-python-package)
-- [Icon created by Midjourney](https://www.midjourney.com/app/)
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- SUPPORT -->
 
 ## Support
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U5J6COZ)
+Would you like to support the project? That's very kind of you! You can go to my Ko-Fi profile by clicking on the button down below.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/henestrosadev)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
