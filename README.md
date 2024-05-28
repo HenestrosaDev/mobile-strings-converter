@@ -64,9 +64,9 @@
   - [Package Installation](#package-installation)
 - [Usage](#usage)
   - [Run the Program](#run-the-program)
+    - [Script Flags](#script-flags)
   - [Use the Package in Your Project](#use-the-package-in-your-project)
   - [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets)
-  - [Script Flags](#script-flags)
 - [Notes](#notes)
   - [Indic Languages Supported by PDF files](#indic-languages-supported-by-pdf-files)
   - [Indic Languages Not Supported by PDF files](#indic-languages-not-supported-by-pdf-files)
@@ -279,10 +279,22 @@ Install the PyPI package by running `pip install mobile-strings-converter`.
 For a basic usage, you can run the following command:
 
 ```
-python path/to/mobile_strings_converter.py <*.xml | *.strings> -o <*.[SUPPORTED_FILE_TYPE]>
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -o *.[SUPPORTED_FILE_TYPE]
 ```
 
 See [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets) to create a spreadsheet.
+
+#### Script flags
+
+| Flag                        | Description                                                                                                                                                         |
+|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-h` or `--help`            | Displays help text for the program                                                                                                                                  |
+| `-o` or `--output-filepath` | Specifies the filepath for storing the converted file. The file extension can be chosen from the list of supported file types mentioned [here](#about-the-project). |
+| `-g` or `--google-sheets`   | Followed by the name of the sheet, creates a new Google Sheets spreadsheet with the specified name.                                                                 |
+| `-c` or `--credentials`     | Followed by the path to your `service_account.json` file is mandatory if you want to generate a spreadsheet in your Google account.                                 |
+| `-p` or `--print-comments`  | The output file will include any commented strings present in the original file.                                                                                    |
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ### Use the Package in Your Project
 
@@ -294,7 +306,7 @@ Once you have followed the steps indicated in the [Getting Started](#getting-sta
    ```
 2. Use it in your package like this: 
    ```python
-   # For example, using convert_strings function
+   # For example, using the `convert_strings` function
    from mobile_strings_converter import convert_strings  
  
    convert_strings(
@@ -328,7 +340,7 @@ python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET_NAME> -
 
 If you want to generate an output file along with the spreadsheet, run this:
 ```
-python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET_NAME> -c path/to/service_account.json -o <*.SUPPORTED_FILE_TYPE>
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE -g <SHEET_NAME> -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
 ```
 
 #### Using the `to_google_sheets` Function in Your Project
@@ -343,18 +355,6 @@ to_google_sheets(
     should_print_comments=True,
 )
 ```
-
-### Script flags
-
-| Flag                        | Description                                                                                                                                                         |
-|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-h` or `--help`            | Displays help text for the program                                                                                                                                  |
-| `-o` or `--output-filepath` | Specifies the filepath for storing the converted file. The file extension can be chosen from the list of supported file types mentioned [here](#about-the-project). |
-| `-g` or `--google-sheets`   | Followed by the name of the sheet, creates a new Google Sheets spreadsheet with the specified name.                                                                 |
-| `-c` or `--credentials`     | Followed by the path to your `service_account.json` file is mandatory if you want to generate a spreadsheet in your Google account.                                 |
-| `-p` or `--print-comments`  | The output file will include any commented strings present in the original file.                                                                                    |
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- NOTES -->
 
