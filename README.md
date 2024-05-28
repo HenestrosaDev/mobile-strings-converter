@@ -25,28 +25,28 @@
           <img alt="Python versions support" src="https://img.shields.io/pypi/pyversions/mobile-strings-converter" />
         </a>
         <br />
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/actions/workflows/build.yaml">
-          <img alt="GitHub action: Build" src="https://github.com/HenestrosaConH/mobile-strings-converter/actions/workflows/build.yaml/badge.svg" />
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/actions/workflows/build.yaml">
+          <img alt="GitHub action: Build" src="https://github.com/HenestrosaDev/mobile-strings-converter/actions/workflows/build.yaml/badge.svg" />
         </a>
-        <a href="https://codecov.io/gh/HenestrosaConH/mobile-strings-converter/">
-          <img alt="Codecov" src="https://codecov.io/gh/HenestrosaConH/mobile-strings-converter/branch/main/graph/badge.svg" />
+        <a href="https://codecov.io/gh/HenestrosaDev/mobile-strings-converter/">
+          <img alt="Codecov" src="https://codecov.io/gh/HenestrosaDev/mobile-strings-converter/branch/main/graph/badge.svg" />
         </a>
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/LICENSE">
-          <img alt="License" src="https://img.shields.io/github/license/HenestrosaConH/mobile-strings-converter" />
-        </a>
-        <br />
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/graphs/contributors">
-          <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaConH/mobile-strings-converter" />
-        </a>
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues">
-          <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaConH/mobile-strings-converter" />
-        </a>
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/pulls">
-          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaConH/mobile-strings-converter" />
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/LICENSE">
+          <img alt="License" src="https://img.shields.io/github/license/HenestrosaDev/mobile-strings-converter" />
         </a>
         <br />
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/graphs/contributors">
+          <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaDev/mobile-strings-converter" />
+        </a>
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues">
+          <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaDev/mobile-strings-converter" />
+        </a>
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/pulls">
+          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaDev/mobile-strings-converter" />
+        </a>
         <br />
-        <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues/new/choose">Report Bug</a> · <a href="https://github.com/HenestrosaConH/mobile-strings-converter/issues/new/choose">Request Feature</a> · <a href="https://github.com/HenestrosaConH/mobile-strings-converter/discussions">Ask Question</a>
+        <br />
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">Report Bug</a> · <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">Request Feature</a> · <a href="https://github.com/HenestrosaDev/mobile-strings-converter/discussions">Ask Question</a>
     </p>
 </div>
 
@@ -65,11 +65,11 @@
 - [Usage](#usage)
   - [Run the Program](#run-the-program)
     - [Script Flags](#script-flags)
-  - [Use the Package in Your Project](#use-the-package-in-your-project)
+  - [Using the Package in Your Project](#using-the-package-in-your-project)
   - [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets)
 - [Notes](#notes)
   - [Indic Languages Supported by PDF files](#indic-languages-supported-by-pdf-files)
-  - [Indic Languages Not Supported by PDF files](#indic-languages-not-supported-by-pdf-files)
+  - [Languages Not Supported by PDF files](#languages-not-supported-by-pdf-files)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -84,7 +84,7 @@
 I tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand and, even though you can do it with the option **Data > Split text to columns**, 
 it involves wasting your time generating the spreadsheet manually. Due to that, I decided to build a time-efficient solution, which consists on running a Python script in order to achieve that with any file type.
 
-Moreover, not only this script can be executed on its own, it also can be installed as a package via **PyPI** (more information [here](#to-import-the-package-into-your-project) about how to install it).
+Moreover, not only this script can be executed on its own, it also can be installed as a package via **PyPI** (more information [here](#using-the-package-in-your-project) about how to install it).
 
 <!-- FILE TYPES SUPPORTED -->
 
@@ -232,14 +232,9 @@ Moreover, not only this script can be executed on its own, it also can be instal
 
 ## Release Files
 
-| File                                                                                                                                                         | Description                                                                                                 | Size      |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------|:----------|
-| [mobile-strings-converter.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter.zip)             | Standard language support for PDF files (over 100 languages, including RTL)                                 | 0.32 MB   |
-| [mobile-strings-converter-indic.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-indic.zip) | PDF file support for Indic languages ([see list](#list-of-indic-languages-supported-by-pdf-files))          | 1.40 MB   |
-| [mobile-strings-converter-zh-ja.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-zh-ja.zip) | PDF file support for Japanese and Chinese (simplified and traditional)                                      | 7.17 MB   |
-| [mobile-strings-converter-ko.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-ko.zip)       | PDF file support for Korean                                                                                 | 0.46 MB   |
-| [mobile-strings-converter-th.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-th.zip)       | PDF file support for Thai                                                                                   | 0.37 MB   |
-| [mobile-strings-converter-all.zip](https://github.com/HenestrosaConH/mobile-strings-converter/releases/latest/download/mobile-strings-converter-all.zip)     | PDF file support for almost all languages ([see exceptions](#list-of-languages-not-supported-by-pdf-files)) | 8.43 MB   |
+| File                                                                                                                                            | Description                                                                                         | Size    |
+|:------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|:--------|
+| [mobile-strings-converter.zip](https://github.com/HenestrosaDev/mobile-strings-converter/releases/latest/download/mobile-strings-converter.zip) | PDF file support for almost all languages ([see exceptions](#languages-not-supported-by-pdf-files)) | 8.43 MB |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -296,25 +291,18 @@ See [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-### Use the Package in Your Project
+### Using the Package in Your Project
 
-Once you have followed the steps indicated in the [Getting Started](#getting-started) section, you just have to use the `convert_strings` function. Here is an example:
+Once you have followed the steps of the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use: 
+```python
+# Using the `get_strings` function
+from mobile_strings_converter import get_strings  
 
-1. Import the package and the wrapper function you wish to use
-   ```python
-   from mobile_strings_converter import [FUNCTION]
-   ```
-2. Use it in your package like this: 
-   ```python
-   # For example, using the `convert_strings` function
-   from mobile_strings_converter import convert_strings  
- 
-   convert_strings(
-       input_filepath=Path("strings.xml"), 
-       output_filepath=Path("strings-en.xlsx"), 
-       should_print_comments=True
-   )
-   ```
+get_strings(
+   input_filepath=Path("strings.xml"), 
+   should_print_comments=True
+)
+```
 
 ### Generate a Spreadsheet in Google Sheets
 
@@ -371,7 +359,7 @@ to_google_sheets(
 - Tamil
 - Punjabi
 
-### Indic Languages Not Supported by PDF files
+### Languages Not Supported by PDF files
 
 - Bengali <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
 - Dhivehi <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
@@ -395,14 +383,14 @@ to_google_sheets(
 - [ ] Add support for multiple `.xml`/`.strings` files input.
 - [ ] Make a web version.
 
-You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/mobile-strings-converter/new/choose).
+You can propose a new feature creating an [issue](https://github.com/HenestrosaDev/mobile-strings-converter/new/choose).
 
 <!-- CONTRIBUTING -->
 
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaConH/mobile-strings-converter/blob/main/.github/CONTRIBUTING.md) file, where you can find more detailed information about how to contribute to the project.
+Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/.github/CONTRIBUTING.md) file, where you can find more detailed information about how to contribute to the project.
 
 <!-- LICENSE -->
 
@@ -416,7 +404,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - HenestrosaDev <henestrosadev@gmail.com> (José Carlos López Henestrosa)
 
-See also the list of [contributors](https://github.com/HenestrosaConH/mobile-strings-converter/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/HenestrosaDev/mobile-strings-converter/contributors) who participated in this project.
 
 <!-- ACKNOWLEDGMENTS -->
 
