@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "mobile-strings-converter"
 version = "0.1.3"
-description = "A Python package that converts Android & iOS strings files to any supported file type."
-authors = ["José Carlos López <henestrosaconh@gmail.com>"]
+description = "Convert Android & iOS strings files to any supported file type and vice versa."
+authors = ["José Carlos López <henestrosadev@gmail.com>"]
 license = "MIT"
 classifiers=[
     "Intended Audience :: Developers",
@@ -33,24 +33,26 @@ keywords=[
     "ios",
     "Localizable.strings"
 ]
-repository="https://github.com/HenestrosaConH/mobile-strings-converter"
+repository="https://github.com/HenestrosaDev/mobile-strings-converter"
 readme = "README.md"
 packages = [{include = "mobile_strings_converter", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
-pyyaml = "^6.0"
+pyyaml = "^6.0.1"
 protobuf = "^5.26.1"
 gspread = "^6.1.0"
-openpyxl = "^3.1.0"
+openpyxl = "^3.1.2"
 fpdf2 = "^2.7.8"
 lingua-language-detector = "^2.0.2"
 python-bidi = "^0.4.2"
 arabic-reshaper = "^3.0.0"
+ezodf = "^0.3.2"
+pypdf2 = "^3.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.0.4"
+pre-commit = "^3.5.0"
 codecov = "^2.1.12"
 
 [tool.poetry.group.test.dependencies]
