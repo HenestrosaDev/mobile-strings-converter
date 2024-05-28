@@ -2,18 +2,20 @@ import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import pandas as pd
 from mobile_strings_converter.converter import convert_strings, get_strings
 
 
+# This is a wrapper class that prevents its nested classes from running as tests.
 class BaseTests(object):
-    class BaseConverterTest(unittest.TestCase):
+    # For `test_to_*` files
+
+    class ConvertToTest(unittest.TestCase):
         # Hook methods
 
         def setUp(self):
-            self.files_path = "files"
             self._file_name: str | None = None
 
+            self.files_path = "files"
             self.input_filepath_android = (
                 Path(__file__).parent / self.files_path / "input/strings.xml"
             )
@@ -53,27 +55,27 @@ class BaseTests(object):
         def test_converter_creates_file_with_comments_android(self):
             self._converter_creates_file(
                 input_filepath=self.input_filepath_android,
-                should_print_comments=True,
+                with_comments=True,
             )
 
         def test_converter_creates_file_without_comments_android(self):
             self._converter_creates_file(
                 input_filepath=self.input_filepath_android,
-                should_print_comments=False,
+                with_comments=False,
             )
 
         def test_converter_writes_correct_data_with_comments_android(self):
             self._converter_writes_correct_data(
                 self.template_with_comments_filepath,
                 self.input_filepath_android,
-                should_print_comments=True,
+                with_comments=True,
             )
 
         def test_converter_writes_correct_data_without_comments_android(self):
             self._converter_writes_correct_data(
                 self.template_without_comments_filepath,
                 self.input_filepath_android,
-                should_print_comments=False,
+                with_comments=False,
             )
 
         # -------------- iOS --------------
@@ -81,27 +83,27 @@ class BaseTests(object):
         def test_converter_creates_file_with_comments_ios(self):
             self._converter_creates_file(
                 input_filepath=self.input_filepath_ios,
-                should_print_comments=True,
+                with_comments=True,
             )
 
         def test_converter_creates_file_without_comments_ios(self):
             self._converter_creates_file(
                 input_filepath=self.input_filepath_ios,
-                should_print_comments=False,
+                with_comments=False,
             )
 
         def test_converter_writes_correct_data_with_comments_ios(self):
             self._converter_writes_correct_data(
                 self.template_with_comments_filepath,
                 self.input_filepath_ios,
-                should_print_comments=True,
+                with_comments=True,
             )
 
         def test_converter_writes_correct_data_without_comments_ios(self):
             self._converter_writes_correct_data(
                 self.template_without_comments_filepath,
                 self.input_filepath_ios,
-                should_print_comments=False,
+                with_comments=False,
             )
 
         # Private methods
@@ -109,18 +111,18 @@ class BaseTests(object):
         def _converter_creates_file(
             self,
             input_filepath: Path,
-            should_print_comments: bool,
+            with_comments: bool,
         ):
-            convert_strings(input_filepath, self.output_filepath, should_print_comments)
+            convert_strings(input_filepath, self.output_filepath, with_comments)
             self.assertTrue(self.output_filepath.exists())
 
         def _converter_writes_correct_data(
             self,
             template_filepath: Path,
             input_filepath: Path,
-            should_print_comments: bool,
+            with_comments: bool,
         ):
-            convert_strings(input_filepath, self.output_filepath, should_print_comments)
+            convert_strings(input_filepath, self.output_filepath, with_comments)
 
             with open(self.output_filepath, "rb") as test_file, open(
                 template_filepath, "rb"
@@ -130,7 +132,90 @@ class BaseTests(object):
                     template_file.read().decode("utf-8").replace("\r\n", "\n"),
                 )
 
-    class BaseGetStringsTest(unittest.TestCase):
+    # For `test_from_*` files
+
+    class ConvertFromTest(unittest.TestCase):
+        # Hook methods
+
+        def setUp(self):
+            self._file_name: str | None = None
+
+            self.files_path = "files"
+            self.android_filepath = (
+                Path(__file__).parent / self.files_path / "input/strings.xml"
+            )
+            self.ios_filepath = (
+                Path(__file__).parent / self.files_path / "input/Localizable.strings"
+            )
+
+        def tearDown(self):
+            if self.output_filepath.exists():
+                self.output_filepath.unlink()
+
+        # Properties
+
+        @property
+        def file_name(self):
+            return self._file_name
+
+        @file_name.setter
+        def file_name(self, value):
+            self.input_filepath = (
+                Path(__file__).parent
+                / self.files_path
+                / f"template-without-comments/{value}"
+            )
+            self.output_filepath = Path(value)
+            self._file_name = value
+
+        # Test methods
+
+        # ------------ ANDROID ------------
+
+        def test_converter_creates_file_android(self):
+            self._converter_creates_file(self.input_filepath)
+
+        def test_converter_writes_correct_data_android(self):
+            self._converter_writes_correct_data(
+                template_filepath=self.input_filepath,
+                input_filepath=self.android_filepath,
+            )
+
+        # -------------- iOS --------------
+
+        def test_converter_creates_file_ios(self):
+            self._converter_creates_file(self.input_filepath)
+
+        def test_converter_writes_correct_data_ios(self):
+            self._converter_writes_correct_data(
+                template_filepath=self.input_filepath, input_filepath=self.ios_filepath
+            )
+
+        # Private methods
+
+        def _converter_creates_file(
+            self,
+            input_filepath: Path,
+        ):
+            convert_strings(input_filepath, self.output_filepath)
+            self.assertTrue(self.output_filepath.exists())
+
+        def _converter_writes_correct_data(
+            self,
+            template_filepath: Path,
+            input_filepath: Path,
+        ):
+            convert_strings(input_filepath, self.output_filepath)
+
+            with open(self.output_filepath, "rb") as test_file, open(
+                template_filepath, "rb"
+            ) as template_file:
+                self.assertEqual(
+                    test_file.read().decode("utf-8").replace("\r\n", "\n"),
+                    template_file.read().decode("utf-8").replace("\r\n", "\n"),
+                )
+
+    class GetStringsTest(unittest.TestCase):
         def setUp(self):
             self.data: str | None = None
             self.extension: str | None = None
@@ -153,7 +238,7 @@ class BaseTests(object):
             # Call the function and check the output
             self.assertEqual(
                 expected_output,
-                get_strings(filepath, should_print_comments=False),
+                get_strings(filepath, with_comments=False),
             )
 
             # Remove the temporary file
@@ -179,7 +264,7 @@ class BaseTests(object):
             # Call the function and check the output
             self.assertEqual(
                 expected_output,
-                get_strings(filepath, should_print_comments=True),
+                get_strings(filepath, with_comments=True),
             )
 
             # Remove the temporary file
@@ -215,7 +300,7 @@ class BaseTests(object):
 
             # Call the function and check that it raises a ValueError
             with self.assertRaises(ValueError):
-                get_strings(filepath, should_print_comments=True)
+                get_strings(filepath, with_comments=True)
 
             # Clean up the temporary file
             filepath.unlink()
@@ -237,24 +322,7 @@ class BaseTests(object):
 
             # Call the function and check that it raises a ValueError
             with self.assertRaises(ValueError):
-                get_strings(filepath, should_print_comments=False)
+                get_strings(filepath, with_comments=False)
 
             # Clean up the temporary file
             filepath.unlink()
-
-    class BaseTestToSheet(BaseConverterTest):
-        # Overrides
-        def _converter_writes_correct_data(
-            self,
-            template_filepath: Path,
-            input_filepath: Path,
-            should_print_comments: bool,
-        ):
-            convert_strings(input_filepath, self.output_filepath, should_print_comments)
-
-            # Load the two Excel files into pandas dataframes
-            df1 = pd.read_excel(template_filepath)
-            df2 = pd.read_excel(self.output_filepath)
-
-            # Compare the dataframes to check if they are equal
-            self.assertTrue(df1.equals(df2))

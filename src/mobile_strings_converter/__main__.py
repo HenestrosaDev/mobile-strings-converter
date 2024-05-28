@@ -67,7 +67,7 @@ def main():
             input_filepath,
             sheet_name=args.google_sheets,
             credentials_filepath=Path(args.credentials),
-            should_print_comments=args.print_comments,
+            with_comments=args.print_comments,
         )
 
     convert_strings(input_filepath, Path(args.output_filepath), args.print_comments)
