@@ -5,8 +5,9 @@ import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
+import ezodf
 import gspread
 import openpyxl
 import yaml
@@ -16,6 +17,7 @@ from console_style import ConsoleStyle
 from fpdf import FPDF
 from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
+from PyPDF2 import PdfReader
 
 
 def convert_strings(
@@ -26,16 +28,17 @@ def convert_strings(
     them to the desired output file format. The output file format can be any of the
     following:
 
-    - Android strings format (*.xml)
-    - CSV
-    - HTML
-    - iOS strings format (*.strings)
-    - JSON
-    - MD
-    - ODS
-    - PDF
-    - XLSX
-    - YAML
+    Supported formats and corresponding extraction functions:
+    - .csv: to_csv
+    - .xlsx: to_sheet
+    - .ods: to_sheet
+    - .md: to_md
+    - .json: to_json
+    - .yaml: to_yaml
+    - .html: to_html
+    - .strings: to_ios
+    - .xml: to_android
+    - .pdf: to_pdf
 
     :param input_filepath: .strings or .xml file to extract the strings
     :type input_filepath: Path
@@ -78,46 +81,55 @@ def convert_strings(
             )
 
 
-def get_strings(input_filepath: Path, should_print_comments: bool):
+def get_strings(
+    input_filepath: Path, should_print_comments: bool
+) -> List[Tuple[str, str]]:
     """
-    Creates a Google spreadsheet with the extracted strings from the input filepath
+    Extracts strings from various file formats based on the file extension.
 
-    :param input_filepath: .strings or .xml file to extract the strings
+    Supported formats and corresponding extraction functions:
+    - .csv: get_strings_from_csv
+    - .xlsx: get_strings_from_xlsx
+    - .ods: get_strings_from_ods
+    - .md: get_strings_from_md
+    - .json: get_strings_from_json
+    - .yaml: get_strings_from_yaml
+    - .html: get_strings_from_html
+    - .strings: get_strings_from_ios
+    - .xml: get_strings_from_xml
+    - .pdf: get_strings_from_pdf
+
+    If the input file format is .strings or .xml, additional options are available:
+    - should_print_comments: If True, includes comments in the extracted strings.
+
+    :param input_filepath: Path to the input file.
     :type input_filepath: Path
-    :param should_print_comments: True if the user wants to print comments from
-        .strings/.xml to the file
+    :param should_print_comments: True if comments should be included (for .strings and
+        .xml files), False otherwise.
     :type should_print_comments: bool
+    :return: A list of tuples containing extracted strings and their corresponding values.
+    :rtype: List[Tuple[str, str]]
     """
 
-    if input_filepath.suffix == ".strings":
-        if should_print_comments:
-            pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
-        else:
-            pattern = r'^(?!\s*//)\s*"(.+?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
-    elif input_filepath.suffix == ".xml":
-        if should_print_comments:
-            pattern = r'<string name="(.*?)">(.*?)</string>'
-        else:
-            pattern = r'^(?!\s*<!--)\s*<string name="(.*?)">(.*?)</string>(?!\s*-->)'
-    else:
-        raise ValueError(
-            "The extension of the provided file must be .strings for iOS or .xml "
-            "Android"
+    conversion_functions = {
+        ".csv": get_strings_from_csv,
+        ".xlsx": get_strings_from_xlsx,
+        ".ods": get_strings_from_ods,
+        ".md": get_strings_from_md,
+        ".json": get_strings_from_json,
+        ".yaml": get_strings_from_yaml,
+        ".html": get_strings_from_html,
+        ".strings": get_strings_from_ios,
+        ".xml": get_strings_from_xml,
+        ".pdf": get_strings_from_pdf,
+    }
+
+    if input_filepath.suffix in [".strings", ".xml"]:
+        return conversion_functions[input_filepath.suffix](
+            input_filepath, should_print_comments
         )
-
-    # Open the Localizable.strings file
-    with open(input_filepath, "r", encoding="utf-8") as file:
-        strings_data = file.read()
-
-    # Extract the strings using a regular expression
-    strings = re.findall(pattern, strings_data, re.MULTILINE)
-
-    if len(strings) >= 1:
-        return strings
     else:
-        raise ValueError(
-            "The file provided is not a valid Localizable.strings nor strings.xml file."
-        )
+        return conversion_functions[input_filepath.suffix](input_filepath)
 
 
 def to_google_sheets(
@@ -476,3 +488,324 @@ def to_md(strings: List[str], output_filepath: Path):
         f.write("| ----------- | ----------- |\n")
         for name, translation in strings:
             f.write(f"| {name} | {translation} |\n")
+
+
+# GET STRINGS FROM
+
+
+def get_strings_from_csv(csv_filepath: Path):
+    """
+    Extract data from a CSV file with NAME and VALUE columns and return it as a
+    list of tuples.
+
+    :param csv_filepath: The path to the input CSV file.
+    :type csv_filepath: Path
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Open the CSV file and read its contents
+    with open(csv_filepath, "r", newline="", encoding="utf-8") as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Skip the header row
+
+        # Iterate over the rows in the CSV file
+        for row in csv_reader:
+            name, value = row
+            data.append((name, value))
+
+    return data
+
+
+def get_strings_from_xlsx(sheet_filepath: Path):
+    """
+    Extract data from an Excel file with NAME and VALUE columns and return it as a list
+    of tuples.
+
+    :param sheet_filepath: The path to the input Excel file.
+    :type sheet_filepath: str
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Load the workbook and select the active sheet
+    workbook = openpyxl.load_workbook(sheet_filepath)
+    sheet = workbook.active
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Iterate over the rows in the sheet starting from the second row to skip the header
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        name, value = row
+        data.append((name, value))
+
+    return data
+
+
+def get_strings_from_ods(ods_filepath: Path) -> List[Tuple[str, str]]:
+    """
+    Extract data from an OpenDocument Spreadsheet (ODS) file with NAME and VALUE columns
+    and return it as a list of tuples.
+
+    :param ods_filepath: The path to the input ODS file.
+    :type ods_filepath: str
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Load the ODS file
+    doc = ezodf.opendoc(ods_filepath)
+
+    # Get the first sheet
+    sheet = doc.sheets[0]
+
+    # Iterate over the rows in the sheet
+    for row in sheet.rows():
+        # Extract NAME and VALUE from each row
+        name, value = [cell.value for cell in row[:2]]
+        data.append((name, value))
+
+    return data
+
+
+def get_strings_from_md(
+    md_filepath: Path, delimiter: str = "|"
+) -> List[Tuple[str, str]]:
+    """
+    Extract data from a Markdown file with a table containing NAME and VALUE columns and
+    return it as a list of tuples.
+
+    :param md_filepath: The path to the input Markdown file.
+    :type md_filepath: Path
+    :param delimiter: The delimiter used in the Markdown table, defaults to '|'.
+    :type delimiter: str, optional
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Open the Markdown file and read its contents
+    with open(md_filepath, "r", encoding="utf-8") as file:
+        lines = file.readlines()
+
+    # Find the start and end indices of the table
+    start_index = None
+    end_index = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith("|"):
+            start_index = i
+            break
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip().startswith("|"):
+            end_index = i
+            break
+
+    # Extract data from the table, skipping the first two lines (header)
+    if start_index is not None and end_index is not None:
+        for row in lines[start_index + 2 : end_index + 1]:
+            # Split the line by the delimiter and extract NAME and VALUE
+            parts = row.strip().strip(delimiter).split(delimiter)
+            if len(parts) >= 2:
+                name, value = parts[:2]
+                data.append((name.strip(), value.strip()))
+
+    return data
+
+
+def get_strings_from_json(json_filepath: Path) -> List[Tuple[str, str]]:
+    """
+    Extract data from a JSON file with objects containing NAME and VALUE fields and
+    return it as a list of tuples.
+
+    :param json_filepath: The path to the input JSON file.
+    :type json_filepath: Path
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Open the JSON file and load its contents
+    with open(json_filepath, "r", encoding="utf-8") as file:
+        json_data = json.load(file)
+
+    # Iterate over each object in the JSON data
+    for record in json_data:
+        if "name" in record and "value" in record:
+            data.append((record["name"], record["value"]))
+
+    return data
+
+
+def get_strings_from_yaml(yaml_filepath: Path) -> List[Tuple[str, str]]:
+    """
+    Extract data from a YAML file with objects containing NAME and VALUE fields and
+    return it as a list of tuples.
+
+    :param yaml_filepath: The path to the input YAML file.
+    :type yaml_filepath: Path
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Open the YAML file and load its contents
+    with open(yaml_filepath, "r", encoding="utf-8") as file:
+        yaml_data = yaml.safe_load(file)
+
+    # Iterate over each key-value pair in the YAML data
+    for key, value in yaml_data.items():
+        data.append((key, value))
+
+    return data
+
+
+def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
+    """
+    Extract data from an HTML file with a table containing NAME and VALUE columns and
+    return it as a list of tuples.
+
+    :param html_filepath: The path to the input HTML file.
+    :type html_filepath: Path
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Open the HTML file and read its contents
+    with open(html_filepath, "r", encoding="utf-8") as file:
+        html_content = file.read()
+
+    # Find the start and end indices of the table
+    table_start = html_content.find("<table")
+    table_end = html_content.find("</table>", table_start)
+
+    # Extract data from the table if it exists
+    if table_start != -1 and table_end != -1:
+        table_content = html_content[table_start:table_end]
+        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_content, re.DOTALL)
+
+        # Extract data from each row
+        for row in rows:
+            cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
+            if len(cells) >= 2:
+                name = re.sub(r"<.*?>", "", cells[0].strip())
+                value = re.sub(r"<.*?>", "", cells[1].strip())
+                data.append((name, value))
+
+    return data
+
+
+def get_strings_from_ios(
+    ios_filepath: Path, should_print_comments: bool
+) -> List[Tuple[str, str]]:
+    """
+    Get strings from the .strings or .xml file.
+
+    :param ios_filepath: .strings or .xml file to extract the strings
+    :type ios_filepath: Path
+    :param should_print_comments: True if the user wants to print comments from
+        the .strings to the output file
+    :type should_print_comments: bool
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    if should_print_comments:
+        pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
+    else:
+        pattern = r'^(?!\s*//)\s*"(.+?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
+
+    # Open the strings file
+    with open(ios_filepath, "r", encoding="utf-8") as file:
+        strings_data = file.read()
+
+    # Extract the strings using a regular expression
+    strings = re.findall(pattern, strings_data, re.MULTILINE)
+
+    if len(strings) >= 1:
+        return strings
+    else:
+        raise ValueError("The file provided is not a valid .strings file.")
+
+
+def get_strings_from_xml(
+    xml_filepath: Path, should_print_comments: bool
+) -> List[Tuple[str, str]]:
+    """
+    Get strings from the .strings or .xml file.
+
+    :param xml_filepath: .strings or .xml file to extract the strings
+    :type xml_filepath: Path
+    :param should_print_comments: True if the user wants to print comments from
+        the .strings to the output file
+    :type should_print_comments: bool
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+
+    if should_print_comments:
+        pattern = r'<string name="(.*?)">(.*?)</string>'
+    else:
+        pattern = r'^(?!\s*<!--)\s*<string name="(.*?)">(.*?)</string>(?!\s*-->)'
+
+    # Open the strings file
+    with open(xml_filepath, "r", encoding="utf-8") as file:
+        strings_data = file.read()
+
+    # Extract the strings using a regular expression
+    strings = re.findall(pattern, strings_data, re.MULTILINE)
+
+    if len(strings) >= 1:
+        return strings
+    else:
+        raise ValueError("The file provided is not a valid .xml file.")
+
+
+def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
+    """
+    Extract data from a PDF file with a table containing NAME and VALUE columns and
+    return it as a list of tuples.
+
+    :param pdf_filepath: The path to the input PDF file.
+    :type pdf_filepath: Path
+    :return: A list of tuples where each tuple contains a NAME and VALUE.
+    :rtype: List[Tuple[str, str]]
+    """
+    # Initialize a list to hold the tuples
+    data = []
+
+    # Create a PdfReader object
+    pdf_reader = PdfReader(pdf_filepath)
+
+    # Extract text from each page
+    for page in pdf_reader.pages:
+        text = page.extract_text()
+
+        # Find patterns for table rows
+        rows = text.split("\n")
+
+        # Skip the header
+        rows = rows[1:]
+
+        for row in rows:
+            match = re.match(r"(\w+)\s+(.*)", row.strip())
+            if match:
+                name, value = match.groups()
+                data.append((name.strip(), value.strip()))
+
+    return data

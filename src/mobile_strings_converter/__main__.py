@@ -50,13 +50,6 @@ def main():
 
     input_filepath = Path(args.input_filepath)
 
-    if input_filepath.suffix not in [".strings", ".xml"]:
-        print(
-            f"{ConsoleStyle.RED}Invalid input file. Its extension must be .strings "
-            f"for iOS strings or .xml for Android strings.{ConsoleStyle.RED}"
-        )
-        return
-
     if args.google_sheets and not args.credentials:
         print(
             f"{ConsoleStyle.RED}Error: You need to pass the path of the "

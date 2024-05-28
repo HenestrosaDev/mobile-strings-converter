@@ -284,7 +284,7 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -o *.[SUPPORT
 
 See [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets) to create a spreadsheet.
 
-#### Script flags
+#### Script Flags
 
 | Flag                        | Description                                                                                                                                                         |
 |:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -391,8 +391,8 @@ to_google_sheets(
 
 ## Roadmap
 
+- [x] Add support for converting a file (not `.xml` or `.strings`) into a strings resource file (`.xml` or `.strings`).
 - [ ] Add support for multiple `.xml`/`.strings` files input.
-- [ ] Add support for converting a file (not `.xml` nor `.strings`) to a strings resource file.
 - [ ] Make a web version.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaConH/mobile-strings-converter/new/choose).
