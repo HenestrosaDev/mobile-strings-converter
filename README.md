@@ -15,7 +15,7 @@
     <img src="docs/icon.png" alt="Logo" width="156" height="156" style="margin-bottom:-40px">
     <h1 align="center">Mobile Strings Converter</h1>
     <p align="center">
-        A Python package that converts Android & iOS strings files to any supported file type.
+        A Python package that converts Android & iOS strings files to any supported file type, and vice versa.
         <br />
         <br />
         <a href="https://pypi.org/project/mobile-strings-converter/">
@@ -65,7 +65,7 @@
 - [Usage](#usage)
   - [Run the Program](#run-the-program)
     - [Script Flags](#script-flags)
-  - [Using the Package in Your Project](#using-the-package-in-your-project)
+  - [Use the Package in Your Project](#use-the-package-in-your-project)
   - [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets)
 - [Notes](#notes)
   - [Indic Languages Supported by PDF files](#indic-languages-supported-by-pdf-files)
@@ -291,7 +291,7 @@ See [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-### Using the Package in Your Project
+### Use the Package in Your Project
 
 Once you have followed the steps of the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use: 
 ```python
@@ -380,7 +380,7 @@ to_google_sheets(
 ## Roadmap
 
 - [x] Add support for converting a file (not `.xml` or `.strings`) into a strings resource file (`.xml` or `.strings`).
-- [ ] Add support for multiple `.xml`/`.strings` files input.
+- [ ] Add support for multiple files input.
 - [ ] Make a web version.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaDev/mobile-strings-converter/new/choose).
