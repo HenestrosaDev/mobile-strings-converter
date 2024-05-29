@@ -10,9 +10,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'tests/**'
   workflow_dispatch:
 
 jobs:
@@ -48,6 +45,8 @@ jobs:
           poetry run coverage xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           fail_ci_if_error: true

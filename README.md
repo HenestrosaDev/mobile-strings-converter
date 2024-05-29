@@ -300,7 +300,7 @@ from mobile_strings_converter import get_strings
 
 get_strings(
    input_filepath=Path("strings.xml"), 
-   should_print_comments=True
+   with_comments=True
 )
 ```
 
@@ -340,7 +340,7 @@ to_google_sheets(
     input_filepath=Path("path/to/strings-file"),
     sheet_name="MyProject strings",
     credentials_filepath=Path("path/to/service_account.json"),
-    should_print_comments=True,
+    with_comments=True,
 )
 ```
 

@@ -22,7 +22,7 @@ from .console_style import ConsoleStyle
 
 
 def convert_strings(
-    input_filepath: Path, output_filepath: Path, should_print_comments: bool
+    input_filepath: Path, output_filepath: Path, with_comments: bool = False
 ):
     """
     Extracts strings from the input file in either .xml or .strings format and converts
@@ -45,12 +45,12 @@ def convert_strings(
     :type input_filepath: Path
     :param output_filepath: Name of the sheet to be generated
     :type output_filepath: Path
-    :param should_print_comments: True if the user wants to print comments from
+    :param with_comments: True if the user wants to include comments from
         .strings/.xml to the output file
-    :type should_print_comments: bool
+    :type with_comments: bool
     """
 
-    strings = get_strings(input_filepath, should_print_comments)
+    strings = get_strings(input_filepath, with_comments)
 
     if output_filepath:
         conversion_functions = {
@@ -76,15 +76,13 @@ def convert_strings(
         else:
             raise ValueError(
                 f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
-                f"an issue here (https://github.com/HenestrosaConH/mobile-strings"
+                f"an issue here (https://github.com/HenestrosaDev/mobile-strings"
                 f"-converter/issues) if you want the file type to be supported by the "
                 f"package.{ConsoleStyle.END}"
             )
 
 
-def get_strings(
-    input_filepath: Path, should_print_comments: bool
-) -> List[Tuple[str, str]]:
+def get_strings(input_filepath: Path, with_comments: bool) -> List[Tuple[str, str]]:
     """
     Extracts strings from various file formats based on the file extension.
 
@@ -101,13 +99,13 @@ def get_strings(
     - .pdf: get_strings_from_pdf
 
     If the input file format is .strings or .xml, additional options are available:
-    - should_print_comments: If True, includes comments in the extracted strings.
+    - with_comments: If True, includes comments in the extracted strings.
 
     :param input_filepath: Path to the input file.
     :type input_filepath: Path
-    :param should_print_comments: True if comments should be included (for .strings and
+    :param with_comments: True if comments should be included (for .strings and
         .xml files), False otherwise.
-    :type should_print_comments: bool
+    :type with_comments: bool
     :return: A list of tuples containing extracted strings and their corresponding values.
     :rtype: List[Tuple[str, str]]
     """
@@ -127,7 +125,7 @@ def get_strings(
 
     if input_filepath.suffix in [".strings", ".xml"]:
         return conversion_functions[input_filepath.suffix](
-            input_filepath, should_print_comments
+            input_filepath, with_comments
         )
     else:
         return conversion_functions[input_filepath.suffix](input_filepath)
@@ -137,7 +135,7 @@ def to_google_sheets(
     input_filepath: Path,
     sheet_name: str,
     credentials_filepath: Path,
-    should_print_comments: bool,
+    with_comments: bool,
 ):
     """
     Creates a Google spreadsheet with the extracted strings from the input filepath
@@ -149,12 +147,12 @@ def to_google_sheets(
     :param credentials_filepath: Path to the service_account.json in order to be able
         to create the sheet in the user's Google account
     :type credentials_filepath: Path
-    :param should_print_comments: True if the user wants to print comments from
+    :param with_comments: True if the user wants to include comments from
         .strings/.xml to the sheet
-    :type should_print_comments: bool
+    :type with_comments: bool
     """
 
-    strings = get_strings(input_filepath, should_print_comments)
+    strings = get_strings(input_filepath, with_comments)
 
     # Authenticate with Google Sheets API
     scope = [
@@ -712,21 +710,21 @@ def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
 
 
 def get_strings_from_ios(
-    ios_filepath: Path, should_print_comments: bool
+    ios_filepath: Path, with_comments: bool
 ) -> List[Tuple[str, str]]:
     """
     Get strings from the .strings or .xml file.
 
     :param ios_filepath: .strings or .xml file to extract the strings
     :type ios_filepath: Path
-    :param should_print_comments: True if the user wants to print comments from
+    :param with_comments: True if the user wants to include comments from
         the .strings to the output file
-    :type should_print_comments: bool
+    :type with_comments: bool
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
 
-    if should_print_comments:
+    if with_comments:
         pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
     else:
         pattern = r'^(?!\s*//)\s*"(.+?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
@@ -745,21 +743,21 @@ def get_strings_from_ios(
 
 
 def get_strings_from_xml(
-    xml_filepath: Path, should_print_comments: bool
+    xml_filepath: Path, with_comments: bool
 ) -> List[Tuple[str, str]]:
     """
     Get strings from the .strings or .xml file.
 
     :param xml_filepath: .strings or .xml file to extract the strings
     :type xml_filepath: Path
-    :param should_print_comments: True if the user wants to print comments from
+    :param with_comments: True if the user wants to include comments from
         the .strings to the output file
-    :type should_print_comments: bool
+    :type with_comments: bool
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
 
-    if should_print_comments:
+    if with_comments:
         pattern = r'<string name="(.*?)">(.*?)</string>'
     else:
         pattern = r'^(?!\s*<!--)\s*<string name="(.*?)">(.*?)</string>(?!\s*-->)'

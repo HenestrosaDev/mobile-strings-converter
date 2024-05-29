@@ -3,7 +3,7 @@ import unittest
 from base_tests import BaseTests
 
 
-class TestGetStringsIos(BaseTests.BaseGetStringsTest):
+class TestGetStringsIos(BaseTests.GetStringsTest):
     def setUp(self):
         self.data = """
         //      "chinese" = "  欢迎来到我的申请  "   ;
@@ -14,7 +14,7 @@ class TestGetStringsIos(BaseTests.BaseGetStringsTest):
         self.extension = ".strings"
 
 
-class TestGetStringsAndroid(BaseTests.BaseGetStringsTest):
+class TestGetStringsAndroid(BaseTests.GetStringsTest):
     def setUp(self):
         self.data = """
         <?xml version="1.0" encoding="UTF-8"?>
