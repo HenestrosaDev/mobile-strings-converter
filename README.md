@@ -125,7 +125,7 @@ In addition to being able to run this script on its own, it can also be installe
 ### Project Structure
 
 <details>
-  <summary>ASCII folder structure</summary>
+  <summary>ASCII directory structure</summary>
 
 ```
 │   .gitignore
@@ -289,29 +289,51 @@ Install the PyPI package by running `pip install mobile-strings-converter`.
 
 ### Running the Program
 
-For basic use, you can run the following command:
+To convert one file to another file:
 
-```bash
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -o *.[SUPPORTED_FILE_TYPE]
+```
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE]
 ```
 
-To include the comments of the `.xml`/`.strings` file in the output file, add the `-p` (also `--print-comments`) flag:
+To include the comments of the `.xml`/`.strings` input file in the output file, add the `-p` (also `--print-comments`) flag. Note that it will be ignored for other input file types.
 
-```bash
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -o *.[SUPPORTED_FILE_TYPE] -p
 ```
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
+```
+
+To convert multiple files at once and save them to the specified directory passed in the `-d` flag, use the`-t` flag followed by the desired file type extension (e.g., `.json`). Note that the program will create the directory if it doesn't exist.
+
+```
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
+```
+
+To convert supported files in a directory and its subdirectories and save them to a directory:
+
+```
+python path/to/mobile_strings_converter.py [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
+```
+
+To convert supported files in multiple directories and their subdirectories and save them to a directory:
+
+```
+python path/to/mobile_strings_converter.py [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
+```
+
+For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`
 
 See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section to create a spreadsheet in your Google account.
 
 #### Script Flags
 
-| Flag                        | Description                                                                                                                                                                                 |
-|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-h` or `--help`            | Displays help text for the program                                                                                                                                                          |
-| `-o` or `--output-filepath` | Specifies the filepath for storing the converted file. The file extension can be chosen from the list of supported file types mentioned [here](#about-the-project).                         |
-| `-g` or `--google-sheets`   | Followed by the name of the sheet, creates a new Google Sheets spreadsheet with the specified name.                                                                                         |
-| `-c` or `--credentials`     | Followed by the path to your `service_account.json` file is mandatory if you want to generate a spreadsheet in your Google account.                                                         |
-| `-p` or `--print-comments`  | The output file will contain all commented strings that were present in the original file (only applicable if the input file is a `.xml` or `.strings` file). Otherwise it will be ignored. |
+| Flag                        | Description                                                                                                                                                                                                                                       |
+|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-h` or `--help`            | Displays help text for the program.                                                                                                                                                                                                               |
+| `-f` or `--output-filepath` | Path to save the converted file. Only works if only one input file is provided. The file extension can be chosen from [the list of supported file types](#file-types-supported).                                                                  |
+| `-d` or `--output-dir`      | Directory where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                  |
+| `-t` or `--target-type`     | Target file type to convert the files (e.g., .pdf, .json). Required if multiple file paths or the `--output-dir` is specified.                                                                                                                    |
+| `-g` or `--google-sheets`   | If provided, a Google spreadsheet will be created in your Google account. You must pass the `service_account.json` with the `-c` flag.                                                                                                            |
+| `-c` or `--credentials`     | `service_account.json` filepath. Mandatory if you want to generate a spreadsheet in your Google account. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
+| `-p` or `--print-comments`  | If provided, the commented strings will be printed in the output file. Only valid for input files of type `.xml` or `.strings`. Otherwise it is ignored.                                                                                          |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -348,15 +370,17 @@ Alternatively, you can create an `.xlsx` file and open it in Google Sheets if yo
 
 Once you have the `service_account.json` file, you can create a spreadsheet in Google Sheets by running the following command:
 
-```bash
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g [SHEET_NAME] -c path/to/service_account.json 
+```
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json 
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
 
-```bash
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g [SHEET_NAME] -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
 ```
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
+```
+
+The name of the sheet will be the same as the name of the input file.
 
 #### Using the `to_google_sheets` Function in Your Project
 
@@ -407,8 +431,9 @@ to_google_sheets(
 ## Roadmap
 
 - [x] Add support for converting a file (not `.xml` or `.strings`) into a strings resource file (`.xml` or `.strings`).
-- [ ] Add support for multiple files input.
-- [ ] Add support for accepting the path to a folder as input.
+- [x] Add support for multiple files input.
+- [x] Add support for accepting the path to a directory as input.
+- [x] Add support for accepting the path to a directory as output.
 - [ ] Make a web version.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaDev/mobile-strings-converter/new/choose).
