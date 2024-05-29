@@ -12,12 +12,17 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img src="docs/icon.png" alt="Logo" width="156" height="156" style="margin-bottom:-40px">
+    <img 
+        src="docs/icon.png" 
+        alt="Logo" 
+        width="156" 
+        height="156"
+    >
     <h1 align="center">Mobile Strings Converter</h1>
     <p align="center">
         A Python package that converts Android & iOS strings files to any supported file type, and vice versa.
-        <br />
-        <br />
+    </p>
+    <p>
         <a href="https://pypi.org/project/mobile-strings-converter/">
           <img alt="PyPI version" src="https://img.shields.io/pypi/v/mobile-strings-converter" />
         </a>
@@ -44,9 +49,19 @@
         <a href="https://github.com/HenestrosaDev/mobile-strings-converter/pulls">
           <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaDev/mobile-strings-converter" />
         </a>
-        <br />
-        <br />
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">Report Bug</a> · <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">Request Feature</a> · <a href="https://github.com/HenestrosaDev/mobile-strings-converter/discussions">Ask Question</a>
+    </p>
+    <p>
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">
+            Report Bug
+        </a> 
+        · 
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">
+            Request Feature
+        </a> 
+        · 
+        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/discussions">
+            Ask Question
+        </a>
     </p>
 </div>
 
@@ -63,13 +78,15 @@
   - [Script Installation](#script-installation)
   - [Package Installation](#package-installation)
 - [Usage](#usage)
-  - [Run the Program](#run-the-program)
+  - [Running the Program](#running-the-program)
     - [Script Flags](#script-flags)
-  - [Use the Package in Your Project](#use-the-package-in-your-project)
-  - [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets)
+  - [Using the Package in Your Project](#using-the-package-in-your-project)
+  - [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
+    - [Setting Up a Google Account](#setting-up-a-google-account)
+    - [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
 - [Notes](#notes)
-  - [Indic Languages Supported by PDF files](#indic-languages-supported-by-pdf-files)
-  - [Languages Not Supported by PDF files](#languages-not-supported-by-pdf-files)
+  - [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
+  - [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -81,10 +98,11 @@
 
 ## About the Project
 
-I tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand and, even though you can do it with the option **Data > Split text to columns**, 
-it involves wasting your time generating the spreadsheet manually. Due to that, I decided to build a time-efficient solution, which consists on running a Python script in order to achieve that with any file type.
+I have tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand, and although you can do it with the **Data > Split text to columns** option, 
+it is a waste of time to generate the spreadsheet manually. Also, you are limited to spreadsheet files only. For this reason, I decided to create a time-efficient solution that consists of running 
+a Python script in order to do this that with any file type.
 
-Moreover, not only this script can be executed on its own, it also can be installed as a package via **PyPI** (more information [here](#using-the-package-in-your-project) about how to install it).
+In addition to being able to run this script on its own, it can also be installed as a package via **PyPI** (more information on how to install it [here](#use-the-package-in-your-project)).
 
 <!-- FILE TYPES SUPPORTED -->
 
@@ -172,16 +190,16 @@ Moreover, not only this script can be executed on its own, it also can be instal
 └───tests   
     │   base_tests.py
     │   test_get_strings.py
-    │   test_to_android.py
-    │   test_to_csv.py
-    │   test_to_html.py
-    │   test_to_ios.py
-    │   test_to_json.py
-    │   test_to_md.py
-    │   test_to_ods.py
-    │   test_to_pdf.py
-    │   test_to_xlsx.py
-    │   test_to_yaml.py
+    │   test_android.py
+    │   test_csv.py
+    │   test_html.py
+    │   test_ios.py
+    │   test_json.py
+    │   test_md.py
+    │   test_ods.py
+    │   test_pdf.py
+    │   test_xlsx.py
+    │   test_yaml.py
     │
     └───files
         ├───input
@@ -244,7 +262,7 @@ Moreover, not only this script can be executed on its own, it also can be instal
 
 ### Script Installation
 
-1. Download the [release](#release-files) that is best suited to your needs.
+1. Download the `.zip` file from the [latest release](#release-files).
 2. (Optional but recommended) Create a Python virtual environment in the project root. If you're using `virtualenv`, you would run `virtualenv venv`.
 3. (Optional but recommended) Activate the virtual environment:
    ```bash
@@ -269,31 +287,38 @@ Install the PyPI package by running `pip install mobile-strings-converter`.
 
 ## Usage
 
-### Run the Program
+### Running the Program
 
-For a basic usage, you can run the following command:
+For basic use, you can run the following command:
 
-```
+```bash
 python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -o *.[SUPPORTED_FILE_TYPE]
 ```
 
-See [Generate a Spreadsheet in Google Sheets](#generate-a-spreadsheet-in-google-sheets) to create a spreadsheet.
+To include the comments of the `.xml`/`.strings` file in the output file, add the `-p` (also `--print-comments`) flag:
+
+```bash
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -o *.[SUPPORTED_FILE_TYPE] -p
+```
+
+See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section to create a spreadsheet in your Google account.
 
 #### Script Flags
 
-| Flag                        | Description                                                                                                                                                         |
-|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-h` or `--help`            | Displays help text for the program                                                                                                                                  |
-| `-o` or `--output-filepath` | Specifies the filepath for storing the converted file. The file extension can be chosen from the list of supported file types mentioned [here](#about-the-project). |
-| `-g` or `--google-sheets`   | Followed by the name of the sheet, creates a new Google Sheets spreadsheet with the specified name.                                                                 |
-| `-c` or `--credentials`     | Followed by the path to your `service_account.json` file is mandatory if you want to generate a spreadsheet in your Google account.                                 |
-| `-p` or `--print-comments`  | The output file will include any commented strings present in the original file.                                                                                    |
+| Flag                        | Description                                                                                                                                                                                 |
+|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-h` or `--help`            | Displays help text for the program                                                                                                                                                          |
+| `-o` or `--output-filepath` | Specifies the filepath for storing the converted file. The file extension can be chosen from the list of supported file types mentioned [here](#about-the-project).                         |
+| `-g` or `--google-sheets`   | Followed by the name of the sheet, creates a new Google Sheets spreadsheet with the specified name.                                                                                         |
+| `-c` or `--credentials`     | Followed by the path to your `service_account.json` file is mandatory if you want to generate a spreadsheet in your Google account.                                                         |
+| `-p` or `--print-comments`  | The output file will contain all commented strings that were present in the original file (only applicable if the input file is a `.xml` or `.strings` file). Otherwise it will be ignored. |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-### Use the Package in Your Project
+### Using the Package in Your Project
 
-Once you have followed the steps of the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use: 
+After following the steps in the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use: 
+
 ```python
 # Using the `get_strings` function
 from mobile_strings_converter import get_strings  
@@ -304,11 +329,11 @@ get_strings(
 )
 ```
 
-### Generate a Spreadsheet in Google Sheets
+### Generating a Spreadsheet in Google Sheets
 
-#### Set Up Google Account
+#### Setting Up a Google Account
 
-Before going further into running the commands to do so, please note that you will have to generate a `service_account.json` file. You can do the following to get one:
+Before going further into running the commands to do this, note that you need to generate a `service_account.json` file. Follow these steps to get one:
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
 2. Create a new project or select an existing project.
@@ -319,16 +344,18 @@ Before going further into running the commands to do so, please note that you wi
 7. Click on the **Create key** button, select the JSON format and download the `service_account.json` file.
 8. Share your Google Sheets file with the email address that is specified in the **client_email** field in the `service_account.json` file.
 
-Alternatively, you can create a `.xlsx` file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
+Alternatively, you can create an `.xlsx` file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
 
-Once you have generated the `service_account.json` file, you can generate a spreadsheet in Google Sheets by running the following command:
-```
-python path/to/mobile_strings_converter.py <*.xml | *.strings> -g <SHEET_NAME> -c path/to/service_account.json 
+Once you have the `service_account.json` file, you can create a spreadsheet in Google Sheets by running the following command:
+
+```bash
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g [SHEET_NAME] -c path/to/service_account.json 
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
-```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE -g <SHEET_NAME> -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
+
+```bash
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g [SHEET_NAME] -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
 ```
 
 #### Using the `to_google_sheets` Function in Your Project
@@ -348,7 +375,7 @@ to_google_sheets(
 
 ## Notes
 
-### Indic Languages Supported by PDF files
+### Indic Languages Supported by PDF Files
 
 - Hindi
 - Marathu
@@ -359,7 +386,7 @@ to_google_sheets(
 - Tamil
 - Punjabi
 
-### Languages Not Supported by PDF files
+### Languages Not Supported by PDF Files
 
 - Bengali <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
 - Dhivehi <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
@@ -381,6 +408,7 @@ to_google_sheets(
 
 - [x] Add support for converting a file (not `.xml` or `.strings`) into a strings resource file (`.xml` or `.strings`).
 - [ ] Add support for multiple files input.
+- [ ] Add support for accepting the path to a folder as input.
 - [ ] Make a web version.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaDev/mobile-strings-converter/new/choose).
@@ -396,7 +424,7 @@ Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaDev/mobile-strin
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See [`LICENSE`](https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/LICENSE) for more information.
 
 <!-- AUTHORS -->
 
