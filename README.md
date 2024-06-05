@@ -20,7 +20,7 @@
     >
     <h1 align="center">Mobile Strings Converter</h1>
     <p align="center">
-        A Python package that converts Android & iOS strings files to any supported file type, and vice versa.
+        Convert Android & iOS string files to any supported file type, and vice versa.
     </p>
     <p>
         <a href="https://pypi.org/project/mobile-strings-converter/">
@@ -87,6 +87,8 @@
 - [Notes](#notes)
   - [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
   - [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
+- [Troubleshooting](#troubleshooting)
+  - [iOS](#ios)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -100,7 +102,7 @@
 
 I have tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand, and although you can do it with the **Data > Split text to columns** option, 
 it is a waste of time to generate the spreadsheet manually. Also, you are limited to spreadsheet files only. For this reason, I decided to create a time-efficient solution that consists of running 
-a Python script in order to do this that with any file type.
+a Python script to do this with any file type.
 
 In addition to being able to run this script on its own, it can also be installed as a package via **PyPI** (more information on how to install it [here](#use-the-package-in-your-project)).
 
@@ -424,6 +426,42 @@ to_google_sheets(
 - Sinhala <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
 - Tigrinya <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
 
+## Troubleshooting
+
+### iOS
+
+You may encounter this error on iOS when using a generated `.strings` file:
+
+```
+validation failed: Couldn't parse property list because the input data was in an invalid format
+```
+
+This is because the input file has double quotes in some NAME or VALUE. To identify the line with the error, you have to do the following on macOS:
+
+1. `cd` into your project root.
+2. `cd [LANGUAGE_CODE].lproj` (e.g., `cd es.lproj`)
+3. `plutil -lint Localizable.strings`
+
+When you run step 3, you will either get an error telling you what is wrong with your file, or you will be told that the file is correct.
+
+✅ Success output example:
+
+```
+╰─➤  plutil -lint Localizable.strings
+Localizable.strings: OK
+```
+
+❌ Error output example:
+
+```
+╰─➤  plutil -lint Localizable.strings
+2024-06-05 11:04:08.614 plutil[86874:16115488] CFPropertyListCreateFromXMLData(): Old-style plist parser: missing semicolon in dictionary on line 293. Parsing will be abandoned. Break on _CFPropertyListMissingSemicolon to debug.
+Localizable.strings: Unexpected character " at line 1
+```
+
+>[!NOTE]
+>The last line of the `plutil` output on error will always be `Unexpected character at line 1`. However, the real error is in the line above, where it says that the error is on line 293 due to a missing semicolon.
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- ROADMAP -->
@@ -434,6 +472,7 @@ to_google_sheets(
 - [x] Add support for multiple files input.
 - [x] Add support for accepting the path to a directory as input.
 - [x] Add support for accepting the path to a directory as output.
+- [ ] Make brew (macOS) formula.
 - [ ] Make a web version.
 
 You can propose a new feature creating an [issue](https://github.com/HenestrosaDev/mobile-strings-converter/new/choose).
