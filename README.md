@@ -324,11 +324,15 @@ To convert one file to another file:
 python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE]
 ```
 
+---
+
 To include the comments of the `.xml`/`.strings` input file in the output file, add the `-p` (also `--print-comments`) flag. Note that it will be ignored for other input file types.
 
 ```
 python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
 ```
+
+---
 
 To convert multiple files at once and save them to the specified directory passed in the `-d` flag, use the`-t` flag followed by the desired file type extension (e.g., `.json`). Note that the program will create the directory if it doesn't exist.
 
@@ -336,11 +340,15 @@ To convert multiple files at once and save them to the specified directory passe
 python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
 ```
 
+---
+
 To convert supported files in a directory and its subdirectories and save them to a directory:
 
 ```
 python path/to/mobile_strings_converter.py [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
 ```
+
+---
 
 To convert supported files in multiple directories and their subdirectories and save them to a directory:
 
@@ -348,9 +356,13 @@ To convert supported files in multiple directories and their subdirectories and 
 python path/to/mobile_strings_converter.py [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
 ```
 
+---
+
 For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`
 
 See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section to create a spreadsheet in your Google account.
+
+---
 
 #### Script Flags
 
