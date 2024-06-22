@@ -12,57 +12,81 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img 
-        src="docs/icon.png" 
-        alt="Logo" 
-        width="156" 
-        height="156"
-    >
-    <h1 align="center">Mobile Strings Converter</h1>
-    <p align="center">
-        Convert Android & iOS string files to any supported file type, and vice versa.
-    </p>
-    <p>
-        <a href="https://pypi.org/project/mobile-strings-converter/">
-          <img alt="PyPI version" src="https://img.shields.io/pypi/v/mobile-strings-converter" />
-        </a>
-        <a href="https://pypi.org/project/mobile-strings-converter/">
-          <img alt="Python versions support" src="https://img.shields.io/pypi/pyversions/mobile-strings-converter" />
-        </a>
-        <br />
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/actions/workflows/build.yaml">
-          <img alt="GitHub action: Build" src="https://github.com/HenestrosaDev/mobile-strings-converter/actions/workflows/build.yaml/badge.svg" />
-        </a>
-        <a href="https://codecov.io/gh/HenestrosaDev/mobile-strings-converter/">
-          <img alt="Codecov" src="https://codecov.io/gh/HenestrosaDev/mobile-strings-converter/branch/main/graph/badge.svg" />
-        </a>
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/LICENSE">
-          <img alt="License" src="https://img.shields.io/github/license/HenestrosaDev/mobile-strings-converter" />
-        </a>
-        <br />
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/graphs/contributors">
-          <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/HenestrosaDev/mobile-strings-converter" />
-        </a>
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues">
-          <img alt="Issues" src="https://img.shields.io/github/issues/HenestrosaDev/mobile-strings-converter" />
-        </a>
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/pulls">
-          <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/HenestrosaDev/mobile-strings-converter" />
-        </a>
-    </p>
-    <p>
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">
-            Report Bug
-        </a> 
-        · 
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">
-            Request Feature
-        </a> 
-        · 
-        <a href="https://github.com/HenestrosaDev/mobile-strings-converter/discussions">
-            Ask Question
-        </a>
-    </p>
+	<img 
+		src="docs/icon.png" 
+		alt="Logo" 
+		width="156" 
+		height="156"
+	>
+		<h1 align="center">Mobile Strings Converter</h1>
+		<p align="center">
+			Convert Android & iOS string files to any supported file type, and vice versa.
+		</p>
+		<p>
+			<a href="https://pypi.org/project/mobile-strings-converter/">
+				<img 
+					alt="PyPI version" 
+					src="https://img.shields.io/pypi/v/mobile-strings-converter" 
+				/>
+			</a>
+			<a href="https://pypi.org/project/mobile-strings-converter/">
+				<img 
+					alt="Python versions support" 
+					src="https://img.shields.io/pypi/pyversions/mobile-strings-converter" 
+				/>
+			</a>
+			<br />
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/actions/workflows/build.yaml">
+				<img 
+					alt="GitHub action: Build" 
+					src="https://github.com/HenestrosaDev/mobile-strings-converter/actions/workflows/build.yaml/badge.svg" 
+				/>
+			</a>
+			<a href="https://codecov.io/gh/HenestrosaDev/mobile-strings-converter/">
+				<img 
+					alt="Codecov" 
+					src="https://codecov.io/gh/HenestrosaDev/mobile-strings-converter/branch/main/graph/badge.svg" 
+				/>
+			</a>
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/LICENSE">
+				<img 
+					alt="License" 
+					src="https://img.shields.io/github/license/HenestrosaDev/mobile-strings-converter" 
+				/>
+			</a>
+			<br />
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/graphs/contributors">
+				<img 
+					alt="GitHub Contributors" 
+					src="https://img.shields.io/github/contributors/HenestrosaDev/mobile-strings-converter" 
+				/>
+			</a>
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues">
+				<img 
+					alt="Issues" 
+					src="https://img.shields.io/github/issues/HenestrosaDev/mobile-strings-converter" 
+				/>
+			</a>
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/pulls">
+				<img 
+					alt="GitHub pull requests" 
+					src="https://img.shields.io/github/issues-pr/HenestrosaDev/mobile-strings-converter" 
+				/>
+			</a>
+		</p>
+		<p>
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">
+				Report Bug
+			</a> 
+			· 
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/issues/new/choose">
+				Request Feature
+			</a> 
+			· 
+			<a href="https://github.com/HenestrosaDev/mobile-strings-converter/discussions">
+				Ask Question
+			</a>
+		</p>
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -70,25 +94,25 @@
 ## Table of Contents
 
 - [About the Project](#about-the-project)
-  - [File Types Supported](#file-types-supported) 
-  - [Project Structure](#project-structure)
-  - [Built With](#built-with)
+	- [File Types Supported](#file-types-supported)
+	- [Project Structure](#project-structure)
+	- [Built With](#built-with)
 - [Release Files](#release-files)
 - [Getting Started](#getting-started)
-  - [Script Installation](#script-installation)
-  - [Package Installation](#package-installation)
+	- [Script Installation](#script-installation)
+	- [Package Installation](#package-installation)
 - [Usage](#usage)
-  - [Running the Program](#running-the-program)
-    - [Script Flags](#script-flags)
-  - [Using the Package in Your Project](#using-the-package-in-your-project)
-  - [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
-    - [Setting Up a Google Account](#setting-up-a-google-account)
-    - [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
+	- [Running the Program](#running-the-program)
+		- [Script Flags](#script-flags)
+	- [Using the Package in Your Project](#using-the-package-in-your-project)
+	- [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
+		- [Setting Up a Google Account](#setting-up-a-google-account)
+		- [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
 - [Notes](#notes)
-  - [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
-  - [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
+	- [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
+	- [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
 - [Troubleshooting](#troubleshooting)
-  - [iOS](#ios)
+	- [iOS](#ios)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -100,8 +124,8 @@
 
 ## About the Project
 
-I have tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand, and although you can do it with the **Data > Split text to columns** option, 
-it is a waste of time to generate the spreadsheet manually. Also, you are limited to spreadsheet files only. For this reason, I decided to create a time-efficient solution that consists of running 
+I have tried to do the whole process of converting a strings resource file into a spreadsheet in Google Sheets by hand, and although you can do it with the **Data > Split text to columns** option,
+it is a waste of time to generate the spreadsheet manually. Also, you are limited to spreadsheet files only. For this reason, I decided to create a time-efficient solution that consists of running
 a Python script to do this with any file type.
 
 In addition to being able to run this script on its own, it can also be installed as a package via **PyPI** (more information on how to install it [here](#use-the-package-in-your-project)).
@@ -127,13 +151,13 @@ In addition to being able to run this script on its own, it can also be installe
 ### Project Structure
 
 <details>
-  <summary>ASCII directory structure</summary>
+	<summary>ASCII directory structure</summary>
 
 ```
 │   .gitignore
 │   .pre-commit-config.yaml
 │   LICENSE
-│   poetry.lock 
+│   poetry.lock
 │   pyproject.toml
 │   README.md
 │   requirements.txt
@@ -189,7 +213,7 @@ In addition to being able to run this script on its own, it can also be installe
 │           main_window.py
 │           __init__.py
 │
-└───tests   
+└───tests
     │   base_tests.py
     │   test_get_strings.py
     │   test_android.py
@@ -232,6 +256,7 @@ In addition to being able to run this script on its own, it can also be installe
                 strings.xml
                 strings.yaml
 ```
+
 </details>
 
 <!-- BUILT WITH -->
@@ -240,11 +265,11 @@ In addition to being able to run this script on its own, it can also be installe
 
 - [openpyxl](https://pypi.org/project/openpyxl/) to generate ODS and XLSX files.
 - [gspread](https://pypi.org/project/gspread/) to generate spreadsheets in Google Sheets.
-- [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets. 
+- [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets.
 - [PyYAML](https://pypi.org/project/PyYAML/) to generate YAML files.
 - [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/) to add arabic characters support for PDF files.
 - [fpdf2](https://pypi.org/project/fpdf2/) to generate PDF files.
-- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/) to recognize the **value** language when writing a PDF in order to know what font to use.  
+- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/) to recognize the **value** language when writing a PDF in order to know what font to use.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -253,7 +278,7 @@ In addition to being able to run this script on its own, it can also be installe
 ## Release Files
 
 | File                                                                                                                                            | Description                                                                                         | Size    |
-|:------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|:--------|
+| :---------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- | :------ |
 | [mobile-strings-converter.zip](https://github.com/HenestrosaDev/mobile-strings-converter/releases/latest/download/mobile-strings-converter.zip) | PDF file support for almost all languages ([see exceptions](#languages-not-supported-by-pdf-files)) | 8.43 MB |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -267,16 +292,18 @@ In addition to being able to run this script on its own, it can also be installe
 1. Download the `.zip` file from the [latest release](#release-files).
 2. (Optional but recommended) Create a Python virtual environment in the project root. If you're using `virtualenv`, you would run `virtualenv venv`.
 3. (Optional but recommended) Activate the virtual environment:
-   ```bash
-   # on Windows
-   . venv/Scripts/activate
-   # if you get the error `FullyQualifiedErrorId : UnauthorizedAccess`, run this:
-   Set-ExecutionPolicy Unrestricted -Scope Process
-   # and then . venv/Scripts/activate
-   
-   # on macOS and Linux
-   source venv/Scripts/activate
-   ```
+
+	 ```bash
+	 # on Windows
+	 . venv/Scripts/activate
+	 # if you get the error `FullyQualifiedErrorId : UnauthorizedAccess`, run this:
+	 Set-ExecutionPolicy Unrestricted -Scope Process
+	 # and then . venv/Scripts/activate
+
+	 # on macOS and Linux
+	 source venv/Scripts/activate
+	 ```
+
 4. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to run the script.
 
 ### Package Installation
@@ -328,7 +355,7 @@ See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in
 #### Script Flags
 
 | Flag                        | Description                                                                                                                                                                                                                                       |
-|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `-h` or `--help`            | Displays help text for the program.                                                                                                                                                                                                               |
 | `-f` or `--output-filepath` | Path to save the converted file. Only works if only one input file is provided. The file extension can be chosen from [the list of supported file types](#file-types-supported).                                                                  |
 | `-d` or `--output-dir`      | Directory where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                  |
@@ -341,15 +368,15 @@ See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in
 
 ### Using the Package in Your Project
 
-After following the steps in the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use: 
+After following the steps in the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use:
 
 ```python
 # Using the `get_strings` function
-from mobile_strings_converter import get_strings  
+from mobile_strings_converter import get_strings
 
 get_strings(
-   input_filepath=Path("strings.xml"), 
-   with_comments=True
+	input_filepath=Path("strings.xml"),
+	with_comments=True
 )
 ```
 
@@ -373,7 +400,7 @@ Alternatively, you can create an `.xlsx` file and open it in Google Sheets if yo
 Once you have the `service_account.json` file, you can create a spreadsheet in Google Sheets by running the following command:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json 
+python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
@@ -390,10 +417,10 @@ The name of the sheet will be the same as the name of the input file.
 from mobile_strings_converter import to_google_sheets
 
 to_google_sheets(
-    input_filepath=Path("path/to/strings-file"),
-    sheet_name="MyProject strings",
-    credentials_filepath=Path("path/to/service_account.json"),
-    with_comments=True,
+	input_filepath=Path("path/to/strings-file"),
+	sheet_name="MyProject strings",
+	credentials_filepath=Path("path/to/service_account.json"),
+	with_comments=True,
 )
 ```
 
@@ -459,8 +486,8 @@ Localizable.strings: OK
 Localizable.strings: Unexpected character " at line 1
 ```
 
->[!NOTE]
->The last line of the `plutil` output on error will always be `Unexpected character at line 1`. However, the real error is in the line above, where it says that the error is on line 293 due to a missing semicolon.
+> [!NOTE]
+> The last line of the `plutil` output on error will always be `Unexpected character at line 1`. However, the real error is in the line above, where it says that the error is on line 293 due to a missing semicolon.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
