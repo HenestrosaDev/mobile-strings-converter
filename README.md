@@ -154,6 +154,7 @@ In addition to being able to run this script on its own, it can also be installe
 	<summary>ASCII directory structure</summary>
 
 ```
+/
 │   .gitignore
 │   .pre-commit-config.yaml
 │   LICENSE
@@ -165,59 +166,46 @@ In addition to being able to run this script on its own, it can also be installe
 │
 ├───.github
 │   │   CONTRIBUTING.md
+│   │   dependabot.yml
 │   │
 │   ├───ISSUE_TEMPLATE
 │   │       bug_report_template.md
 │   │       feature_request_template.md
 │   │
-│   └───PULL_REQUEST_TEMPLATE
-│           pull_request_template.md
+│   ├───PULL_REQUEST_TEMPLATE
+│   │       pull_request_template.md
+│   │
+│   └───workflows
+│           build.yaml
+│           publish.yaml
 │
 ├───docs
 │       icon.png
 │
 ├───src
-│   ├───mobile_strings_converter
-│   │       console_style.py
-│   │       converter.py
-│   │       __init__.py
-│   │       __main__.py
-│   │
-│   ├───assets
-│   │       └───fonts
-│   │               Aakar.ttf
-│   │               AnekTelugu-VariableFont_wdth,wght.ttf
-│   │               DejaVuSansCondensed.ttf
-│   │               Eunjin.ttf
-│   │               fireflysung.ttf
-│   │               gargi.ttf
-│   │               Gurvetica_a8_Heavy.ttf
-│   │               Latha.ttf
-│   │               Waree.ttf
-│   │
-│   ├───controller
-│   │       main_controller.py
-│   │       __init__.py
-│   │
-│   ├───model
-│   │       transcription.py
-│   │       __init__.py
-│   │
-│   ├───utils
-│   │       constants.py
-│   │       i18n.py
-│   │       path_helper.py
-│   │       __init__.py
-│   │
-│   └───view
-│           main_window.py
-│           __init__.py
+│   └───mobile_strings_converter
+│       │   console_style.py
+│       │   converter.py
+│       │   __init__.py
+│       │   __main__.py
+│       │
+│       └───assets
+│           └───fonts
+│                   Aakar.ttf
+│                   AnekTelugu-VariableFont_wdth,wght.ttf
+│                   DejaVuSansCondensed.ttf
+│                   Eunjin.ttf
+│                   fireflysung.ttf
+│                   gargi.ttf
+│                   Gurvetica_a8_Heavy.ttf
+│                   Latha.ttf
+│                   Waree.ttf
 │
 └───tests
     │   base_tests.py
-    │   test_get_strings.py
     │   test_android.py
     │   test_csv.py
+    │   test_get_strings.py
     │   test_html.py
     │   test_ios.py
     │   test_json.py
