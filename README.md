@@ -97,7 +97,6 @@
 	- [File Types Supported](#file-types-supported)
 	- [Project Structure](#project-structure)
 	- [Built With](#built-with)
-- [Release Files](#release-files)
 - [Getting Started](#getting-started)
 	- [Script Installation](#script-installation)
 	- [Package Installation](#package-installation)
@@ -261,23 +260,13 @@ In addition to being able to run this script on its own, it can also be installe
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- RELEASE FILES -->
-
-## Release Files
-
-| File                                                                                                                                            | Description                                                                                         | Size    |
-| :---------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- | :------ |
-| [mobile-strings-converter.zip](https://github.com/HenestrosaDev/mobile-strings-converter/releases/latest/download/mobile-strings-converter.zip) | PDF file support for almost all languages ([see exceptions](#languages-not-supported-by-pdf-files)) | 8.43 MB |
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 <!-- GETTING STARTED -->
 
 ## Getting Started
 
 ### Script Installation
 
-1. Download the `.zip` file from the [latest release](#release-files).
+1. Download the `.zip` file from the [latest release](https://github.com/HenestrosaDev/mobile-strings-converter/releases/latest/).
 2. (Optional but recommended) Create a Python virtual environment in the project root. If you're using `virtualenv`, you would run `virtualenv venv`.
 3. (Optional but recommended) Activate the virtual environment:
 
@@ -354,8 +343,8 @@ See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in
 
 #### Script Flags
 
-| Flag                        | Description                                                                                                                                                                                                                                       |
-| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| FLAG                        | DESCRIPTION                                                                                                                                                                                                                                       |
+|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `-h` or `--help`            | Displays help text for the program.                                                                                                                                                                                                               |
 | `-f` or `--output-filepath` | Path to save the converted file. Only works if only one input file is provided. The file extension can be chosen from [the list of supported file types](#file-types-supported).                                                                  |
 | `-d` or `--output-dir`      | Directory where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                  |
