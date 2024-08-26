@@ -4,6 +4,7 @@ from pathlib import Path
 
 from console_style import ConsoleStyle
 from converter import convert_strings, to_google_sheets
+from mobile_strings_converter import __version__
 
 
 def get_filepaths_from_dir(directory, extensions):
@@ -43,8 +44,12 @@ def main():
         "input_paths",
         type=str,
         nargs="+",  # Accept one or more values
-        help="File paths or directories containing supported file types to be "
-        "converted.",
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=__version__,
+        help="Show program version info and exit.",
     )
     parser.add_argument(
         "-f",
