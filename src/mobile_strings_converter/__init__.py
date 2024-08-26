@@ -7,7 +7,7 @@
 from .converter import convert_strings, to_google_sheets
 
 # Constants
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 __author__ = "José Carlos López Henestrosa"
 __license = "MIT"

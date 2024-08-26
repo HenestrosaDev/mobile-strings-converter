@@ -102,7 +102,9 @@
 	- [Package Installation](#package-installation)
 - [Usage](#usage)
 	- [Running the Program](#running-the-program)
-		- [Script Flags](#script-flags)
+		- [Script Arguments](#script-arguments)
+			- [Positional Arguments](#positional-arguments)
+            - [Options](#options)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
 	- [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
@@ -303,7 +305,7 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORT
 
 ---
 
-To include the comments of the `.xml`/`.strings` input file in the output file, add the `-p` (also `--print-comments`) flag. Note that it will be ignored for other input file types.
+To include the comments of the `.xml`/`.strings` input file in the output file, add the `-p` (or `--print-comments`) option. Note that it will be ignored for other input file types.
 
 ```
 python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
@@ -311,7 +313,7 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORT
 
 ---
 
-To convert multiple files at once and save them to the specified directory passed in the `-d` flag, use the`-t` flag followed by the desired file type extension (e.g., `.json`). Note that the program will create the directory if it doesn't exist.
+To convert multiple files at once and save them in the specified directory specified with the `-d` option, use the`-t` option followed by the desired file type extension (e.g., `.json`). Note that the program will create the directory if it doesn't exist.
 
 ```
 python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
@@ -341,17 +343,27 @@ See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in
 
 ---
 
-#### Script Flags
+#### Script Arguments
 
-| FLAG                        | DESCRIPTION                                                                                                                                                                                                                                       |
-|:----------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-h` or `--help`            | Displays help text for the program.                                                                                                                                                                                                               |
-| `-f` or `--output-filepath` | Path to save the converted file. Only works if only one input file is provided. The file extension can be chosen from [the list of supported file types](#file-types-supported).                                                                  |
-| `-d` or `--output-dir`      | Directory where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                  |
-| `-t` or `--target-type`     | Target file type to convert the files (e.g., .pdf, .json). Required if multiple file paths or the `--output-dir` is specified.                                                                                                                    |
-| `-g` or `--google-sheets`   | If provided, a Google spreadsheet will be created in your Google account. You must pass the `service_account.json` with the `-c` flag.                                                                                                            |
-| `-c` or `--credentials`     | `service_account.json` filepath. Mandatory if you want to generate a spreadsheet in your Google account. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
-| `-p` or `--print-comments`  | If provided, the commented strings will be printed in the output file. Only valid for input files of type `.xml` or `.strings`. Otherwise it is ignored.                                                                                          |
+A full list of the program command's options are as follows:
+
+##### Positional Arguments
+
+| POSITIONAL ARGUMENT | DESCRIPTION                                                                                                            |
+|:--------------------|:-----------------------------------------------------------------------------------------------------------------------|
+| `input_paths`       | Files or directory paths of supported files to convert. See [the list of supported file types](#file-types-supported). |
+
+##### Options
+
+| OPTION                                                  | DESCRIPTION                                                                                                                                                                                                                                                    |
+|:--------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-h, --help`                                            | Show the help text and exit.                                                                                                                                                                                                                                   |
+| `-v, --version`                                         | Show script version info and exit.                                                                                                                                                                                                                             |
+| `-f FILE_PATH, --output-file FILE_PATH`                 | File path to save the converted file. Only works if only one input file is provided. See [the list of supported file types](#file-types-supported).                                                                                                            |
+| `-d DIR_PATH, --output-dir DIR_PATH`                    | Directory path where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                          |
+| `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files. Required when specifying multiple file paths or `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
+| `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Create a Google spreadsheet with the output in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
+| `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

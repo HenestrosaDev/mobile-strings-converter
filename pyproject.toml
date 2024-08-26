@@ -4,7 +4,7 @@ version = "0.1.4"
 description = "Convert Android & iOS strings files to any supported file type and vice versa."
 authors = ["José Carlos López <henestrosadev@gmail.com>"]
 license = "MIT"
-classifiers=[
+classifiers = [
     "Intended Audience :: Developers",
     "Environment :: Console",
     "Topic :: Text Processing :: General",
@@ -17,7 +17,7 @@ classifiers=[
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
 ]
-keywords=[
+keywords = [
     "android",
     "strings.xml",
     "strings",
@@ -33,9 +33,9 @@ keywords=[
     "ios",
     "Localizable.strings"
 ]
-repository="https://github.com/HenestrosaDev/mobile-strings-converter"
+repository = "https://github.com/HenestrosaDev/mobile-strings-converter"
 readme = "README.md"
-packages = [{include = "mobile_strings_converter", from = "src"}]
+packages = [{ include = "mobile_strings_converter", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
