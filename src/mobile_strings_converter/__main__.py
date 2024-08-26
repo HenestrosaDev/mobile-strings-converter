@@ -44,6 +44,9 @@ def main():
         "input_paths",
         type=str,
         nargs="+",  # Accept one or more values
+        help="Files or directory paths of supported files to convert. Check the list "
+        "of the supported file types above.",
+    )
     parser.add_argument(
         "-v",
         "--version",
@@ -53,27 +56,31 @@ def main():
     )
     parser.add_argument(
         "-f",
-        "--output-filepath",
+        "--output-file",
         required=False,
         type=str,
-        help="Path to save the converted file. Only works if only one input file  "
-        "is provided. See the README for a list of supported file types.",
+        metavar="FILE_PATH",
+        help="File path to save the converted file. Only works if only one input file "
+        "is specified. Check the list of the supported file types above.",
     )
     parser.add_argument(
         "-d",
         "--output-dir",
         required=False,
         type=str,
-        help="Directory where the converted files will be saved. Compatible with "
-        "single and multiple input files as well as directories. The specified "
-        "directory will be created if it does not already exist.",
+        metavar="DIR_PATH",
+        help="Directory path to save the converted files. Compatible with single and "
+        "multiple input files as well as directories. The specified directory will be "
+        "created if it does not already exist.",
     )
     parser.add_argument(
         "-t",
         "--target-type",
         type=str,
-        help="Target file type to convert the files (e.g., .pdf, .json). Required if "
-        "multiple file paths or the `--output-dir` is specified.",
+        metavar="FILE_TYPE",
+        help="Target file type to convert the files. Required when specifying "
+        "multiple file paths or `--output-dir`. Check the list of the supported file "
+        "types above.",
     )
     parser.add_argument(
         "-g",
@@ -91,9 +98,8 @@ def main():
         "--print-comments",
         required=False,
         action="store_true",
-        help="If provided, the commented strings will be printed in the output file. "
-        "Only valid for input files of type `.xml` or `.strings`. Otherwise it is "
-        "ignored.",
+        help="Print commented strings from the input file to the output file. "
+        "Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
     )
 
     args = parser.parse_args()
