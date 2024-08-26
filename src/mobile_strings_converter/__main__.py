@@ -18,9 +18,27 @@ def get_filepaths_from_dir(directory, extensions):
 
 
 def main():
+    supported_file_types = [
+        ".csv",
+        ".xlsx",
+        ".ods",
+        ".md",
+        ".json",
+        ".yaml",
+        ".html",
+        ".strings",
+        ".xml",
+        ".pdf",
+    ]
+    supported_file_types_str = "\n".join(f"  - {ext}" for ext in supported_file_types)
+
     parser = argparse.ArgumentParser(
-        description="Takes input and output files from console."
+        description="Script to convert Android & iOS string files to any supported "
+        "file type, and vice versa.\n\n"
+        f"Supported file types:\n{supported_file_types_str}",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+
     parser.add_argument(
         "input_paths",
         type=str,
@@ -88,28 +106,15 @@ def main():
             f"{ConsoleStyle.END}"
         )
 
-    allowed_extensions = [
-        ".csv",
-        ".xlsx",
-        ".ods",
-        ".md",
-        ".json",
-        ".yaml",
-        ".html",
-        ".strings",
-        ".xml",
-        ".pdf",
-    ]
-
     input_filepaths = []
     output_dir = None
 
     for path in args.input_paths:
         if os.path.isdir(path):
             # If it's a directory, get all matching files
-            input_filepaths.extend(get_filepaths_from_dir(path, allowed_extensions))
-        elif os.path.isfile(path) and path.endswith(tuple(allowed_extensions)):
-            # If it's a file with an allowed extension, add it to the list
+            input_filepaths.extend(get_filepaths_from_dir(path, supported_file_types))
+        elif os.path.isfile(path) and path.endswith(tuple(supported_file_types)):
+            # If it's a supported file type, add it to the list
             input_filepaths.append(Path(path))
         else:
             print(
