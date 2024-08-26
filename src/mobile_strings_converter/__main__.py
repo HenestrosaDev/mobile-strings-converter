@@ -79,18 +79,12 @@ def main():
         "-g",
         "--google-sheets",
         required=False,
-        action="store_true",
-        help="If provided, a Google spreadsheet will be created in your Google "
-        "account. You must pass the `service_account.json` with the -c flag.",
-    )
-    parser.add_argument(
-        "-c",
-        "--credentials",
-        required=False,
         type=str,
-        help="`service_account.json` filepath. Mandatory if you want to generate a "
-        "spreadsheet in your Google account. You can learn how to generate "
-        "it in the README.",
+        metavar="CREDENTIALS_PATH",
+        help="Create a Google spreadsheet with the output in your Google account. "
+        "You must specify the `service_account.json` path. You can learn how to "
+        "generate it in the Generating a Spreadsheet in Google Sheets section in the "
+        "README.",
     )
     parser.add_argument(
         "-p",
@@ -145,23 +139,19 @@ def main():
             f"-f or -d flag.{ConsoleStyle.END}"
         )
 
-    if args.google_sheets and not args.credentials:
-        raise ValueError(
-            f"{ConsoleStyle.RED}You need to pass the path of the "
-            f"`service_account.json` file to generate a Sheet.{ConsoleStyle.END}"
-        )
-    elif not args.google_sheets and args.credentials:
-        raise ValueError(
-            f"{ConsoleStyle.RED}You need to pass the name of the Sheet to be "
-            f"generated.{ConsoleStyle.END}"
-        )
-    elif args.google_sheets and args.credentials:
-        for input_filepath in input_filepaths:
-            to_google_sheets(
-                args.input_filepath,
-                sheet_name=Path(input_filepath).stem,
-                credentials_filepath=Path(args.credentials),
-                with_comments=args.print_comments,
+    if credentials_path := args.google_sheets:
+        if os.path.isfile(credentials_path):
+            for input_filepath in input_filepaths:
+                to_google_sheets(
+                    args.input_filepath,
+                    sheet_name=Path(input_filepath).stem,
+                    credentials_filepath=Path(credentials_path),
+                    with_comments=args.print_comments,
+                )
+        else:
+            raise ValueError(
+                f"{ConsoleStyle.RED}You need to pass the path of the "
+                f"`service_account.json` file to generate a Sheet.{ConsoleStyle.END}"
             )
 
     for input_filepath in input_filepaths:
