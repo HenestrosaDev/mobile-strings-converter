@@ -113,6 +113,7 @@
 - [Notes](#notes)
 	- [Android Resources](#android-resources)
 	- [Plurals and Arrays](#plurals-and-arrays)
+	- [Placeholders](#placeholders)
 	- [PDF Files](#pdf-files)
 	- [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
 	- [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
@@ -194,6 +195,7 @@ Every file type except `.xml` and `.strings` can hold several languages at once 
 │       │   exceptions.py
 │       │   files.py
 │       │   model.py
+│       │   placeholders.py
 │       │   __init__.py
 │       │   __main__.py
 │       │
@@ -232,6 +234,7 @@ Every file type except `.xml` and `.strings` can hold several languages at once 
     │   test_files.py
     │   test_formats.py
     │   test_get_strings.py
+    │   test_placeholders.py
     │   test_google_sheets.py
     │   test_html.py
     │   test_ios.py
@@ -530,6 +533,18 @@ Spreadsheets and other tables have a row for each item of a plural or array, nam
 | `planets[1]`   | `Venus`    |
 
 These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead. iOS `.strings` files can't hold plurals or arrays, so they are skipped with a warning.
+
+### Placeholders
+
+Placeholders are converted when writing Android and iOS files, so the strings work on the other platform:
+
+| ANDROID         | IOS                         |
+|:----------------|:----------------------------|
+| `%s`, `%1$s`    | `%@`, `%1$@`                |
+| `%d`, `%1$d`    | `%d`, `%ld`, `%lld`, `%1$d` |
+| `%.2f`          | `%.2f`, `%.2lf`             |
+
+Other file types keep the placeholders of the input file.
 
 ### PDF Files
 
