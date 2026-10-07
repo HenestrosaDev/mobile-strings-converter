@@ -83,11 +83,8 @@ class TestMultiLocaleRoundTrip(unittest.TestCase):
         self.assertEqual("songs[one],%d song,%d canción,,", csv[2])
         self.assertEqual("bye,Bye,Adiós,,", csv[-1])
 
-    def test_for_locale_and_merge(self):
-        catalogs = {
-            locale: MULTI_LOCALE_CATALOG.for_locale(locale)
-            for locale in MULTI_LOCALE_CATALOG.locales
-        }
+    def test_split(self):
+        catalogs = MULTI_LOCALE_CATALOG.split()
 
         self.assertEqual([DEFAULT_LOCALE, "es", "fr"], list(catalogs))
         self.assertEqual([("hello", "Bonjour")], catalogs["fr"].to_pairs())

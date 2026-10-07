@@ -105,6 +105,7 @@
 		- [Script Arguments](#script-arguments)
 			- [Positional Arguments](#positional-arguments)
             - [Options](#options)
+	- [Working With Several Languages](#working-with-several-languages)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
 	- [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
@@ -149,6 +150,8 @@ In addition to being able to run this script on its own, it can also be installe
 - PDF
 - XLSX
 - YAML
+
+Every file type except `.xml` and `.strings` can hold several languages at once (e.g., a spreadsheet with a column per language). See [Working With Several Languages](#working-with-several-languages).
 
 <!-- PROJECT STRUCTURE -->
 
@@ -390,8 +393,37 @@ A full list of the program command's options are as follows:
 | `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files (e.g. `json` or `.json`). Required when using `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
 | `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Write the strings to the Google spreadsheet named after each input file (without its extension) in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
+| `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+### Working With Several Languages
+
+To put all the languages of your app in one file to send to translators, pass the resources directory and the `-m` (or `--merge`) option:
+
+```
+mobile-strings-converter app/src/main/res -m -f translations.xlsx
+```
+
+The language of each file is taken from its directory:
+
+| DIRECTORY                                       | LANGUAGE COLUMN |
+|:------------------------------------------------|:----------------|
+| `values` or `Base.lproj`                        | `VALUE`         |
+| `values-es` or `es.lproj`                       | `es`            |
+| `values-pt-rBR` or `pt-BR.lproj`                | `pt-BR`         |
+| `values-b+sr+Latn` or `sr-Latn.lproj`           | `sr-Latn`       |
+
+Comments written right before a string (e.g., `<!-- Title of the home screen -->` or `/* Title of the home screen */`) go to the `COMMENT` column so translators can read them.
+
+To convert the translated file back, use `-d` with `.xml` or `.strings` as the target type. A file is written for each language:
+
+```
+mobile-strings-converter translations.xlsx -d app/src/main/res -t xml
+mobile-strings-converter translations.xlsx -d MyApp -t strings
+```
+
+This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`... respectively. Strings with no translation are left out of the file of that language.
 
 ### Using the Package in Your Project
 
@@ -414,13 +446,16 @@ The strings are read into a `Catalog`, which holds the value of each string in e
 ```python
 from pathlib import Path
 
-from mobile_strings_converter import Catalog, load, parse, save, serialize
+from mobile_strings_converter import Catalog, load, parse, save, save_split, serialize
 
 # Merge the languages of an Android project into a single spreadsheet
 catalog = Catalog.merge(
 	load(path) for path in sorted(Path("app/src/main/res").glob("values*/strings.xml"))
 )
 save(catalog, Path("translations.xlsx"))
+
+# Write an iOS `.strings` file for each language
+save_split(load(Path("translations.xlsx")), Path("MyApp"), ".strings")
 
 # Convert the content of a file without touching the disk
 data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")

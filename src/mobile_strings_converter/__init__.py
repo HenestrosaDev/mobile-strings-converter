@@ -14,7 +14,7 @@ from .converter import (
     write_google_sheets,
 )
 from .exceptions import ConversionWarning, UnsupportedCharactersWarning
-from .files import load, locale_from_path, save
+from .files import load, locale_from_path, localized_path, save, save_split
 from .formats import SUPPORTED_FILE_TYPES, parse, serialize
 from .model import DEFAULT_LOCALE, PLURAL_QUANTITIES, Catalog, Entry
 
@@ -31,7 +31,9 @@ __all__ = [
     # Files
     "load",
     "save",
+    "save_split",
     "locale_from_path",
+    "localized_path",
     # Path-based conversions
     "convert_strings",
     "get_strings",

@@ -8,8 +8,9 @@ from pathlib import Path
 from . import __version__
 from .console_style import ConsoleStyle
 from .converter import write_google_sheets
-from .files import load, save
-from .formats import SUPPORTED_FILE_TYPES, normalize_file_type
+from .files import load, save, save_split
+from .formats import SUPPORTED_FILE_TYPES, is_multi_locale, normalize_file_type
+from .model import Catalog
 
 
 def get_filepaths_from_dir(directory, extensions):
@@ -57,7 +58,8 @@ def build_parser():
         type=str,
         metavar="FILE_PATH",
         help="File path to save the converted file. Only works if only one input file "
-        "is specified. Check the list of the supported file types above.",
+        "is specified, or with `--merge`. Check the list of the supported file types "
+        "above.",
     )
     parser.add_argument(
         "-d",
@@ -67,7 +69,9 @@ def build_parser():
         metavar="DIR_PATH",
         help="Directory path to save the converted files. Compatible with single and "
         "multiple input files as well as directories. The specified directory will be "
-        "created if it does not already exist.",
+        "created if it does not already exist. Files with several locales (e.g. a "
+        "spreadsheet with a column per language) converted to `.xml` or `.strings` are "
+        "split into a file per locale (e.g. `values-es/strings.xml`).",
     )
     parser.add_argument(
         "-t",
@@ -97,6 +101,15 @@ def build_parser():
         help="Print commented strings from the input file to the output file. "
         "Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
     )
+    parser.add_argument(
+        "-m",
+        "--merge",
+        required=False,
+        action="store_true",
+        help="Merge the input files into a single output with a column per locale. The "
+        "locale of each file is taken from its directory (e.g. `values-es` or "
+        "`es.lproj`). Use it with `--output-file` or `--google-sheets`.",
+    )
 
     return parser
 
@@ -110,6 +123,12 @@ def main(argv=None):
 
     if args.output_file and args.output_dir:
         parser.error("-f/--output-file and -d/--output-dir cannot be used together.")
+
+    if args.merge and args.output_dir:
+        parser.error(
+            "-m/--merge writes a single file. Use -f/--output-file instead of "
+            "-d/--output-dir."
+        )
 
     if args.output_file and (
         Path(args.output_file).suffix.lower() not in SUPPORTED_FILE_TYPES
@@ -153,10 +172,10 @@ def main(argv=None):
     if not input_files:
         parser.error("no supported input files found.")
 
-    if args.output_file and len(input_files) > 1:
+    if args.output_file and len(input_files) > 1 and not args.merge:
         parser.error(
             "cannot use -f/--output-file with multiple input files. Use "
-            "-d/--output-dir instead."
+            "-d/--output-dir or -m/--merge instead."
         )
 
     if args.output_dir:
@@ -184,15 +203,28 @@ def main(argv=None):
         exit_code = 1
         print(f"{ConsoleStyle.RED}{message}{ConsoleStyle.END}", file=sys.stderr)
 
-    sources = []
-    for input_file in input_files:
-        try:
-            with _print_warnings():
-                sources.append(
-                    (input_file, load(input_file[0], None, args.print_comments))
-                )
-        except Exception as e:
-            fail(f"Could not convert {input_file[0]}: {e}")
+    # Each source is converted to the outputs: a single one with all the input files
+    # when merging, or one per input file
+    if args.merge:
+        catalogs = []
+        for input_filepath, _ in input_files:
+            try:
+                with _print_warnings():
+                    catalogs.append(load(input_filepath, None, args.print_comments))
+            except Exception as e:
+                fail(f"Could not read {input_filepath}: {e}")
+
+        sources = [(input_files[0], Catalog.merge(catalogs))] if catalogs else []
+    else:
+        sources = []
+        for input_file in input_files:
+            try:
+                with _print_warnings():
+                    sources.append(
+                        (input_file, load(input_file[0], None, args.print_comments))
+                    )
+            except Exception as e:
+                fail(f"Could not convert {input_file[0]}: {e}")
 
     for (input_filepath, base_dir), catalog in sources:
         if args.output_file or args.output_dir:
@@ -228,20 +260,35 @@ def _output_dir_filepath(output_dir, input_filepath, base_dir, target_type):
 
 def _write_outputs(args, catalog, input_filepath, base_dir):
     if args.output_file:
-        output_filepath = Path(args.output_file)
+        output_filepaths = [Path(args.output_file)]
+        if catalog.is_multi_locale and not is_multi_locale(output_filepaths[0].suffix):
+            raise ValueError(
+                f"the strings have {len(catalog.locales)} locales and "
+                f"{output_filepaths[0].suffix} files can only hold one. Use "
+                f"-d/--output-dir to write a file per locale."
+            )
+        save(catalog, output_filepaths[0])
     else:
+        target_type = normalize_file_type(args.target_type)
         output_filepath = _output_dir_filepath(
-            args.output_dir,
-            input_filepath,
-            base_dir,
-            normalize_file_type(args.target_type),
+            args.output_dir, input_filepath, base_dir, target_type
         )
 
-    save(catalog, output_filepath)
-    print(
-        f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
-        f"{ConsoleStyle.END}"
-    )
+        if catalog.is_multi_locale and not is_multi_locale(target_type):
+            # Write `values-es/strings.xml`, `es.lproj/Localizable.strings`... next to
+            # where the converted file would be
+            output_filepaths = save_split(
+                catalog, output_filepath.parent, target_type
+            ).values()
+        else:
+            save(catalog, output_filepath)
+            output_filepaths = [output_filepath]
+
+    for output_filepath in output_filepaths:
+        print(
+            f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
+            f"{ConsoleStyle.END}"
+        )
 
 
 @contextmanager
