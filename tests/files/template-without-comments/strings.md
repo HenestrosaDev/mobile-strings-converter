@@ -44,7 +44,7 @@
 | message_mongolian | миний програмыг сайхан өнгөрүүлээрэй |
 | message_myanmar_burmese | ငါ့ app ကိုခံစားပါ။ |
 | message_nepali | मेरो एपको मजा लिनुहोस् |
-| message_odia_oriya | ମୋର ଆପ୍ ଉପଭୋଗ କରନ୍ତୁ | |
+| message_odia_oriya | ମୋର ଆପ୍ ଉପଭୋଗ କରନ୍ତୁ \| |
 | message_pashto | زما ایپ څخه خوند واخلئ |
 | message_persian | از برنامه من لذت ببرید |
 | message_punjabi | ਮੇਰੀ ਐਪ ਦਾ ਆਨੰਦ ਮਾਣੋ |

@@ -5,6 +5,7 @@ import os
 import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import List, Tuple
 
@@ -306,21 +307,24 @@ def to_yaml(strings: List[str], output_filepath: Path):
         yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
 
 
-def to_html(strings: List[str], output_filepath: Path):
+def to_html(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .html file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
     # Create an HTML file
     with open(output_filepath, "w", encoding="utf-8") as file:
+        file.write("<!DOCTYPE html>\n")
+        file.write("<html>\n")
         file.write("<head>\n")
         file.write('\t<meta charset="UTF-8">\n')
         file.write("</head>\n")
+        file.write("<body>\n")
         file.write("<table>\n")
         file.write("\t<thead>\n")
         file.write("\t\t<tr>\n")
@@ -333,12 +337,14 @@ def to_html(strings: List[str], output_filepath: Path):
         # Write the data to the HTML file
         for name, value in strings:
             file.write("\t\t<tr>\n")
-            file.write(f"\t\t\t<td>{name}</td>\n")
-            file.write(f"\t\t\t<td>{value}</td>\n")
+            file.write(f"\t\t\t<td>{html.escape(name, quote=False)}</td>\n")
+            file.write(f"\t\t\t<td>{html.escape(value, quote=False)}</td>\n")
             file.write("\t\t</tr>\n")
 
         file.write("\t</tbody>\n")
         file.write("</table>\n")
+        file.write("</body>\n")
+        file.write("</html>\n")
 
 
 def to_ios(strings: List[Tuple[str, str]], output_filepath: Path):
@@ -519,12 +525,12 @@ def to_pdf(strings: List[str], output_filepath: Path):
             pdf.output(str(output_filepath))
 
 
-def to_md(strings: List[str], output_filepath: Path):
+def to_md(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .md file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -533,8 +539,8 @@ def to_md(strings: List[str], output_filepath: Path):
         # Write each string to the Markdown file in a table format
         f.write("| NAME | VALUE |\n")
         f.write("| ----------- | ----------- |\n")
-        for name, translation in strings:
-            f.write(f"| {name} | {translation} |\n")
+        for name, value in strings:
+            f.write(f"| {_escape_md(name)} | {_escape_md(value)} |\n")
 
 
 # GET STRINGS FROM
@@ -651,22 +657,25 @@ def get_strings_from_md(
     start_index = None
     end_index = None
     for i, line in enumerate(lines):
-        if line.strip().startswith("|"):
+        if line.strip().startswith(delimiter):
             start_index = i
             break
     for i in range(len(lines) - 1, -1, -1):
-        if lines[i].strip().startswith("|"):
+        if lines[i].strip().startswith(delimiter):
             end_index = i
             break
+
+    # Split on delimiters that are not escaped with a backslash
+    split_pattern = rf"(?<!\\){re.escape(delimiter)}"
 
     # Extract data from the table, skipping the first two lines (header)
     if start_index is not None and end_index is not None:
         for row in lines[start_index + 2 : end_index + 1]:
             # Split the line by the delimiter and extract NAME and VALUE
-            parts = row.strip().strip(delimiter).split(delimiter)
+            parts = re.split(split_pattern, row.strip())[1:-1]
             if len(parts) >= 2:
                 name, value = parts[:2]
-                data.append((name.strip(), value.strip()))
+                data.append((_unescape_md(name.strip()), _unescape_md(value.strip())))
 
     return data
 
@@ -733,31 +742,16 @@ def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
     :rtype: List[Tuple[str, str]]
     """
 
-    # Initialize a list to hold the tuples
-    data = []
-
     # Open the HTML file and read its contents
     with open(html_filepath, "r", encoding="utf-8") as file:
         html_content = file.read()
 
-    # Find the start and end indices of the table
-    table_start = html_content.find("<table")
-    table_end = html_content.find("</table>", table_start)
+    parser = _HTMLTableParser()
+    parser.feed(html_content)
+    parser.close()
 
-    # Extract data from the table if it exists
-    if table_start != -1 and table_end != -1:
-        table_content = html_content[table_start:table_end]
-        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_content, re.DOTALL)
-
-        # Extract data from each row
-        for row in rows:
-            cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
-            if len(cells) >= 2:
-                name = re.sub(r"<.*?>", "", cells[0].strip())
-                value = re.sub(r"<.*?>", "", cells[1].strip())
-                data.append((name, value))
-
-    return data
+    # Rows with fewer than two cells (e.g. the header row) are skipped
+    return [(row[0], row[1]) for row in parser.rows if len(row) >= 2]
 
 
 def get_strings_from_ios(
@@ -1008,3 +1002,50 @@ def _to_android_value(value: str) -> str:
             pass
 
     return _escape_android(value)
+
+
+# Markdown
+
+
+def _escape_md(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\")
+        .replace("|", "\\|")
+        .replace("\r\n", "<br>")
+        .replace("\n", "<br>")
+    )
+
+
+def _unescape_md(value: str) -> str:
+    return re.sub(r"\\(.)|<br>", lambda m: m.group(1) or "\n", value, flags=re.DOTALL)
+
+
+# HTML
+
+
+class _HTMLTableParser(HTMLParser):
+    """Collects the text of the `<td>` cells of every `<tr>` row."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.rows: List[List[str]] = []
+        self._row = None
+        self._cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self._row = []
+        elif tag == "td" and self._row is not None:
+            self._cell = []
+
+    def handle_endtag(self, tag):
+        if tag == "td" and self._cell is not None:
+            self._row.append("".join(self._cell))
+            self._cell = None
+        elif tag == "tr" and self._row is not None:
+            self.rows.append(self._row)
+            self._row = None
+
+    def handle_data(self, data):
+        if self._cell is not None:
+            self._cell.append(data)
