@@ -17,6 +17,7 @@ from . import (
     ods,
     pdf,
     stringsdict,
+    xcstrings,
     xlsx,
     yamlfile,
 )
@@ -31,6 +32,7 @@ FORMATS: Dict[str, ModuleType] = {
     ".html": html_table,
     ".strings": ios,
     ".stringsdict": stringsdict,
+    ".xcstrings": xcstrings,
     ".xml": android,
     ".pdf": pdf,
 }

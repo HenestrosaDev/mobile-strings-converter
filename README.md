@@ -114,6 +114,7 @@
 	- [Android Resources](#android-resources)
 	- [Plurals and Arrays](#plurals-and-arrays)
 	- [Placeholders](#placeholders)
+	- [String Catalogs](#string-catalogs)
 	- [PDF Files](#pdf-files)
 	- [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
 	- [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
@@ -146,6 +147,7 @@ In addition to being able to run this script on its own, it can also be installe
 - HTML
 - iOS strings format (`*.strings`)
 - iOS plurals format (`*.stringsdict`)
+- Xcode String Catalogs (`*.xcstrings`)
 - JSON
 - MD
 - ODS
@@ -212,6 +214,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 │       │       stringsdict.py
 │       │       table.py
 │       │       text.py
+│       │       xcstrings.py
 │       │       xlsx.py
 │       │       yamlfile.py
 │       │       __init__.py
@@ -246,6 +249,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
     │   test_pdf.py
     │   test_round_trip.py
     │   test_stringsdict.py
+    │   test_xcstrings.py
     │   test_xlsx.py
     │   test_yaml.py
     │
@@ -432,6 +436,12 @@ mobile-strings-converter translations.xlsx -d MyApp -t stringsdict
 
 This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`... respectively. Strings with no translation are left out of the file of that language. iOS plurals go to `.stringsdict` files, so run both of the last two commands to get every string.
 
+If your iOS app uses a [String Catalog](#string-catalogs), all the languages go to a single file instead:
+
+```
+mobile-strings-converter translations.xlsx -f MyApp/Localizable.xcstrings
+```
+
 ### Using the Package in Your Project
 
 After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use:
@@ -538,7 +548,7 @@ Spreadsheets and other tables have a row for each item of a plural or array, nam
 
 These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead.
 
-On iOS, plurals go to `.stringsdict` files and strings go to `.strings` files. iOS has no arrays. Whatever a file type can't hold is skipped with a warning. Only plurals with a single number (`%#@variable@`) are read from `.stringsdict` files.
+On iOS, plurals go to `.stringsdict` or `.xcstrings` files, and strings go to `.strings` or `.xcstrings` files. iOS has no arrays. Whatever a file type can't hold is skipped with a warning. Only plurals with a single number (`%#@variable@`) are read from `.stringsdict` and `.xcstrings` files.
 
 ### Placeholders
 
@@ -551,6 +561,12 @@ Placeholders are converted when writing Android and iOS files, so the strings wo
 | `%.2f`          | `%.2f`, `%.2lf`             |
 
 Other file types keep the placeholders of the input file.
+
+### String Catalogs
+
+Xcode String Catalogs (`.xcstrings`) hold every language of the app in a single file, with each language under its own code (e.g., `en` or `es`). When converting strings from Android's `values` directory or iOS' `Base.lproj` directory, they are written as the source language of the catalog, `en`.
+
+Strings, plurals, comments and `shouldTranslate` are converted. Device variations (e.g., a different string for Mac) and strings with several plurals (substitutions) are skipped with a warning.
 
 ### PDF Files
 

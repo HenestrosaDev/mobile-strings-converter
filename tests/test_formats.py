@@ -56,7 +56,8 @@ class TestMultiLocaleRoundTrip(unittest.TestCase):
 
     def test_round_trip(self):
         for file_type in SUPPORTED_FILE_TYPES:
-            if not is_multi_locale(file_type):
+            # String Catalogs are tested in `test_xcstrings`
+            if not is_multi_locale(file_type) or file_type == ".xcstrings":
                 continue
 
             with self.subTest(file_type=file_type), warnings.catch_warnings():

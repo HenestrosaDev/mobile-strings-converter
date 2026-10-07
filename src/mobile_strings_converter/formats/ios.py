@@ -4,7 +4,8 @@ iOS strings files (`Localizable.strings`).
 A comment right before an entry is read as its comment for translators, unless the
 comment holds commented out entries, which are read as entries if `with_comments` is
 True. Plurals and arrays can't be written to `.strings` files, so they are skipped
-(see `stringsdict` for plurals). Android placeholders (e.g. `%s`) are converted to iOS ones (e.g. `%@`) when writing.
+(see `stringsdict` for plurals). Android placeholders (e.g. `%s`) are converted to iOS
+ones (e.g. `%@`) when writing.
 """
 
 import re
@@ -64,7 +65,7 @@ def serialize(catalog: Catalog) -> bytes:
         warnings.warn(
             f"Skipped {len(skipped)} plural(s)/array(s) because .strings files can't "
             f"hold them: {', '.join(skipped)}. Plurals can be written to .stringsdict "
-            f"files.",
+            f"or .xcstrings files.",
             ConversionWarning,
         )
 

@@ -93,7 +93,7 @@ def serialize(catalog: Catalog) -> bytes:
         warnings.warn(
             f"Skipped {len(skipped)} string(s)/array(s) because .stringsdict files can "
             f"only hold plurals: {', '.join(skipped)}. Strings can be written to "
-            f".strings files.",
+            f".strings or .xcstrings files.",
             ConversionWarning,
         )
 
