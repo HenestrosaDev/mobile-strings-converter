@@ -5,6 +5,7 @@ import os
 import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
+from functools import lru_cache
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import List, Tuple
@@ -34,6 +35,10 @@ SUPPORTED_FILE_TYPES = [
     ".xml",
     ".pdf",
 ]
+
+# Name of the JSON file embedded in the generated PDFs. It holds the exact strings
+# written to the PDF so they can be read back losslessly.
+PDF_EMBEDDED_FILENAME = "strings.json"
 
 
 def convert_strings(
@@ -384,29 +389,40 @@ def to_android(strings: List[Tuple[str, str]], output_filepath: Path):
         file.write("</resources>\n")
 
 
-def to_pdf(strings: List[str], output_filepath: Path):
+def to_pdf(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .pdf file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
-    # Ignore the following warning when adding a font already added:
-    # UserWarning: Core font or font already added 'dejavusanscondensed': doing nothing
-    warnings.filterwarnings("ignore", category=UserWarning)
-
     def add_font(font_name, size=12):
         root_dir = Path(__file__).parent
-        pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
+        # Ignore the following warning when adding a font already added:
+        # UserWarning: Core font or font already added 'dejavusanscondensed': doing
+        # nothing
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
         pdf.set_font(font_name, size=size)
 
     # Create a new PDF file
     pdf = FPDF(orientation="P", format="A4")
     pdf.add_page()
-    pdf.set_font("Arial", "B", 12)
+    pdf.set_font("helvetica", "B", 12)
+
+    # Embed the strings so they can be read back losslessly by get_strings_from_pdf
+    pdf.embed_file(
+        bytes=json.dumps(
+            [{"name": name, "value": value} for name, value in strings],
+            ensure_ascii=False,
+        ).encode("utf-8"),
+        basename=PDF_EMBEDDED_FILENAME,
+        mime_type="application/json",
+    )
 
     # Cell properties
     c_width = 95
@@ -417,11 +433,8 @@ def to_pdf(strings: List[str], output_filepath: Path):
     pdf.cell(c_width, c_height, "VALUE", border=1)
     pdf.ln()
 
-    detector = (
-        LanguageDetectorBuilder.from_all_languages()
-        .with_preloaded_language_models()
-        .build()
-    )
+    detector = _get_language_detector()
+    unsupported_values = []
 
     # Add table data
     # https://stackoverflow.com/questions/53526311/fpdf-multicell-same-height
@@ -438,9 +451,9 @@ def to_pdf(strings: List[str], output_filepath: Path):
                 if j % 2 == 0:  # Prevents 'name' language detection
                     add_font("DejaVuSansCondensed")
                 else:
-                    language_code = detector.detect_language_of(
-                        string[j]
-                    ).iso_code_639_1.name.lower()
+                    language = detector.detect_language_of(string[j])
+                    if language is not None:
+                        language_code = language.iso_code_639_1.name.lower()
 
                     if language_code in [
                         "bn",  # Bengali
@@ -470,6 +483,14 @@ def to_pdf(strings: List[str], output_filepath: Path):
                     else:
                         add_font("DejaVuSansCondensed")
 
+                # The font has no glyphs for some characters of the string
+                if any(
+                    ord(char) not in pdf.current_font.cmap
+                    for char in string[j]
+                    if not char.isspace()
+                ):
+                    unsupported_values.append(string[j])
+
                 if language_code in [
                     # RTL languages
                     "ar",  # Arabic
@@ -492,12 +513,7 @@ def to_pdf(strings: List[str], output_filepath: Path):
 
                 pdf.set_xy(x + (c_width * (j + 1)), y)
             except (Exception,):
-                with open(
-                    output_filepath.parent / f"{output_filepath.stem}-errors.txt",
-                    "a",
-                    encoding="utf-8",
-                ) as f:
-                    f.write(f"{string[1]} not supported\n")
+                unsupported_values.append(string[j])
 
         for j in range(cells_in_row + 1):
             pdf.line(x + c_width * j, y, x + c_width * j, y + max_height)
@@ -523,6 +539,17 @@ def to_pdf(strings: List[str], output_filepath: Path):
         with redirect_stdout(devnull), redirect_stderr(devnull):
             # Save the PDF file
             pdf.output(str(output_filepath))
+
+    if unsupported_values:
+        errors_filepath = output_filepath.parent / f"{output_filepath.stem}-errors.txt"
+        with open(errors_filepath, "w", encoding="utf-8") as f:
+            for value in unsupported_values:
+                f.write(f"{value} not supported\n")
+
+        print(
+            f"{ConsoleStyle.YELLOW}{len(unsupported_values)} string(s) could not be "
+            f"rendered in the PDF. See {errors_filepath}{ConsoleStyle.END}"
+        )
 
 
 def to_md(strings: List[Tuple[str, str]], output_filepath: Path):
@@ -838,6 +865,10 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
     Extract data from a PDF file with a table containing NAME and VALUE columns and
     return it as a list of tuples.
 
+    PDFs generated by this package embed the original strings, which are read
+    losslessly. For any other PDF, the strings are extracted from the text of the
+    table, which only works for single-line values.
+
     :param pdf_filepath: The path to the input PDF file.
     :type pdf_filepath: Path
     :return: A list of tuples where each tuple contains a NAME and VALUE.
@@ -849,18 +880,24 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
     # Create a PdfReader object
     pdf_reader = PdfReader(pdf_filepath)
 
+    embedded_files = pdf_reader.attachments.get(PDF_EMBEDDED_FILENAME)
+    if embedded_files:
+        records = json.loads(embedded_files[0].decode("utf-8"))
+        return [(r["name"], r["value"]) for r in records]
+
     # Extract text from each page
-    for page in pdf_reader.pages:
+    for page_number, page in enumerate(pdf_reader.pages):
         text = page.extract_text()
 
         # Find patterns for table rows
         rows = text.split("\n")
 
         # Skip the header
-        rows = rows[1:]
+        if page_number == 0:
+            rows = rows[1:]
 
         for row in rows:
-            match = re.match(r"(\w+)\s+(.*)", row.strip())
+            match = re.match(r"(\S+)\s+(.*)", row.strip())
             if match:
                 name, value = match.groups()
                 data.append((name.strip(), value.strip()))
@@ -869,6 +906,16 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
 
 
 # HELPERS
+
+
+@lru_cache(maxsize=1)
+def _get_language_detector():
+    return (
+        LanguageDetectorBuilder.from_all_languages()
+        .with_preloaded_language_models()
+        .build()
+    )
+
 
 # iOS
 
