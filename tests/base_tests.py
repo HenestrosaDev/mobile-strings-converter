@@ -140,7 +140,7 @@ class BaseTests(object):
             convert_strings(input_filepath, self.output_filepath, with_comments)
             self._assert_same_content(self.output_filepath, template_filepath)
 
-    # For converting each supported file type to the same file type
+    # For converting each supported file type to Android & iOS files
 
     class ConvertFromTest(OutputDirTest):
         # Hook methods
@@ -149,8 +149,12 @@ class BaseTests(object):
             super().setUp()
             self._file_name: str | None = None
 
-            self.android_filepath = FILES_PATH / "input/strings.xml"
-            self.ios_filepath = FILES_PATH / "input/Localizable.strings"
+            self.template_android_filepath = (
+                FILES_PATH / "template-without-comments/strings.xml"
+            )
+            self.template_ios_filepath = (
+                FILES_PATH / "template-without-comments/Localizable.strings"
+            )
 
         # Properties
 
@@ -161,7 +165,6 @@ class BaseTests(object):
         @file_name.setter
         def file_name(self, value):
             self.input_filepath = FILES_PATH / f"template-without-comments/{value}"
-            self.output_filepath = self.output_dir / value
             self._file_name = value
 
         # Test methods
@@ -169,40 +172,38 @@ class BaseTests(object):
         # ------------ ANDROID ------------
 
         def test_converter_creates_file_android(self):
-            self._converter_creates_file(self.input_filepath)
+            self._converter_creates_file(self.output_dir / "strings.xml")
 
         def test_converter_writes_correct_data_android(self):
             self._converter_writes_correct_data(
-                template_filepath=self.input_filepath,
-                input_filepath=self.android_filepath,
+                template_filepath=self.template_android_filepath,
+                output_filepath=self.output_dir / "strings.xml",
             )
 
         # -------------- iOS --------------
 
         def test_converter_creates_file_ios(self):
-            self._converter_creates_file(self.input_filepath)
+            self._converter_creates_file(self.output_dir / "Localizable.strings")
 
         def test_converter_writes_correct_data_ios(self):
             self._converter_writes_correct_data(
-                template_filepath=self.input_filepath, input_filepath=self.ios_filepath
+                template_filepath=self.template_ios_filepath,
+                output_filepath=self.output_dir / "Localizable.strings",
             )
 
         # Private methods
 
-        def _converter_creates_file(
-            self,
-            input_filepath: Path,
-        ):
-            convert_strings(input_filepath, self.output_filepath)
-            self.assertTrue(self.output_filepath.exists())
+        def _converter_creates_file(self, output_filepath: Path):
+            convert_strings(self.input_filepath, output_filepath)
+            self.assertTrue(output_filepath.exists())
 
         def _converter_writes_correct_data(
             self,
             template_filepath: Path,
-            input_filepath: Path,
+            output_filepath: Path,
         ):
-            convert_strings(input_filepath, self.output_filepath)
-            self._assert_same_content(self.output_filepath, template_filepath)
+            convert_strings(self.input_filepath, output_filepath)
+            self._assert_same_content(output_filepath, template_filepath)
 
     class GetStringsTest(unittest.TestCase):
         def setUp(self):

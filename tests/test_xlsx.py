@@ -9,7 +9,7 @@ class TestToXlsx(SameStringsMixin, BaseTests.ConvertToTest):
         self.file_name = "strings.xlsx"
 
 
-class TestFromXlsx(SameStringsMixin, BaseTests.ConvertFromTest):
+class TestFromXlsx(BaseTests.ConvertFromTest):
     def setUp(self):
         super().setUp()
         self.file_name = "strings.xlsx"

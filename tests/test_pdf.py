@@ -22,7 +22,7 @@ class TestToPdf(SameStringsMixin, BaseTests.ConvertToTest):
         self.assertEqual(len(errors), len(set(errors)))
 
 
-class TestFromPdf(SameStringsMixin, BaseTests.ConvertFromTest):
+class TestFromPdf(BaseTests.ConvertFromTest):
     def setUp(self):
         super().setUp()
         self.file_name = "strings.pdf"

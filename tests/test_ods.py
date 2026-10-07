@@ -9,7 +9,7 @@ class TestToOds(SameStringsMixin, BaseTests.ConvertToTest):
         self.file_name = "strings.ods"
 
 
-class TestFromOds(SameStringsMixin, BaseTests.ConvertFromTest):
+class TestFromOds(BaseTests.ConvertFromTest):
     def setUp(self):
         super().setUp()
         self.file_name = "strings.ods"
