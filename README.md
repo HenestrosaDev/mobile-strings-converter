@@ -273,7 +273,10 @@ In addition to being able to run this script on its own, it can also be installe
 
 ### Built With
 
-- [openpyxl](https://pypi.org/project/openpyxl/) to generate ODS and XLSX files.
+- [openpyxl](https://pypi.org/project/openpyxl/) to generate XLSX files.
+- [ezodf](https://pypi.org/project/ezodf/) to generate ODS files.
+- [lxml](https://pypi.org/project/lxml/) to parse Android `.xml` files.
+- [pypdf](https://pypi.org/project/pypdf/) to read PDF files.
 - [gspread](https://pypi.org/project/gspread/) to generate spreadsheets in Google Sheets.
 - [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets.
 - [PyYAML](https://pypi.org/project/PyYAML/) to generate YAML files.
