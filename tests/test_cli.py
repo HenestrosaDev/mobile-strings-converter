@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
 
+from mobile_strings_converter import load
 from mobile_strings_converter.__main__ import main
 from mobile_strings_converter.converter import get_strings
 
@@ -128,17 +129,30 @@ class TestCli(unittest.TestCase):
         credentials_filepath.write_text("{}")
 
         with mock.patch(
-            "mobile_strings_converter.__main__.to_google_sheets"
-        ) as to_google_sheets:
+            "mobile_strings_converter.__main__.write_google_sheets"
+        ) as write_google_sheets:
             exit_code, _, _ = self._run(ANDROID_FILEPATH, "-g", credentials_filepath)
 
         self.assertEqual(0, exit_code)
-        to_google_sheets.assert_called_once_with(
-            ANDROID_FILEPATH,
+        write_google_sheets.assert_called_once_with(
+            load(ANDROID_FILEPATH),
             sheet_name="strings",
             credentials_filepath=credentials_filepath,
-            with_comments=False,
         )
+
+    def test_warnings_are_printed(self):
+        output_filepath = self.output_dir / "Localizable.strings"
+        input_filepath = self.output_dir / "strings.xml"
+        input_filepath.write_text(
+            '<resources><string-array name="list"><item>A</item></string-array>'
+            '<string name="a">A</string></resources>',
+            encoding="utf-8",
+        )
+
+        exit_code, stdout, _ = self._run(input_filepath, "-f", output_filepath)
+
+        self.assertEqual(0, exit_code)
+        self.assertIn('Skipped the <string-array name="list"> resource', stdout)
 
     def test_module_entry_point(self):
         result = subprocess.run(

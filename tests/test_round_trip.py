@@ -3,11 +3,11 @@ import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from mobile_strings_converter import Catalog, save
 from mobile_strings_converter.converter import (
     SUPPORTED_FILE_TYPES,
     convert_strings,
     get_strings,
-    to_json,
 )
 
 # fmt: off
@@ -33,7 +33,7 @@ class TestRoundTrip(unittest.TestCase):
         self._temp_dir = TemporaryDirectory()
         self.output_dir = Path(self._temp_dir.name)
         self.input_filepath = self.output_dir / "input.json"
-        to_json(TRICKY_STRINGS, self.input_filepath)
+        save(Catalog.from_pairs(TRICKY_STRINGS), self.input_filepath)
 
     def tearDown(self):
         self._temp_dir.cleanup()

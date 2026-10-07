@@ -185,8 +185,26 @@ In addition to being able to run this script on its own, it can also be installe
 │   └───mobile_strings_converter
 │       │   console_style.py
 │       │   converter.py
+│       │   exceptions.py
+│       │   files.py
+│       │   model.py
 │       │   __init__.py
 │       │   __main__.py
+│       │
+│       ├───formats
+│       │       android.py
+│       │       csvfile.py
+│       │       html_table.py
+│       │       ios.py
+│       │       jsonfile.py
+│       │       markdown.py
+│       │       ods.py
+│       │       pdf.py
+│       │       table.py
+│       │       text.py
+│       │       xlsx.py
+│       │       yamlfile.py
+│       │       __init__.py
 │       │
 │       └───assets
 │           └───fonts
@@ -205,6 +223,8 @@ In addition to being able to run this script on its own, it can also be installe
     │   test_android.py
     │   test_csv.py
     │   test_cli.py
+    │   test_files.py
+    │   test_formats.py
     │   test_get_strings.py
     │   test_google_sheets.py
     │   test_html.py
@@ -369,7 +389,7 @@ A full list of the program command's options are as follows:
 
 ### Using the Package in Your Project
 
-After following the steps in the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use:
+After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use:
 
 ```python
 # Using the `get_strings` function
@@ -381,6 +401,23 @@ get_strings(
 	input_filepath=Path("strings.xml"),
 	with_comments=True
 )
+```
+
+The strings are read into a `Catalog`, which holds the value of each string in each language. `load` and `save` work with files, while `parse` and `serialize` work with their content, so you don't need a file system:
+
+```python
+from pathlib import Path
+
+from mobile_strings_converter import Catalog, load, parse, save, serialize
+
+# Merge the languages of an Android project into a single spreadsheet
+catalog = Catalog.merge(
+	load(path) for path in sorted(Path("app/src/main/res").glob("values*/strings.xml"))
+)
+save(catalog, Path("translations.xlsx"))
+
+# Convert the content of a file without touching the disk
+data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")
 ```
 
 ### Generating a Spreadsheet in Google Sheets
@@ -436,6 +473,7 @@ to_google_sheets(
 ### Android Resources
 
 - Only `<string>` resources are converted. `<plurals>` and `<string-array>` resources are skipped.
+- `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
 - XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
 - Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
 
