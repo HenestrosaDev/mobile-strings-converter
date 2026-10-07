@@ -95,7 +95,9 @@ def convert_strings(
             )
 
 
-def get_strings(input_filepath: Path, with_comments: bool) -> List[Tuple[str, str]]:
+def get_strings(
+    input_filepath: Path, with_comments: bool = False
+) -> List[Tuple[str, str]]:
     """
     Extracts strings from various file formats based on the file extension.
 
