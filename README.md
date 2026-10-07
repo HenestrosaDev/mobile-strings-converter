@@ -204,6 +204,7 @@ In addition to being able to run this script on its own, it can also be installe
     │   base_tests.py
     │   test_android.py
     │   test_csv.py
+    │   test_cli.py
     │   test_get_strings.py
     │   test_html.py
     │   test_ios.py
