@@ -447,7 +447,7 @@ Generated PDF files embed the original strings, so they can be converted back wi
 ### Indic Languages Supported by PDF Files
 
 - Hindi
-- Marathu
+- Marathi
 - Oriya
 - Tibetan
 - Gujarati
