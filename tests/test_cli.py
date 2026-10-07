@@ -212,6 +212,18 @@ class TestCli(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertIn("Skipped 1 plural(s)/array(s)", stdout)
 
+    def test_pdf_input(self):
+        input_filepath = self.output_dir / "strings.pdf"
+        input_filepath.write_bytes(b"%PDF-1.4")
+
+        exit_code, stdout, stderr = self._run(
+            input_filepath, "-f", self.output_dir / "strings.json"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("Skipping unsupported file", stdout)
+        self.assertIn("no supported input files", stderr)
+
     def test_module_entry_point(self):
         result = subprocess.run(
             [sys.executable, "-m", "mobile_strings_converter", "--version"],

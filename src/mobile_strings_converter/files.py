@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from .exceptions import UnsupportedCharactersWarning
-from .formats import SUPPORTED_FILE_TYPES, normalize_file_type, parse, serialize
+from .formats import INPUT_FILE_TYPES, normalize_file_type, parse, serialize
 from .model import DEFAULT_LOCALE, Catalog
 
 ANDROID_FILENAME = "strings.xml"
@@ -35,7 +35,7 @@ def load(
     """
 
     filepath = Path(filepath)
-    if normalize_file_type(filepath.suffix) not in SUPPORTED_FILE_TYPES:
+    if normalize_file_type(filepath.suffix) not in INPUT_FILE_TYPES:
         raise ValueError(f"Input file type not supported: {filepath}")
 
     if locale is None:

@@ -37,7 +37,13 @@ FORMATS: Dict[str, ModuleType] = {
     ".pdf": pdf,
 }
 
+# File types that can be written
 SUPPORTED_FILE_TYPES = list(FORMATS)
+
+# File types that can be read. PDF files can only be written.
+INPUT_FILE_TYPES = [
+    file_type for file_type, module in FORMATS.items() if hasattr(module, "parse")
+]
 
 
 def normalize_file_type(file_type: str) -> str:
@@ -76,7 +82,13 @@ def parse(
     :rtype: Catalog
     """
 
-    return _get_format(file_type).parse(data, locale, with_comments)
+    file_format = _get_format(file_type)
+    if not hasattr(file_format, "parse"):
+        raise ValueError(
+            f"{normalize_file_type(file_type)} files can only be written, not read."
+        )
+
+    return file_format.parse(data, locale, with_comments)
 
 
 def serialize(catalog: Catalog, file_type: str) -> bytes:

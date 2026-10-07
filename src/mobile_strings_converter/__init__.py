@@ -15,7 +15,7 @@ from .converter import (
 )
 from .exceptions import ConversionWarning, UnsupportedCharactersWarning
 from .files import load, locale_from_path, localized_path, save, save_split
-from .formats import SUPPORTED_FILE_TYPES, parse, serialize
+from .formats import INPUT_FILE_TYPES, SUPPORTED_FILE_TYPES, parse, serialize
 from .model import DEFAULT_LOCALE, PLURAL_QUANTITIES, Catalog, Entry
 
 __all__ = [
@@ -26,6 +26,7 @@ __all__ = [
     "PLURAL_QUANTITIES",
     # Content of the files
     "SUPPORTED_FILE_TYPES",
+    "INPUT_FILE_TYPES",
     "parse",
     "serialize",
     # Files

@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from mobile_strings_converter import (
     DEFAULT_LOCALE,
-    SUPPORTED_FILE_TYPES,
+    INPUT_FILE_TYPES,
     Catalog,
     ConversionWarning,
     Entry,
@@ -55,7 +55,7 @@ class TestMultiLocaleRoundTrip(unittest.TestCase):
     """Every file type that can hold several locales must keep all of them."""
 
     def test_round_trip(self):
-        for file_type in SUPPORTED_FILE_TYPES:
+        for file_type in INPUT_FILE_TYPES:
             # String Catalogs are tested in `test_xcstrings`
             if not is_multi_locale(file_type) or file_type == ".xcstrings":
                 continue

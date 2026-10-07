@@ -1323,31 +1323,6 @@ files = [
 ]
 
 [[package]]
-name = "pypdf"
-version = "6.19.0"
-description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "pypdf-6.19.0-py3-none-any.whl", hash = "sha256:7e5d6e730e7dae87d560a2cee218b852f6498c8be61966f3cd02ead971e48d14"},
-    {file = "pypdf-6.19.0.tar.gz", hash = "sha256:bbc43aca292369ccc6cbc8a921991ecf2538a3587ab5a116eff06c321d647155"},
-]
-
-[package.dependencies]
-typing_extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
-
-[package.extras]
-crypto = ["cryptography (>3.0)"]
-cryptodome = ["PyCryptodome"]
-dev = ["flit", "pip-tools", "pre-commit", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
-docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
-fonts = ["fonttools"]
-full = ["Pillow (>=8.0.0)", "arabic-reshaper", "cryptography (>3.0)", "fonttools", "python-bidi"]
-image = ["Pillow (>=8.0.0)"]
-rtl-text = ["arabic-reshaper", "python-bidi"]
-
-[[package]]
 name = "python-bidi"
 version = "0.6.11"
 description = "Python Bidi layout wrapping the Rust crate unicode-bidi"
@@ -1678,4 +1653,4 @@ typing-extensions = {version = ">=4.13.2", markers = "python_version < \"3.11\""
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "858952fe3462da40e8100d41501250e1641b65db3fc849f52f96f9fdb69ff612"
+content-hash = "ab9e4234b6f4448d4cf7388691f8a058a47977b7c7b7a0fc9c4e7e5ba39140d9"

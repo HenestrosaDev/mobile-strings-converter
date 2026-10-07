@@ -9,7 +9,12 @@ from . import __version__
 from .console_style import ConsoleStyle
 from .converter import write_google_sheets
 from .files import load, save, save_split
-from .formats import SUPPORTED_FILE_TYPES, is_multi_locale, normalize_file_type
+from .formats import (
+    INPUT_FILE_TYPES,
+    SUPPORTED_FILE_TYPES,
+    is_multi_locale,
+    normalize_file_type,
+)
 from .model import Catalog
 
 
@@ -27,7 +32,10 @@ def get_filepaths_from_dir(directory, extensions):
 
 
 def build_parser():
-    supported_file_types_str = "\n".join(f"  - {ext}" for ext in SUPPORTED_FILE_TYPES)
+    supported_file_types_str = "\n".join(
+        f"  - {ext}" + ("" if ext in INPUT_FILE_TYPES else " (output only)")
+        for ext in SUPPORTED_FILE_TYPES
+    )
 
     parser = argparse.ArgumentParser(
         prog="mobile-strings-converter",
@@ -157,11 +165,9 @@ def main(argv=None):
     for path in args.input_paths:
         if os.path.isdir(path):
             # If it's a directory, get all matching files
-            for filepath in get_filepaths_from_dir(path, SUPPORTED_FILE_TYPES):
+            for filepath in get_filepaths_from_dir(path, INPUT_FILE_TYPES):
                 input_files.append((filepath, Path(path)))
-        elif os.path.isfile(path) and path.lower().endswith(
-            tuple(SUPPORTED_FILE_TYPES)
-        ):
+        elif os.path.isfile(path) and path.lower().endswith(tuple(INPUT_FILE_TYPES)):
             # If it's a supported file type, add it to the list
             input_files.append((Path(path), Path(path).parent))
         else:
