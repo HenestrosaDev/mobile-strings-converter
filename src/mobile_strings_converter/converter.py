@@ -242,6 +242,7 @@ def to_json(strings: List[str], output_filepath: Path):
     # Write the data to the JSON file
     with open(output_filepath, "w", encoding="utf-8") as file:
         json.dump(data_list, file, ensure_ascii=False, indent=2)
+        file.write("\n")
 
 
 def to_yaml(strings: List[str], output_filepath: Path):
@@ -327,7 +328,7 @@ def to_android(strings: List[str], output_filepath: Path):
         for string in strings:
             file.write(f'\t<string name="{string[0]}">{string[1]}</string>\n')
 
-        file.write("</resources>")
+        file.write("</resources>\n")
 
 
 def to_pdf(strings: List[str], output_filepath: Path):
