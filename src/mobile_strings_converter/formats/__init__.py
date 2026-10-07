@@ -4,7 +4,7 @@ files (bytes), not with paths, so they can be used without a file system.
 """
 
 from types import ModuleType
-from typing import Dict
+from typing import Dict, Optional
 
 from ..model import DEFAULT_LOCALE, Catalog
 from . import (
@@ -91,7 +91,9 @@ def parse(
     return file_format.parse(data, locale, with_comments)
 
 
-def serialize(catalog: Catalog, file_type: str) -> bytes:
+def serialize(
+    catalog: Catalog, file_type: str, source_language: Optional[str] = None
+) -> bytes:
     """
     Writes the strings to the content of a file.
 
@@ -103,11 +105,18 @@ def serialize(catalog: Catalog, file_type: str) -> bytes:
     :type catalog: Catalog
     :param file_type: Extension of the file, e.g. `.xml` or `xml`
     :type file_type: str
+    :param source_language: Code of the language of the default strings (e.g. `en`).
+        Required by `.xcstrings` files, and ignored by any other file type.
+    :type source_language: Optional[str]
     :return: The content of the file
     :rtype: bytes
     """
 
-    return _get_format(file_type).serialize(catalog)
+    file_format = _get_format(file_type)
+    if file_format is xcstrings:
+        return xcstrings.serialize(catalog, source_language)
+
+    return file_format.serialize(catalog)
 
 
 def _get_format(file_type: str) -> ModuleType:

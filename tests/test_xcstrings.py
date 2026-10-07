@@ -72,18 +72,20 @@ class TestXcstrings(unittest.TestCase):
         with self.assertWarns(ConversionWarning):
             catalog = parse(json.dumps(XCODE_CATALOG).encode(), ".xcstrings")
 
+        # The source language is the default locale
         self.assertEqual(
             Catalog(
                 [
                     Entry(
-                        "Hello, world!", {"en": "Hello, world!", "es": "¡Hola, mundo!"}
+                        "Hello, world!",
+                        {DEFAULT_LOCALE: "Hello, world!", "es": "¡Hola, mundo!"},
                     ),
                     Entry(
                         "songs",
-                        {"en": {"one": "%lld song", "other": "%lld songs"}},
+                        {DEFAULT_LOCALE: {"one": "%lld song", "other": "%lld songs"}},
                         comment="Number of songs",
                     ),
-                    Entry("Songbook", {"en": "Songbook"}, translatable=False),
+                    Entry("Songbook", {DEFAULT_LOCALE: "Songbook"}, translatable=False),
                     # Device variations are not supported
                     Entry("Tap here", {}),
                 ]
@@ -94,57 +96,100 @@ class TestXcstrings(unittest.TestCase):
     def test_round_trip(self):
         catalog = Catalog(
             [
-                Entry("hello", {"en": "Hello", "es": "Hola"}, comment="Greeting"),
+                Entry(
+                    "hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"}, comment="Greeting"
+                ),
                 Entry(
                     "songs",
-                    {"en": SONGS, "es": {"one": "%d canción", "other": "%d canciones"}},
+                    {
+                        DEFAULT_LOCALE: SONGS,
+                        "es": {"one": "%d canción", "other": "%d canciones"},
+                    },
                 ),
-                Entry("app_name", {"en": "Songbook"}, translatable=False),
+                Entry("app_name", {DEFAULT_LOCALE: "Songbook"}, translatable=False),
             ]
         )
 
-        self.assertEqual(catalog, parse(serialize(catalog, ".xcstrings"), ".xcstrings"))
+        data = serialize(catalog, ".xcstrings", source_language="en")
 
-    def test_default_locale_is_the_source_language(self):
+        self.assertEqual(catalog, parse(data, ".xcstrings"))
+
+    def test_default_locale_is_written_as_the_source_language(self):
         catalog = Catalog(
             [Entry("hello", {DEFAULT_LOCALE: "Hello %s", "es": "Hola %s"})]
         )
 
-        catalog_data = json.loads(serialize(catalog, ".xcstrings"))
+        catalog_data = json.loads(
+            serialize(catalog, ".xcstrings", source_language="fr")
+        )
 
-        self.assertEqual("en", catalog_data["sourceLanguage"])
+        self.assertEqual("fr", catalog_data["sourceLanguage"])
         self.assertEqual(
             {
                 "extractionState": "manual",
                 "localizations": {
-                    "en": {"stringUnit": {"state": "translated", "value": "Hello %@"}},
+                    "fr": {"stringUnit": {"state": "translated", "value": "Hello %@"}},
                     "es": {"stringUnit": {"state": "translated", "value": "Hola %@"}},
                 },
             },
             catalog_data["strings"]["hello"],
         )
 
-    def test_default_locale_with_source_language(self):
+    def test_source_language_is_required(self):
+        catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello"})])
+
+        with self.assertRaisesRegex(ValueError, "--source-language"):
+            serialize(catalog, ".xcstrings")
+
+    def test_source_language_with_its_own_strings(self):
         catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hi", "en": "Hello"})])
 
-        with self.assertWarns(ConversionWarning):
-            data = serialize(catalog, ".xcstrings")
+        with self.assertRaisesRegex(ValueError, "already has its own strings"):
+            serialize(catalog, ".xcstrings", source_language="en")
 
-        self.assertEqual({"en": "Hello"}, parse(data, ".xcstrings").entries[0].values)
+    def test_strings_without_default_locale(self):
+        # e.g. merged from `en.lproj` and `es.lproj`
+        catalog = Catalog([Entry("hello", {"en": "Hello", "es": "Hola"})])
+
+        data = serialize(catalog, ".xcstrings", source_language="en")
+
+        self.assertEqual(
+            {DEFAULT_LOCALE: "Hello", "es": "Hola"},
+            parse(data, ".xcstrings").entries[0].values,
+        )
+
+    def test_default_locale_goes_first(self):
+        data = json.dumps(
+            {
+                "sourceLanguage": "en",
+                "strings": {
+                    "hello": {
+                        "localizations": {
+                            "de": {"stringUnit": {"value": "Hallo"}},
+                            "en": {"stringUnit": {"value": "Hello"}},
+                        }
+                    }
+                },
+            }
+        ).encode()
+
+        self.assertEqual([DEFAULT_LOCALE, "de"], parse(data, ".xcstrings").locales)
 
     def test_arrays_are_skipped(self):
-        catalog = Catalog([Entry("planets", {"en": ["Mercury"], "es": ["Mercurio"]})])
+        catalog = Catalog(
+            [Entry("planets", {DEFAULT_LOCALE: ["Mercury"], "es": ["Mercurio"]})]
+        )
 
         with self.assertWarns(ConversionWarning) as context:
-            serialize(catalog, ".xcstrings")
+            serialize(catalog, ".xcstrings", source_language="en")
 
         self.assertIn("1 array(s)", str(context.warning))
 
     def test_xcode_format(self):
-        catalog = Catalog([Entry("hello", {"en": "Hello"})])
+        catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello"})])
 
         self.assertTrue(
-            serialize(catalog, ".xcstrings")
+            serialize(catalog, ".xcstrings", source_language="en")
             .decode()
             .startswith(
                 "{\n"
@@ -156,7 +201,13 @@ class TestXcstrings(unittest.TestCase):
         )
 
     def test_invalid_file(self):
-        for data in [b"[]", b"{}", b'{"strings": []}', b"not json"]:
+        for data in [
+            b"[]",
+            b"{}",
+            b'{"strings": []}',
+            b'{"strings": {}}',
+            b"not json",
+        ]:
             with self.subTest(data=data), self.assertRaises(ValueError):
                 parse(data, ".xcstrings")
 

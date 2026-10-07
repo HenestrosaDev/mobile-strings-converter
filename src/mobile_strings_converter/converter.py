@@ -23,7 +23,10 @@ __all__ = [
 
 
 def convert_strings(
-    input_filepath: Path, output_filepath: Path, with_comments: bool = False
+    input_filepath: Path,
+    output_filepath: Path,
+    with_comments: bool = False,
+    source_language: Optional[str] = None,
 ):
     """
     Converts the strings of the input file to the type of the output file, which is
@@ -36,6 +39,9 @@ def convert_strings(
     :param with_comments: True if the user wants to include comments from
         .strings/.xml to the output file
     :type with_comments: bool
+    :param source_language: Code of the language of the default strings (e.g. `en`).
+        Required to write `.xcstrings` files, and ignored by any other file type.
+    :type source_language: Optional[str]
     """
 
     output_filepath = Path(output_filepath)
@@ -44,7 +50,11 @@ def convert_strings(
     if normalize_file_type(output_filepath.suffix) not in SUPPORTED_FILE_TYPES:
         raise ValueError(f"Output file type not supported: {output_filepath}")
 
-    save(load(input_filepath, with_comments=with_comments), output_filepath)
+    save(
+        load(input_filepath, with_comments=with_comments),
+        output_filepath,
+        source_language,
+    )
 
 
 def get_strings(

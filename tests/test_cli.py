@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import subprocess
 import sys
 import unittest
@@ -160,6 +161,24 @@ class TestCli(unittest.TestCase):
         self.assertEqual(
             "name,value,es\nhello,Hello,Hola\n",
             output_filepath.read_text(encoding="utf-8").replace("\r\n", "\n"),
+        )
+
+    def test_merge_to_string_catalog(self):
+        res_dir = self._write_android_project()
+        output_filepath = self.output_dir / "Localizable.xcstrings"
+
+        exit_code, _, stderr = self._run(res_dir, "-m", "-f", output_filepath)
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("--source-language", stderr)
+
+        exit_code, _, _ = self._run(res_dir, "-m", "-f", output_filepath, "-s", "en")
+
+        self.assertEqual(0, exit_code)
+        catalog_data = json.loads(output_filepath.read_text(encoding="utf-8"))
+        self.assertEqual("en", catalog_data["sourceLanguage"])
+        self.assertEqual(
+            {"en", "es"}, set(catalog_data["strings"]["hello"]["localizations"])
         )
 
     def test_merge_requires_output_file(self):

@@ -44,7 +44,7 @@ def load(
     return parse(filepath.read_bytes(), filepath.suffix, locale, with_comments)
 
 
-def save(catalog: Catalog, filepath: Path):
+def save(catalog: Catalog, filepath: Path, source_language: Optional[str] = None):
     """
     Writes the strings to a file, creating its directory if needed.
 
@@ -55,13 +55,16 @@ def save(catalog: Catalog, filepath: Path):
     :type catalog: Catalog
     :param filepath: File to write. Its extension sets the file type.
     :type filepath: Path
+    :param source_language: Code of the language of the default strings (e.g. `en`).
+        Required by `.xcstrings` files, and ignored by any other file type.
+    :type source_language: Optional[str]
     """
 
     filepath = Path(filepath)
 
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.simplefilter("always")
-        data = serialize(catalog, filepath.suffix)
+        data = serialize(catalog, filepath.suffix, source_language)
 
     filepath.parent.mkdir(parents=True, exist_ok=True)
     filepath.write_bytes(data)

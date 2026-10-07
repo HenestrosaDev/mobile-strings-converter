@@ -400,6 +400,7 @@ A full list of the program command's options are as follows:
 | `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files (e.g. `json` or `.json`). Required when using `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
 | `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Write the strings to the Google spreadsheet named after each input file (without its extension) in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
+| `-s LANGUAGE_CODE, --source-language LANGUAGE_CODE`     | Code of the language of the default strings (e.g., `en`), such as the ones in Android's `values` directory or iOS' `Base.lproj` directory. Required to write `.xcstrings` files. See [String Catalogs](#string-catalogs). |
 | `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -436,8 +437,10 @@ This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Loca
 If your iOS app uses a [String Catalog](#string-catalogs), all the languages go to a single file instead:
 
 ```
-mobile-strings-converter translations.xlsx -f MyApp/Localizable.xcstrings
+mobile-strings-converter translations.xlsx -f MyApp/Localizable.xcstrings -s en
 ```
+
+The `-s` (or `--source-language`) option sets the language of the `VALUE` column, as String Catalogs need its code. See [String Catalogs](#string-catalogs).
 
 ### Using the Package in Your Project
 
@@ -561,7 +564,15 @@ Other file types keep the placeholders of the input file.
 
 ### String Catalogs
 
-Xcode String Catalogs (`.xcstrings`) hold every language of the app in a single file, with each language under its own code (e.g., `en` or `es`). When converting strings from Android's `values` directory or iOS' `Base.lproj` directory, they are written as the source language of the catalog, `en`.
+Xcode String Catalogs (`.xcstrings`) hold every language of the app in a single file, with each language under its own code (e.g., `en` or `es`).
+
+The source language of a catalog is read as the default strings, like the ones in Android's `values` directory or iOS' `Base.lproj` directory, so it goes to the `VALUE` column of a spreadsheet and to `values/strings.xml` or `Base.lproj/Localizable.strings`. The other languages keep their code.
+
+When writing a catalog, pass the code of its source language with `-s` (or `--source-language`), as the default strings don't have one:
+
+```
+mobile-strings-converter app/src/main/res -m -f Localizable.xcstrings -s en
+```
 
 Strings, plurals, comments and `shouldTranslate` are converted. Device variations (e.g., a different string for Mac) and strings with several plurals (substitutions) are skipped with a warning.
 

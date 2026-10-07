@@ -2,10 +2,11 @@
 Xcode String Catalogs (`Localizable.xcstrings`), which hold the strings and plurals of
 every language of an iOS app.
 
-The languages keep their code (e.g. `en`), and the default locale is written as the
-source language of the catalog (`en` unless the strings already have an `en`
-locale). Strings without a value in the source language take their key as the value,
-as Xcode does. Arrays, device variations and plurals with several variables
+The source language of a catalog is the default locale, like Android's `values`
+directory or iOS' `Base.lproj` directory, and the other languages keep their code (e.g.
+`es`). Catalogs need the code of their source language, so it must be given when
+writing them. Strings without a value in the source language take their key as the
+value, as Xcode does. Arrays, device variations and plurals with several variables
 (substitutions) are not supported, so they are skipped.
 """
 
@@ -18,19 +19,16 @@ from ..exceptions import ConversionWarning
 from ..model import DEFAULT_LOCALE, PLURAL_QUANTITIES, Catalog, Entry, Value
 from .text import decode
 
-# Source language of the catalogs written from strings with a default locale
-SOURCE_LANGUAGE = "en"
-
 
 def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
     try:
         catalog_data = json.loads(decode(data))
         strings = catalog_data["strings"]
-        source_language = catalog_data.get("sourceLanguage", SOURCE_LANGUAGE)
+        source_language = catalog_data["sourceLanguage"]
     except (ValueError, KeyError, TypeError, AttributeError):
-        strings = None
+        strings = source_language = None
 
-    if not isinstance(strings, dict):
+    if not isinstance(strings, dict) or not isinstance(source_language, str):
         raise ValueError("The file provided is not a valid .xcstrings file.")
 
     entries = []
@@ -41,16 +39,22 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
         localizations = definition.get("localizations", {})
         values = {}
 
+        if source_language not in localizations:
+            # Xcode leaves out the source language when the value is the key
+            values[DEFAULT_LOCALE] = name
+
         for language, localization in localizations.items():
             value = _get_value(localization)
             if value is None:
                 skipped.append(f"{name} ({language})")
+            elif language == source_language:
+                values[DEFAULT_LOCALE] = value
             else:
                 values[language] = value
 
-        if source_language not in localizations:
-            # Xcode leaves out the source language when the value is the key
-            values = {source_language: name, **values}
+        # The default locale goes first, as in the other file types
+        if DEFAULT_LOCALE in values:
+            values = {DEFAULT_LOCALE: values.pop(DEFAULT_LOCALE), **values}
 
         entries.append(
             Entry(
@@ -71,15 +75,28 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
     return Catalog(entries)
 
 
-def serialize(catalog: Catalog) -> bytes:
-    locales = catalog.locales
-    has_source_language = SOURCE_LANGUAGE in locales
+def serialize(catalog: Catalog, source_language: Optional[str] = None) -> bytes:
+    """
+    :param catalog: Strings to write
+    :type catalog: Catalog
+    :param source_language: Code of the source language of the catalog (e.g. `en`),
+        which the strings of the default locale are written as
+    :type source_language: Optional[str]
+    """
 
-    if DEFAULT_LOCALE in locales and has_source_language:
-        warnings.warn(
-            f"Skipped the default locale because the source language of the catalog "
-            f"({SOURCE_LANGUAGE}) already has its own strings.",
-            ConversionWarning,
+    if not source_language:
+        raise ValueError(
+            "String Catalogs need the code of their source language, which the "
+            "default strings (e.g. Android's `values` or iOS' `Base.lproj`) are "
+            "written as. Pass it with `--source-language` (e.g. `--source-language "
+            "en`)."
+        )
+
+    if DEFAULT_LOCALE in catalog.locales and source_language in catalog.locales:
+        raise ValueError(
+            f"The strings of the default locale can't be written as {source_language}, "
+            f"as {source_language} already has its own strings. Pass another source "
+            f"language."
         )
 
     strings = {}
@@ -94,9 +111,7 @@ def serialize(catalog: Catalog) -> bytes:
         localizations = {}
         for locale, value in entry.values.items():
             if locale == DEFAULT_LOCALE:
-                if has_source_language:
-                    continue
-                locale = SOURCE_LANGUAGE
+                locale = source_language
 
             localization = _to_localization(value)
             if localization is None:
@@ -119,7 +134,7 @@ def serialize(catalog: Catalog) -> bytes:
         )
 
     catalog_data = {
-        "sourceLanguage": SOURCE_LANGUAGE,
+        "sourceLanguage": source_language,
         "strings": strings,
         "version": "1.0",
     }

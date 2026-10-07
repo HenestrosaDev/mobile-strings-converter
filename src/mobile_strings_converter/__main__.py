@@ -111,6 +111,17 @@ def build_parser():
         "Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
     )
     parser.add_argument(
+        "-s",
+        "--source-language",
+        required=False,
+        type=str,
+        metavar="LANGUAGE_CODE",
+        help="Code of the language of the default strings (e.g. `en`), such as the "
+        "ones in Android's `values` directory or iOS' `Base.lproj` directory. "
+        "Required to write `.xcstrings` files, which need the code of their source "
+        "language.",
+    )
+    parser.add_argument(
         "-m",
         "--merge",
         required=False,
@@ -274,7 +285,7 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
                 f"{output_filepaths[0].suffix} files can only hold one. Use "
                 f"-d/--output-dir to write a file per locale."
             )
-        save(catalog, output_filepaths[0])
+        save(catalog, output_filepaths[0], args.source_language)
     else:
         target_type = normalize_file_type(args.target_type)
         output_filepath = _output_dir_filepath(
@@ -288,7 +299,7 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
                 catalog, output_filepath.parent, target_type
             ).values()
         else:
-            save(catalog, output_filepath)
+            save(catalog, output_filepath, args.source_language)
             output_filepaths = [output_filepath]
 
     for output_filepath in output_filepaths:
