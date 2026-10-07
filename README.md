@@ -145,6 +145,7 @@ In addition to being able to run this script on its own, it can also be installe
 - Google Sheets support
 - HTML
 - iOS strings format (`*.strings`)
+- iOS plurals format (`*.stringsdict`)
 - JSON
 - MD
 - ODS
@@ -152,7 +153,7 @@ In addition to being able to run this script on its own, it can also be installe
 - XLSX
 - YAML
 
-Every file type except `.xml` and `.strings` can hold several languages at once (e.g., a spreadsheet with a column per language). See [Working With Several Languages](#working-with-several-languages).
+Every file type except `.xml`, `.strings` and `.stringsdict` can hold several languages at once (e.g., a spreadsheet with a column per language). See [Working With Several Languages](#working-with-several-languages).
 
 <!-- PROJECT STRUCTURE -->
 
@@ -208,6 +209,7 @@ Every file type except `.xml` and `.strings` can hold several languages at once 
 │       │       markdown.py
 │       │       ods.py
 │       │       pdf.py
+│       │       stringsdict.py
 │       │       table.py
 │       │       text.py
 │       │       xlsx.py
@@ -243,6 +245,7 @@ Every file type except `.xml` and `.strings` can hold several languages at once 
     │   test_ods.py
     │   test_pdf.py
     │   test_round_trip.py
+    │   test_stringsdict.py
     │   test_xlsx.py
     │   test_yaml.py
     │
@@ -419,14 +422,15 @@ The language of each file is taken from its directory:
 
 Comments written right before a string (e.g., `<!-- Title of the home screen -->` or `/* Title of the home screen */`) go to the `COMMENT` column so translators can read them.
 
-To convert the translated file back, use `-d` with `.xml` or `.strings` as the target type. A file is written for each language:
+To convert the translated file back, use `-d` with `.xml`, `.strings` or `.stringsdict` as the target type. A file is written for each language:
 
 ```
 mobile-strings-converter translations.xlsx -d app/src/main/res -t xml
 mobile-strings-converter translations.xlsx -d MyApp -t strings
+mobile-strings-converter translations.xlsx -d MyApp -t stringsdict
 ```
 
-This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`... respectively. Strings with no translation are left out of the file of that language.
+This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`... respectively. Strings with no translation are left out of the file of that language. iOS plurals go to `.stringsdict` files, so run both of the last two commands to get every string.
 
 ### Using the Package in Your Project
 
@@ -532,7 +536,9 @@ Spreadsheets and other tables have a row for each item of a plural or array, nam
 | `planets[0]`   | `Mercury`  |
 | `planets[1]`   | `Venus`    |
 
-These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead. iOS `.strings` files can't hold plurals or arrays, so they are skipped with a warning.
+These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead.
+
+On iOS, plurals go to `.stringsdict` files and strings go to `.strings` files. iOS has no arrays. Whatever a file type can't hold is skipped with a warning. Only plurals with a single number (`%#@variable@`) are read from `.stringsdict` files.
 
 ### Placeholders
 

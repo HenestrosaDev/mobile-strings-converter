@@ -70,8 +70,9 @@ def build_parser():
         help="Directory path to save the converted files. Compatible with single and "
         "multiple input files as well as directories. The specified directory will be "
         "created if it does not already exist. Files with several locales (e.g. a "
-        "spreadsheet with a column per language) converted to `.xml` or `.strings` are "
-        "split into a file per locale (e.g. `values-es/strings.xml`).",
+        "spreadsheet with a column per language) converted to `.xml`, `.strings` or "
+        "`.stringsdict` are split into a file per locale (e.g. "
+        "`values-es/strings.xml`).",
     )
     parser.add_argument(
         "-t",

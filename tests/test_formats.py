@@ -71,7 +71,7 @@ class TestMultiLocaleRoundTrip(unittest.TestCase):
             self.assertEqual(expected, catalog)
 
     def test_single_locale_file_types_reject_several_locales(self):
-        for file_type in [".xml", ".strings"]:
+        for file_type in [".xml", ".strings", ".stringsdict"]:
             with self.subTest(file_type=file_type), self.assertRaises(ValueError):
                 serialize(MULTI_LOCALE_CATALOG, file_type)
 

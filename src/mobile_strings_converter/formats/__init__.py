@@ -16,6 +16,7 @@ from . import (
     markdown,
     ods,
     pdf,
+    stringsdict,
     xlsx,
     yamlfile,
 )
@@ -29,6 +30,7 @@ FORMATS: Dict[str, ModuleType] = {
     ".yaml": yamlfile,
     ".html": html_table,
     ".strings": ios,
+    ".stringsdict": stringsdict,
     ".xml": android,
     ".pdf": pdf,
 }
@@ -79,8 +81,9 @@ def serialize(catalog: Catalog, file_type: str) -> bytes:
     """
     Writes the strings to the content of a file.
 
-    `.xml` and `.strings` files can only hold one locale, so a `ValueError` is raised
-    for multi-locale catalogs. Use `Catalog.for_locale` to write a file per locale.
+    `.xml`, `.strings` and `.stringsdict` files can only hold one locale, so a
+    `ValueError` is raised for multi-locale catalogs. Use `Catalog.split` to write a
+    file per locale.
 
     :param catalog: Strings to write
     :type catalog: Catalog

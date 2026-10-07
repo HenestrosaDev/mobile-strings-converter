@@ -40,6 +40,10 @@ class TestRoundTrip(unittest.TestCase):
 
     def test_round_trip(self):
         for file_type in SUPPORTED_FILE_TYPES:
+            if file_type == ".stringsdict":
+                # It only holds plurals
+                continue
+
             with self.subTest(file_type=file_type):
                 output_filepath = self.output_dir / f"strings{file_type}"
                 convert_strings(self.input_filepath, output_filepath)

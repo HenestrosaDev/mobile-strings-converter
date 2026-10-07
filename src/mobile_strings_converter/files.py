@@ -13,7 +13,7 @@ from .formats import SUPPORTED_FILE_TYPES, normalize_file_type, parse, serialize
 from .model import DEFAULT_LOCALE, Catalog
 
 ANDROID_FILENAME = "strings.xml"
-IOS_FILENAME = "Localizable.strings"
+IOS_FILENAME = "Localizable"
 
 
 def load(
@@ -139,6 +139,8 @@ def localized_path(directory: Path, locale: str, file_type: str) -> Path:
 
     - `.xml`: `values/strings.xml`, `values-es/strings.xml`, `values-pt-rBR/strings.xml`
     - `.strings`: `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`
+    - `.stringsdict`: `Base.lproj/Localizable.stringsdict`,
+      `es.lproj/Localizable.stringsdict`
     - Any other file type: `default.json`, `es.json`, `pt-BR.json`
 
     :param directory: Directory of the files
@@ -159,9 +161,9 @@ def localized_path(directory: Path, locale: str, file_type: str) -> Path:
         values_dir = "values" if is_default else f"values-{_android_qualifier(locale)}"
         return directory / values_dir / ANDROID_FILENAME
 
-    if file_type == ".strings":
+    if file_type in (".strings", ".stringsdict"):
         lproj_dir = "Base.lproj" if is_default else f"{locale}.lproj"
-        return directory / lproj_dir / IOS_FILENAME
+        return directory / lproj_dir / f"{IOS_FILENAME}{file_type}"
 
     return directory / f"{locale}{file_type}"
 
