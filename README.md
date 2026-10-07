@@ -281,11 +281,11 @@ In addition to being able to run this script on its own, it can also be installe
 	 source venv/bin/activate
 	 ```
 
-4. Open the command line and run `pip install path/to/project/root` to install the required packages to run the script.
+4. Open the command line and run `pip install path/to/project/root` to install the required packages and the `mobile-strings-converter` command.
 
 ### Package Installation
 
-Install the PyPI package by running `pip install mobile-strings-converter`. It requires Python 3.10 or later.
+Install the PyPI package by running `pip install mobile-strings-converter`. It requires Python 3.10 or later and installs the `mobile-strings-converter` command.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -298,7 +298,7 @@ Install the PyPI package by running `pip install mobile-strings-converter`. It r
 To convert one file to another file:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE]
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE]
 ```
 
 ---
@@ -306,15 +306,15 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORT
 To include the comments of the `.xml`/`.strings` input file in the output file, add the `-p` (or `--print-comments`) option. Note that it will be ignored for other input file types.
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
 ```
 
 ---
 
-To convert multiple files at once and save them in the specified directory specified with the `-d` option, use the`-t` option followed by the desired file type extension (e.g., `.json`). Note that the program will create the directory if it doesn't exist.
+To convert multiple files at once and save them in the specified directory specified with the `-d` option, use the `-t` option followed by the desired file type extension (e.g., `json` or `.json`). Note that the program will create the directory if it doesn't exist.
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
 ```
 
 ---
@@ -322,7 +322,7 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_
 To convert supported files in a directory and its subdirectories and save them to a directory:
 
 ```
-python path/to/mobile_strings_converter.py [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
+mobile-strings-converter [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
 ```
 
 ---
@@ -330,12 +330,12 @@ python path/to/mobile_strings_converter.py [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH]
 To convert supported files in multiple directories and their subdirectories and save them to a directory:
 
 ```
-python path/to/mobile_strings_converter.py [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
+mobile-strings-converter [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
 ```
 
 ---
 
-For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`
+For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`. When converting a directory, its subdirectory structure is kept in the output directory, so `res/values-es/strings.xml` and `res/values-fr/strings.xml` become `[OUTPUT_DIR_PATH]/values-es/strings.[TARGET_TYPE]` and `[OUTPUT_DIR_PATH]/values-fr/strings.[TARGET_TYPE]`.
 
 See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section to create a spreadsheet in your Google account.
 
@@ -359,8 +359,8 @@ A full list of the program command's options are as follows:
 | `-v, --version`                                         | Show script version info and exit.                                                                                                                                                                                                                             |
 | `-f FILE_PATH, --output-file FILE_PATH`                 | File path to save the converted file. Only works if only one input file is provided. See [the list of supported file types](#file-types-supported).                                                                                                            |
 | `-d DIR_PATH, --output-dir DIR_PATH`                    | Directory path where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                          |
-| `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files. Required when specifying multiple file paths or `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
-| `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Create a Google spreadsheet with the output in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
+| `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files (e.g. `json` or `.json`). Required when using `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
+| `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Write the strings to the Google spreadsheet named after each input file (without its extension) in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -371,6 +371,8 @@ After following the steps in the [Getting Started](#getting-started) section, im
 
 ```python
 # Using the `get_strings` function
+from pathlib import Path
+
 from mobile_strings_converter import get_strings
 
 get_strings(
@@ -396,23 +398,25 @@ Before going further into running the commands to do this, note that you need to
 
 Alternatively, you can create an `.xlsx` file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
 
-Once you have the `service_account.json` file, you can create a spreadsheet in Google Sheets by running the following command:
+Once you have the `service_account.json` file, create an empty spreadsheet in Google Sheets named after the input file without its extension (e.g., `strings` for `strings.xml`), share it with the `client_email` as described in step 8, and run the following command:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -g path/to/service_account.json
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -g path/to/service_account.json -f *.[SUPPORTED_FILE_TYPE]
 ```
 
-The name of the sheet will be the same as the name of the input file.
+The content of the first sheet of the spreadsheet will be replaced by the strings.
 
 #### Using the `to_google_sheets` Function in Your Project
 
 ```python
+from pathlib import Path
+
 from mobile_strings_converter import to_google_sheets
 
 to_google_sheets(
