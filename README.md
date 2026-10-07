@@ -206,6 +206,7 @@ In addition to being able to run this script on its own, it can also be installe
     │   test_csv.py
     │   test_cli.py
     │   test_get_strings.py
+    │   test_google_sheets.py
     │   test_html.py
     │   test_ios.py
     │   test_json.py

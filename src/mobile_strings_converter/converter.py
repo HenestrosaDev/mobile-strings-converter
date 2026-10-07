@@ -14,7 +14,6 @@ import yaml
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from fpdf import FPDF
-from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
 from pypdf import PdfReader
 
@@ -150,17 +149,18 @@ def to_google_sheets(
     input_filepath: Path,
     sheet_name: str,
     credentials_filepath: Path,
-    with_comments: bool,
+    with_comments: bool = False,
 ):
     """
-    Creates a Google spreadsheet with the extracted strings from the input filepath
+    Writes the extracted strings from the input filepath to an existing Google
+    spreadsheet. The spreadsheet must be shared with the service account's email.
 
-    :param input_filepath: .strings or .xml file to extract the strings
+    :param input_filepath: File to extract the strings from
     :type input_filepath: Path
-    :param sheet_name: Name of the sheet to be generated
+    :param sheet_name: Name of the spreadsheet to write to
     :type sheet_name: str
     :param credentials_filepath: Path to the service_account.json in order to be able
-        to create the sheet in the user's Google account
+        to access the sheet in the user's Google account
     :type credentials_filepath: Path
     :param with_comments: True if the user wants to include comments from
         .strings/.xml to the sheet
@@ -169,23 +169,21 @@ def to_google_sheets(
 
     strings = get_strings(input_filepath, with_comments)
 
-    # Authenticate with Google Sheets API
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive",
-    ]
-    credentials = Credentials.from_service_account_file(credentials_filepath, scope)
-    client = gspread.authorize(credentials)
+    client = gspread.service_account(filename=credentials_filepath)
 
-    # Open a new sheet or an existing one
-    sheet = client.open(sheet_name).sheet1
+    try:
+        spreadsheet = client.open(sheet_name)
+    except gspread.SpreadsheetNotFound:
+        raise ValueError(
+            f"Spreadsheet '{sheet_name}' not found. Create it in Google Sheets and "
+            f"share it with the `client_email` from your `service_account.json`."
+        ) from None
 
-    # Clear the existing data in the sheet
+    sheet = spreadsheet.sheet1
+
+    # Replace the existing data with the strings in a single request
     sheet.clear()
-
-    # Write the data to the sheet
-    for string in strings:
-        sheet.append_row(string)
+    sheet.update([["NAME", "VALUE"], *[[name, value] for name, value in strings]])
 
 
 def to_csv(strings: List[str], output_filepath: Path):
