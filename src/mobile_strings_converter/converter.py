@@ -45,9 +45,8 @@ def convert_strings(
     input_filepath: Path, output_filepath: Path, with_comments: bool = False
 ):
     """
-    Extracts strings from the input file in either .xml or .strings format and converts
-    them to the desired output file format. The output file format can be any of the
-    following:
+    Extracts strings from the input file and converts them to the desired output file
+    format. The output file format can be any of the following:
 
     Supported formats and corresponding extraction functions:
     - .csv: to_csv
@@ -61,45 +60,46 @@ def convert_strings(
     - .xml: to_android
     - .pdf: to_pdf
 
-    :param input_filepath: .strings or .xml file to extract the strings
+    :param input_filepath: File to extract the strings from
     :type input_filepath: Path
-    :param output_filepath: Name of the sheet to be generated
+    :param output_filepath: Path of the file to be generated
     :type output_filepath: Path
     :param with_comments: True if the user wants to include comments from
         .strings/.xml to the output file
     :type with_comments: bool
     """
 
-    strings = get_strings(input_filepath, with_comments)
+    output_filepath = Path(output_filepath)
 
-    if output_filepath:
-        conversion_functions = {
-            ".csv": to_csv,
-            ".xlsx": to_xlsx,
-            ".ods": to_ods,
-            ".md": to_md,
-            ".json": to_json,
-            ".yaml": to_yaml,
-            ".html": to_html,
-            ".strings": to_ios,
-            ".xml": to_android,
-            ".pdf": to_pdf,
-        }
+    conversion_functions = {
+        ".csv": to_csv,
+        ".xlsx": to_xlsx,
+        ".ods": to_ods,
+        ".md": to_md,
+        ".json": to_json,
+        ".yaml": to_yaml,
+        ".html": to_html,
+        ".strings": to_ios,
+        ".xml": to_android,
+        ".pdf": to_pdf,
+    }
 
-        if output_filepath.suffix in conversion_functions:
-            conversion_functions[output_filepath.suffix](strings, output_filepath)
+    output_type = output_filepath.suffix.lower()
+    if output_type not in conversion_functions:
+        raise ValueError(
+            f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
+            f"an issue here (https://github.com/HenestrosaDev/mobile-strings"
+            f"-converter/issues) if you want the file type to be supported by the "
+            f"package.{ConsoleStyle.END}"
+        )
 
-            print(
-                f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
-                f"{ConsoleStyle.END}"
-            )
-        else:
-            raise ValueError(
-                f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
-                f"an issue here (https://github.com/HenestrosaDev/mobile-strings"
-                f"-converter/issues) if you want the file type to be supported by the "
-                f"package.{ConsoleStyle.END}"
-            )
+    strings = get_strings(Path(input_filepath), with_comments)
+    conversion_functions[output_type](strings, output_filepath)
+
+    print(
+        f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
+        f"{ConsoleStyle.END}"
+    )
 
 
 def get_strings(
@@ -132,6 +132,8 @@ def get_strings(
     :rtype: List[Tuple[str, str]]
     """
 
+    input_filepath = Path(input_filepath)
+
     conversion_functions = {
         ".csv": get_strings_from_csv,
         ".xlsx": get_strings_from_xlsx,
@@ -145,12 +147,14 @@ def get_strings(
         ".pdf": get_strings_from_pdf,
     }
 
-    if input_filepath.suffix in [".strings", ".xml"]:
-        return conversion_functions[input_filepath.suffix](
-            input_filepath, with_comments
-        )
+    input_type = input_filepath.suffix.lower()
+    if input_type not in conversion_functions:
+        raise ValueError(f"Input file type not supported: {input_filepath}")
+
+    if input_type in [".strings", ".xml"]:
+        return conversion_functions[input_type](input_filepath, with_comments)
     else:
-        return conversion_functions[input_filepath.suffix](input_filepath)
+        return conversion_functions[input_type](input_filepath)
 
 
 def to_google_sheets(
@@ -194,12 +198,12 @@ def to_google_sheets(
     sheet.update([["NAME", "VALUE"], *[[name, value] for name, value in strings]])
 
 
-def to_csv(strings: List[str], output_filepath: Path):
+def to_csv(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .csv file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -273,12 +277,12 @@ def to_ods(strings: List[Tuple[str, str]], output_filepath: Path):
     doc.save()
 
 
-def to_json(strings: List[str], output_filepath: Path):
+def to_json(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .json file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -294,12 +298,12 @@ def to_json(strings: List[str], output_filepath: Path):
         file.write("\n")
 
 
-def to_yaml(strings: List[str], output_filepath: Path):
+def to_yaml(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .yaml file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -307,9 +311,15 @@ def to_yaml(strings: List[str], output_filepath: Path):
     # Convert the data to a dictionary
     strings_dict = {name: value for name, value in strings}
 
-    # Write the data to the YAML file
+    # Write the data to the YAML file, keeping the order of the input file
     with open(output_filepath, "w", encoding="utf-8") as file:
-        yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
+        yaml.dump(
+            strings_dict,
+            file,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
 
 def to_html(strings: List[Tuple[str, str]], output_filepath: Path):
@@ -573,7 +583,7 @@ def to_md(strings: List[Tuple[str, str]], output_filepath: Path):
 # GET STRINGS FROM
 
 
-def get_strings_from_csv(csv_filepath: Path):
+def get_strings_from_csv(csv_filepath: Path) -> List[Tuple[str, str]]:
     """
     Extract data from a CSV file with NAME and VALUE columns and return it as a
     list of tuples.
@@ -588,40 +598,42 @@ def get_strings_from_csv(csv_filepath: Path):
     data = []
 
     # Open the CSV file and read its contents
-    with open(csv_filepath, "r", newline="", encoding="utf-8") as file:
+    with open(csv_filepath, "r", newline="", encoding="utf-8-sig") as file:
         csv_reader = csv.reader(file)
-        next(csv_reader)  # Skip the header row
+        next(csv_reader, None)  # Skip the header row
 
         # Iterate over the rows in the CSV file
         for row in csv_reader:
-            name, value = row
-            data.append((name, value))
+            if _is_valid_row(row):
+                data.append(_to_string_pair(row))
 
     return data
 
 
-def get_strings_from_xlsx(sheet_filepath: Path):
+def get_strings_from_xlsx(sheet_filepath: Path) -> List[Tuple[str, str]]:
     """
     Extract data from an Excel file with NAME and VALUE columns and return it as a list
     of tuples.
 
     :param sheet_filepath: The path to the input Excel file.
-    :type sheet_filepath: str
+    :type sheet_filepath: Path
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
 
     # Load the workbook and select the active sheet
-    workbook = openpyxl.load_workbook(sheet_filepath)
+    workbook = openpyxl.load_workbook(sheet_filepath, read_only=True)
     sheet = workbook.active
 
     # Initialize a list to hold the tuples
     data = []
 
     # Iterate over the rows in the sheet starting from the second row to skip the header
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        name, value = row
-        data.append((name, value))
+    for row in sheet.iter_rows(min_row=2, max_col=2, values_only=True):
+        if _is_valid_row(row):
+            data.append(_to_string_pair(row))
+
+    workbook.close()
 
     return data
 
@@ -632,7 +644,7 @@ def get_strings_from_ods(ods_filepath: Path) -> List[Tuple[str, str]]:
     and return it as a list of tuples.
 
     :param ods_filepath: The path to the input ODS file.
-    :type ods_filepath: str
+    :type ods_filepath: Path
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
@@ -652,8 +664,9 @@ def get_strings_from_ods(ods_filepath: Path) -> List[Tuple[str, str]]:
             continue
 
         # Extract NAME and VALUE from each row
-        name, value = [cell.value for cell in row[:2]]
-        data.append((name, value))
+        values = [cell.value for cell in row[:2]]
+        if _is_valid_row(values):
+            data.append(_to_string_pair(values))
 
     return data
 
@@ -709,8 +722,8 @@ def get_strings_from_md(
 
 def get_strings_from_json(json_filepath: Path) -> List[Tuple[str, str]]:
     """
-    Extract data from a JSON file with objects containing NAME and VALUE fields and
-    return it as a list of tuples.
+    Extract data from a JSON file with objects containing NAME and VALUE fields (or a
+    single object mapping names to values) and return it as a list of tuples.
 
     :param json_filepath: The path to the input JSON file.
     :type json_filepath: Path
@@ -725,10 +738,13 @@ def get_strings_from_json(json_filepath: Path) -> List[Tuple[str, str]]:
     with open(json_filepath, "r", encoding="utf-8") as file:
         json_data = json.load(file)
 
+    if isinstance(json_data, dict):
+        return [_to_string_pair(item) for item in json_data.items()]
+
     # Iterate over each object in the JSON data
     for record in json_data:
         if "name" in record and "value" in record:
-            data.append((record["name"], record["value"]))
+            data.append(_to_string_pair((record["name"], record["value"])))
 
     return data
 
@@ -744,18 +760,12 @@ def get_strings_from_yaml(yaml_filepath: Path) -> List[Tuple[str, str]]:
     :rtype: List[Tuple[str, str]]
     """
 
-    # Initialize a list to hold the tuples
-    data = []
-
     # Open the YAML file and load its contents
     with open(yaml_filepath, "r", encoding="utf-8") as file:
-        yaml_data = yaml.safe_load(file)
+        yaml_data = yaml.safe_load(file) or {}
 
     # Iterate over each key-value pair in the YAML data
-    for key, value in yaml_data.items():
-        data.append((key, value))
-
-    return data
+    return [_to_string_pair(item) for item in yaml_data.items()]
 
 
 def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
@@ -883,7 +893,7 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
     embedded_files = pdf_reader.attachments.get(PDF_EMBEDDED_FILENAME)
     if embedded_files:
         records = json.loads(embedded_files[0].decode("utf-8"))
-        return [(r["name"], r["value"]) for r in records]
+        return [_to_string_pair((r["name"], r["value"])) for r in records]
 
     # Extract text from each page
     for page_number, page in enumerate(pdf_reader.pages):
@@ -915,6 +925,18 @@ def _get_language_detector():
         .with_preloaded_language_models()
         .build()
     )
+
+
+def _is_valid_row(row) -> bool:
+    """Returns True if the row has a name in the first column."""
+    return len(row) >= 1 and row[0] is not None and str(row[0]).strip() != ""
+
+
+def _to_string_pair(row) -> Tuple[str, str]:
+    """Converts a row of cells into a (name, value) tuple of strings."""
+    name = row[0]
+    value = row[1] if len(row) >= 2 else None
+    return str(name), "" if value is None else str(value)
 
 
 # iOS
