@@ -433,6 +433,12 @@ to_google_sheets(
 
 ## Notes
 
+### Android Resources
+
+- Only `<string>` resources are converted. `<plurals>` and `<string-array>` resources are skipped.
+- XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
+- Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
+
 ### Indic Languages Supported by PDF Files
 
 - Hindi
@@ -468,7 +474,7 @@ You may encounter this error on iOS when using a generated `.strings` file:
 validation failed: Couldn't parse property list because the input data was in an invalid format
 ```
 
-This is because the input file has double quotes in some NAME or VALUE. To identify the line with the error, you have to do the following on macOS:
+Generated `.strings` files escape double quotes and backslashes, but this error can still happen with files edited by hand, for example due to an unescaped double quote in some NAME or VALUE. To identify the line with the error, you have to do the following on macOS:
 
 1. `cd` into your project root.
 2. `cd [LANGUAGE_CODE].lproj` (e.g., `cd es.lproj`)

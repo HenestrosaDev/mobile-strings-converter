@@ -244,7 +244,7 @@ class BaseTests(object):
             # fmt: off
             expected_output = [
                 ("chinese", "  欢迎来到我的申请  "),
-                ("escaped_quote", "MyA\\\"pp"),
+                ("escaped_quote", 'MyA"pp'),
                 ("hindi", "मेरे ऐप का आनंद लें"),
                 ("korean", "내 앱을 즐기세요")
             ]

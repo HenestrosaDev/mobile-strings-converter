@@ -1,4 +1,5 @@
 import csv
+import html
 import json
 import os
 import re
@@ -15,6 +16,7 @@ from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from fpdf import FPDF
 from lingua import LanguageDetectorBuilder
+from lxml import etree
 from pypdf import PdfReader
 
 from .console_style import ConsoleStyle
@@ -339,35 +341,39 @@ def to_html(strings: List[str], output_filepath: Path):
         file.write("</table>\n")
 
 
-def to_ios(strings: List[str], output_filepath: Path):
+def to_ios(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .strings file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
     with open(output_filepath, "w", encoding="utf-8") as file:
-        for string in strings:
-            file.write(f'"{string[0]}" = "{string[1]}";\n')
+        for name, value in strings:
+            file.write(f'"{_escape_ios(name)}" = "{_escape_ios(value)}";\n')
 
 
-def to_android(strings: List[str], output_filepath: Path):
+def to_android(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .xml file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
     with open(output_filepath, "w", encoding="utf-8") as file:
+        file.write('<?xml version="1.0" encoding="utf-8"?>\n')
         file.write("<resources>\n")
-        for string in strings:
-            file.write(f'\t<string name="{string[0]}">{string[1]}</string>\n')
+        for name, value in strings:
+            file.write(
+                f'\t<string name="{html.escape(name)}">'
+                f"{_to_android_value(value)}</string>\n"
+            )
 
         file.write("</resources>\n")
 
@@ -755,12 +761,12 @@ def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
 
 
 def get_strings_from_ios(
-    ios_filepath: Path, with_comments: bool
+    ios_filepath: Path, with_comments: bool = False
 ) -> List[Tuple[str, str]]:
     """
-    Get strings from the .strings or .xml file.
+    Get strings from the .strings file.
 
-    :param ios_filepath: .strings or .xml file to extract the strings
+    :param ios_filepath: .strings file to extract the strings
     :type ios_filepath: Path
     :param with_comments: True if the user wants to include comments from
         the .strings to the output file
@@ -769,17 +775,11 @@ def get_strings_from_ios(
     :rtype: List[Tuple[str, str]]
     """
 
-    if with_comments:
-        pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
-    else:
-        pattern = r'^(?!\s*//)\s*"(.+?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
-
     # Open the strings file
     with open(ios_filepath, "r", encoding="utf-8") as file:
         strings_data = file.read()
 
-    # Extract the strings using a regular expression
-    strings = re.findall(pattern, strings_data, re.MULTILINE)
+    strings = _parse_ios_strings(strings_data, with_comments)
 
     if len(strings) >= 1:
         return strings
@@ -788,31 +788,50 @@ def get_strings_from_ios(
 
 
 def get_strings_from_xml(
-    xml_filepath: Path, with_comments: bool
+    xml_filepath: Path, with_comments: bool = False
 ) -> List[Tuple[str, str]]:
     """
-    Get strings from the .strings or .xml file.
+    Get strings from the Android .xml file.
 
-    :param xml_filepath: .strings or .xml file to extract the strings
+    `<plurals>` and `<string-array>` resources are not supported and are skipped.
+
+    :param xml_filepath: .xml file to extract the strings
     :type xml_filepath: Path
     :param with_comments: True if the user wants to include comments from
-        the .strings to the output file
+        the .xml to the output file
     :type with_comments: bool
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
 
-    if with_comments:
-        pattern = r'<string name="(.*?)">(.*?)</string>'
-    else:
-        pattern = r'^(?!\s*<!--)\s*<string name="(.*?)">(.*?)</string>(?!\s*-->)'
-
     # Open the strings file
-    with open(xml_filepath, "r", encoding="utf-8") as file:
+    with open(xml_filepath, "rb") as file:
         strings_data = file.read()
 
-    # Extract the strings using a regular expression
-    strings = re.findall(pattern, strings_data, re.MULTILINE)
+    try:
+        root = etree.fromstring(strings_data.strip())
+    except etree.XMLSyntaxError:
+        raise ValueError("The file provided is not a valid .xml file.") from None
+
+    strings = []
+    skipped_resources = 0
+
+    if root.tag == "resources":
+        for node in root:
+            if node.tag is etree.Comment:
+                if with_comments:
+                    strings.extend(_parse_commented_android_strings(node.text or ""))
+            elif node.tag == "string" and node.get("name") is not None:
+                strings.append((node.get("name"), _get_android_value(node)))
+            elif node.tag in ["plurals", "string-array"]:
+                skipped_resources += 1
+
+    if skipped_resources:
+        print(
+            f"{ConsoleStyle.YELLOW}Skipped {skipped_resources} <plurals>/"
+            f"<string-array> resource(s) in {xml_filepath} because they are not "
+            f"supported.{ConsoleStyle.END}"
+        )
 
     if len(strings) >= 1:
         return strings
@@ -853,3 +872,139 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
                 data.append((name.strip(), value.strip()))
 
     return data
+
+
+# HELPERS
+
+# iOS
+
+# Matches, in order of appearance, block comments, line comments and
+# `"name" = "value";` entries.
+_IOS_TOKEN_PATTERN = re.compile(
+    r"/\*(?P<block>.*?)\*/"
+    r"|//(?P<line>[^\n]*)"
+    r'|"(?P<name>(?:[^"\\]|\\.)*)"\s*=\s*"(?P<value>(?:[^"\\]|\\.)*)"\s*;',
+    re.DOTALL,
+)
+
+_IOS_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "0": "\0"}
+
+
+def _parse_ios_strings(data: str, with_comments: bool) -> List[Tuple[str, str]]:
+    strings = []
+
+    for match in _IOS_TOKEN_PATTERN.finditer(data):
+        if match.group("name") is not None:
+            strings.append(
+                (
+                    _unescape_ios(match.group("name")),
+                    _unescape_ios(match.group("value")),
+                )
+            )
+        elif with_comments:
+            comment = match.group("block") or match.group("line") or ""
+            strings.extend(_parse_ios_strings(comment, with_comments=False))
+
+    return strings
+
+
+def _unescape_ios(value: str) -> str:
+    def replace(match):
+        escaped = match.group(1)
+        if escaped[0] in "uU" and len(escaped) > 1:
+            return chr(int(escaped[1:], 16))
+        return _IOS_ESCAPES.get(escaped, escaped)
+
+    return re.sub(r"\\([uU][0-9a-fA-F]{4}|.)", replace, value, flags=re.DOTALL)
+
+
+def _escape_ios(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+        .replace("\r", "\\r")
+    )
+
+
+# Android
+
+_ANDROID_ESCAPES = {"n": "\n", "t": "\t"}
+
+
+def _get_android_value(element) -> str:
+    """
+    Returns the value of a `<string>` element. Values with inline markup (e.g.
+    `<b>bold</b>`) are returned verbatim, as they appear in the file. Otherwise, the
+    XML entities and Android escape sequences are decoded.
+    """
+
+    if len(element):
+        inner_xml = element.text and html.escape(element.text, quote=False) or ""
+        for child in element:
+            inner_xml += etree.tostring(child, encoding="unicode", with_tail=True)
+        return inner_xml
+
+    return _unescape_android(element.text or "")
+
+
+def _parse_commented_android_strings(comment: str) -> List[Tuple[str, str]]:
+    try:
+        root = etree.fromstring(f"<resources>{comment}</resources>")
+    except etree.XMLSyntaxError:
+        # The comment is not a commented out string
+        return []
+
+    return [
+        (node.get("name"), _get_android_value(node))
+        for node in root
+        if node.tag == "string" and node.get("name") is not None
+    ]
+
+
+def _unescape_android(value: str) -> str:
+    # Values wrapped in unescaped double quotes are taken literally
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"' and value[-2] != "\\":
+        value = value[1:-1]
+
+    def replace(match):
+        escaped = match.group(1)
+        if escaped[0] == "u" and len(escaped) > 1:
+            return chr(int(escaped[1:], 16))
+        return _ANDROID_ESCAPES.get(escaped, escaped)
+
+    return re.sub(r"\\(u[0-9a-fA-F]{4}|.)", replace, value, flags=re.DOTALL)
+
+
+def _escape_android(value: str) -> str:
+    value = (
+        value.replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+    )
+
+    # `@` and `?` at the start of a value are resource references
+    if value.startswith(("@", "?")):
+        value = "\\" + value
+
+    return html.escape(value, quote=False)
+
+
+def _to_android_value(value: str) -> str:
+    """
+    Returns the value ready to be written inside a `<string>` element. Values with
+    well-formed inline markup (as returned by `_get_android_value`) are written
+    verbatim.
+    """
+
+    if "<" in value:
+        try:
+            if len(etree.fromstring(f"<string>{value}</string>")):
+                return value
+        except etree.XMLSyntaxError:
+            pass
+
+    return _escape_android(value)

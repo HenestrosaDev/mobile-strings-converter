@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest import mock
 
 import gspread
+
 from mobile_strings_converter.converter import get_strings, to_google_sheets
 
 ANDROID_FILEPATH = Path(__file__).parent / "files/input/strings.xml"
