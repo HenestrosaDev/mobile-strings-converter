@@ -16,7 +16,7 @@ from bidi.algorithm import get_display
 from fpdf import FPDF
 from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 from .console_style import ConsoleStyle
 

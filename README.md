@@ -162,8 +162,6 @@ In addition to being able to run this script on its own, it can also be installe
 │   poetry.lock
 │   pyproject.toml
 │   README.md
-│   requirements.txt
-│   requirements-dev.txt
 │
 ├───.github
 │   │   CONTRIBUTING.md
@@ -280,14 +278,14 @@ In addition to being able to run this script on its own, it can also be installe
 	 # and then . venv/Scripts/activate
 
 	 # on macOS and Linux
-	 source venv/Scripts/activate
+	 source venv/bin/activate
 	 ```
 
-4. Open the command line and run `pip install -r path/to/requirements.txt` to install the required packages to run the script.
+4. Open the command line and run `pip install path/to/project/root` to install the required packages to run the script.
 
 ### Package Installation
 
-Install the PyPI package by running `pip install mobile-strings-converter`.
+Install the PyPI package by running `pip install mobile-strings-converter`. It requires Python 3.10 or later.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
