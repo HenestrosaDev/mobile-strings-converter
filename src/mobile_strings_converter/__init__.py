@@ -5,12 +5,18 @@
 
 """Imports for the mobile-strings-converter package."""
 
-from .converter import convert_strings, to_google_sheets
+from importlib.metadata import PackageNotFoundError, version
+
+from .converter import convert_strings, get_strings, to_google_sheets
 
 # Constants
-__version__ = "0.1.5"
+try:
+    # The version is defined in `pyproject.toml`
+    __version__ = version("mobile-strings-converter")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 __author__ = "José Carlos López Henestrosa"
-__license = "MIT"
+__license__ = "MIT"
 __author_email__ = "henestrosadev@gmail.com"
 __maintainer_email__ = "henestrosadev@gmail.com"

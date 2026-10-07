@@ -20,6 +20,19 @@ from pypdf import PdfReader
 
 from .console_style import ConsoleStyle
 
+SUPPORTED_FILE_TYPES = [
+    ".csv",
+    ".xlsx",
+    ".ods",
+    ".md",
+    ".json",
+    ".yaml",
+    ".html",
+    ".strings",
+    ".xml",
+    ".pdf",
+]
+
 
 def convert_strings(
     input_filepath: Path, output_filepath: Path, with_comments: bool = False
