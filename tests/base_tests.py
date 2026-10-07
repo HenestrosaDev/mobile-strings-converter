@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from mobile_strings_converter.converter import convert_strings, get_strings
 
@@ -15,6 +15,10 @@ class BaseTests(object):
         def setUp(self):
             self._file_name: str | None = None
 
+            # The generated files are written to a temporary directory
+            self._temp_dir = TemporaryDirectory()
+            self.output_dir = Path(self._temp_dir.name)
+
             self.files_path = "files"
             self.input_filepath_android = (
                 Path(__file__).parent / self.files_path / "input/strings.xml"
@@ -24,8 +28,7 @@ class BaseTests(object):
             )
 
         def tearDown(self):
-            if self.output_filepath.exists():
-                self.output_filepath.unlink()
+            self._temp_dir.cleanup()
 
         # Properties
 
@@ -46,7 +49,7 @@ class BaseTests(object):
                 / self.files_path
                 / f"template-without-comments/{self._file_name}"
             )
-            self.output_filepath = Path(self._file_name)
+            self.output_filepath = self.output_dir / self._file_name
 
         # Test methods
 
@@ -141,6 +144,10 @@ class BaseTests(object):
         def setUp(self):
             self._file_name: str | None = None
 
+            # The generated files are written to a temporary directory
+            self._temp_dir = TemporaryDirectory()
+            self.output_dir = Path(self._temp_dir.name)
+
             self.files_path = "files"
             self.android_filepath = (
                 Path(__file__).parent / self.files_path / "input/strings.xml"
@@ -150,8 +157,7 @@ class BaseTests(object):
             )
 
         def tearDown(self):
-            if self.output_filepath.exists():
-                self.output_filepath.unlink()
+            self._temp_dir.cleanup()
 
         # Properties
 
@@ -166,7 +172,7 @@ class BaseTests(object):
                 / self.files_path
                 / f"template-without-comments/{value}"
             )
-            self.output_filepath = Path(value)
+            self.output_filepath = self.output_dir / value
             self._file_name = value
 
         # Test methods
