@@ -3,12 +3,12 @@ import html
 import json
 import os
 import re
+import unicodedata
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
-from functools import lru_cache
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Set, Tuple
 
 import ezodf
 import gspread
@@ -17,7 +17,6 @@ import yaml
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from fpdf import FPDF
-from lingua import LanguageDetectorBuilder
 from lxml import etree
 from pypdf import PdfReader
 
@@ -39,6 +38,24 @@ SUPPORTED_FILE_TYPES = [
 # Name of the JSON file embedded in the generated PDFs. It holds the exact strings
 # written to the PDF so they can be read back losslessly.
 PDF_EMBEDDED_FILENAME = "strings.json"
+
+PDF_FONTS_PATH = Path(__file__).parent / "assets/fonts"
+
+# Each cell of a PDF is written with the first font that has glyphs for all its
+# characters
+PDF_FONTS = [
+    "DejaVuSansCondensed",  # Latin, Greek, Cyrillic, Arabic, Hebrew, Armenian...
+    "gargi",  # Devanagari
+    "Aakar",  # Gujarati
+    "AnekTelugu-VariableFont_wdth,wght",  # Telugu
+    "Latha",  # Tamil
+    "Gurvetica_a8_Heavy",  # Gurmukhi
+    "Waree",  # Thai
+    "fireflysung",  # Chinese and Japanese
+    "Eunjin",  # Korean
+]
+
+PDF_FONT_SIZE = 12
 
 
 def convert_strings(
@@ -409,20 +426,10 @@ def to_pdf(strings: List[Tuple[str, str]], output_filepath: Path):
     :type output_filepath: Path
     """
 
-    def add_font(font_name, size=12):
-        root_dir = Path(__file__).parent
-        # Ignore the following warning when adding a font already added:
-        # UserWarning: Core font or font already added 'dejavusanscondensed': doing
-        # nothing
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
-        pdf.set_font(font_name, size=size)
-
     # Create a new PDF file
     pdf = FPDF(orientation="P", format="A4")
     pdf.add_page()
-    pdf.set_font("helvetica", "B", 12)
+    pdf.set_font("helvetica", "B", PDF_FONT_SIZE)
 
     # Embed the strings so they can be read back losslessly by get_strings_from_pdf
     pdf.embed_file(
@@ -443,8 +450,9 @@ def to_pdf(strings: List[Tuple[str, str]], output_filepath: Path):
     pdf.cell(c_width, c_height, "VALUE", border=1)
     pdf.ln()
 
-    detector = _get_language_detector()
-    unsupported_values = []
+    fonts = _PdfFontPicker(pdf)
+    # Used as an ordered set
+    unsupported_values = {}
 
     # Add table data
     # https://stackoverflow.com/questions/53526311/fpdf-multicell-same-height
@@ -456,74 +464,22 @@ def to_pdf(strings: List[Tuple[str, str]], output_filepath: Path):
         cells_in_row = 2
 
         for j in range(cells_in_row):
-            language_code = None
+            text = string[j]
+            if _is_rtl(text):
+                text = get_display(reshape(text))
+
+            if not fonts.use_best_font_for(text):
+                unsupported_values[string[j]] = None
+
             try:
-                if j % 2 == 0:  # Prevents 'name' language detection
-                    add_font("DejaVuSansCondensed")
-                else:
-                    language = detector.detect_language_of(string[j])
-                    if language is not None:
-                        language_code = language.iso_code_639_1.name.lower()
+                pdf.multi_cell(c_width, c_height, text)
+            except Exception:
+                unsupported_values[string[j]] = None
 
-                    if language_code in [
-                        "bn",  # Bengali
-                        "hi",  # Hindi
-                        "kn",  # Kannada
-                        "ml",  # Malayalam
-                        "mr",  # Marathi
-                        "or",  # Oriya
-                        "bo",  # Tibetan
-                    ]:
-                        add_font("gargi")
-                    elif language_code == "gu":  # Gujarati
-                        add_font("Aakar")
-                    elif language_code == "te":  # Telugu
-                        add_font("AnekTelugu-VariableFont_wdth,wght")
-                    elif language_code == "ta":  # Tamil
-                        add_font("Latha")
-                    elif language_code == "pa":  # Punjabi, Panjabi
-                        add_font("Gurvetica_a8_Heavy")
-                    elif language_code == "zh" or language_code == "ja":
-                        # Chinese or Japanese
-                        add_font("fireflysung")
-                    elif language_code == "ko":  # Korean
-                        add_font("Eunjin")
-                    elif language_code == "th":  # Thai
-                        add_font("Waree")
-                    else:
-                        add_font("DejaVuSansCondensed")
+            if pdf.get_y() - y > max_height:
+                max_height = pdf.get_y() - y
 
-                # The font has no glyphs for some characters of the string
-                if any(
-                    ord(char) not in pdf.current_font.cmap
-                    for char in string[j]
-                    if not char.isspace()
-                ):
-                    unsupported_values.append(string[j])
-
-                if language_code in [
-                    # RTL languages
-                    "ar",  # Arabic
-                    "he",  # Hebrew
-                    "dv",  # Dhivehi
-                    "ku",  # Kurdish (sorani)
-                    "ps",  # Pashto
-                    "fa",  # Persian
-                    "sd",  # Sindhi
-                    "ur",  # Urdu
-                    "ug",  # Uyghur
-                    "yi",  # Yiddish
-                ]:
-                    pdf.multi_cell(c_width, c_height, get_display(reshape(string[j])))
-                else:
-                    pdf.multi_cell(c_width, c_height, string[j])
-
-                if pdf.get_y() - y > max_height:
-                    max_height = pdf.get_y() - y
-
-                pdf.set_xy(x + (c_width * (j + 1)), y)
-            except (Exception,):
-                unsupported_values.append(string[j])
+            pdf.set_xy(x + (c_width * (j + 1)), y)
 
         for j in range(cells_in_row + 1):
             pdf.line(x + c_width * j, y, x + c_width * j, y + max_height)
@@ -918,13 +874,50 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
 # HELPERS
 
 
-@lru_cache(maxsize=1)
-def _get_language_detector():
-    return (
-        LanguageDetectorBuilder.from_all_languages()
-        .with_preloaded_language_models()
-        .build()
-    )
+def _is_rtl(text: str) -> bool:
+    """Returns True if the text has right-to-left characters (e.g. Arabic)."""
+    return any(unicodedata.bidirectional(char) in ("R", "AL") for char in text)
+
+
+class _PdfFontPicker:
+    """Loads the fonts on demand and picks the one that can render a text."""
+
+    def __init__(self, pdf: FPDF):
+        self._pdf = pdf
+        self._cmaps: Dict[str, Set[int]] = {}
+
+    def use_best_font_for(self, text: str) -> bool:
+        """
+        Sets the first font that has glyphs for all the characters of the text, or the
+        one that has the most if none has all of them. Returns True if the font has
+        glyphs for all the characters.
+        """
+
+        code_points = {ord(char) for char in text if not char.isspace()}
+        best_font, best_missing = None, None
+
+        for font in PDF_FONTS:
+            missing = len(code_points - self._get_cmap(font))
+            if best_missing is None or missing < best_missing:
+                best_font, best_missing = font, missing
+            if missing == 0:
+                break
+
+        self._pdf.set_font(best_font, size=PDF_FONT_SIZE)
+        return best_missing == 0
+
+    def _get_cmap(self, font: str) -> Set[int]:
+        if font not in self._cmaps:
+            # Ignore the following warning when adding a font already added:
+            # UserWarning: Core font or font already added 'dejavusanscondensed':
+            # doing nothing
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=UserWarning)
+                self._pdf.add_font(fname=str(PDF_FONTS_PATH / f"{font}.ttf"))
+            self._pdf.set_font(font, size=PDF_FONT_SIZE)
+            self._cmaps[font] = set(self._pdf.current_font.cmap)
+
+        return self._cmaps[font]
 
 
 def _is_valid_row(row) -> bool:
