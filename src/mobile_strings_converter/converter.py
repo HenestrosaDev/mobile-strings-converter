@@ -404,7 +404,7 @@ def to_pdf(strings: List[str], output_filepath: Path):
                     elif language_code == "te":  # Telugu
                         add_font("AnekTelugu-VariableFont_wdth,wght")
                     elif language_code == "ta":  # Tamil
-                        add_font("latha")
+                        add_font("Latha")
                     elif language_code == "pa":  # Punjabi, Panjabi
                         add_font("Gurvetica_a8_Heavy")
                     elif language_code == "zh" or language_code == "ja":
