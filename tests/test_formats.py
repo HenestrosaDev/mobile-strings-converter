@@ -7,6 +7,7 @@ from mobile_strings_converter import (
     DEFAULT_LOCALE,
     SUPPORTED_FILE_TYPES,
     Catalog,
+    ConversionWarning,
     Entry,
     parse,
     serialize,
@@ -20,6 +21,17 @@ MULTI_LOCALE_CATALOG = Catalog(
             {DEFAULT_LOCALE: "Hello", "es": "Hola", "fr": "Bonjour"},
             comment="Greeting on the home screen",
         ),
+        Entry(
+            "songs",
+            {
+                DEFAULT_LOCALE: {"one": "%d song", "other": "%d songs"},
+                "es": {"one": "%d canción", "other": "%d canciones"},
+            },
+        ),
+        Entry(
+            "planets",
+            {DEFAULT_LOCALE: ["Mercury", "Venus"], "es": ["Mercurio", "Venus"]},
+        ),
         # Not translated to French
         Entry("bye", {DEFAULT_LOCALE: "Bye", "es": "Adiós"}),
     ]
@@ -29,6 +41,8 @@ SINGLE_LOCALE_CATALOG = Catalog(
     [
         Entry("app_name", {DEFAULT_LOCALE: "My App"}, translatable=False),
         Entry("hello", {DEFAULT_LOCALE: "Hello"}, comment="Greeting"),
+        Entry("songs", {DEFAULT_LOCALE: {"one": "%d song", "other": "%d songs"}}),
+        Entry("planets", {DEFAULT_LOCALE: ["Mercury", "Venus"]}),
     ]
 )
 
@@ -66,7 +80,8 @@ class TestMultiLocaleRoundTrip(unittest.TestCase):
 
         self.assertEqual("name,value,es,fr,comment", csv[0])
         self.assertEqual("hello,Hello,Hola,Bonjour,Greeting on the home screen", csv[1])
-        self.assertEqual("bye,Bye,Adiós,,", csv[2])
+        self.assertEqual("songs[one],%d song,%d canción,,", csv[2])
+        self.assertEqual("bye,Bye,Adiós,,", csv[-1])
 
     def test_for_locale_and_merge(self):
         catalogs = {
@@ -92,6 +107,14 @@ class TestAndroid(unittest.TestCase):
             '\t<string name="app_name" translatable="false">My App</string>\n'
             "\t<!-- Greeting -->\n"
             '\t<string name="hello">Hello</string>\n'
+            '\t<plurals name="songs">\n'
+            '\t\t<item quantity="one">%d song</item>\n'
+            '\t\t<item quantity="other">%d songs</item>\n'
+            "\t</plurals>\n"
+            '\t<string-array name="planets">\n'
+            "\t\t<item>Mercury</item>\n"
+            "\t\t<item>Venus</item>\n"
+            "\t</string-array>\n"
             "</resources>\n",
             serialize(SINGLE_LOCALE_CATALOG, ".xml").decode("utf-8"),
         )
@@ -151,6 +174,15 @@ class TestIos(unittest.TestCase):
 
         self.assertIsNone(catalog.entries[1].comment)
 
+    def test_plurals_and_arrays_are_skipped(self):
+        with self.assertWarns(ConversionWarning):
+            data = serialize(SINGLE_LOCALE_CATALOG, ".strings")
+
+        self.assertEqual(
+            [("app_name", "My App"), ("hello", "Hello")],
+            parse(data, ".strings").to_pairs(),
+        )
+
     def test_utf16(self):
         data = codecs.BOM_UTF16_LE + '"hello" = "Hola";'.encode("utf-16-le")
 
@@ -158,6 +190,29 @@ class TestIos(unittest.TestCase):
 
 
 class TestTables(unittest.TestCase):
+    def test_flattened_names_are_grouped(self):
+        data = b"name,value\nsongs[one],1 song\nsongs[other],%d songs\nlist[1],B\n"
+
+        self.assertEqual(
+            Catalog(
+                [
+                    Entry(
+                        "songs",
+                        {DEFAULT_LOCALE: {"one": "1 song", "other": "%d songs"}},
+                    ),
+                    Entry("list", {DEFAULT_LOCALE: ["", "B"]}),
+                ]
+            ),
+            parse(data, ".csv"),
+        )
+
+    def test_flattened_names_of_strings_are_kept(self):
+        data = b"name,value\nitem,Item\nitem[0],First\n"
+
+        self.assertEqual(
+            [("item", "Item"), ("item[0]", "First")], parse(data, ".csv").to_pairs()
+        )
+
     def test_value_column_locale(self):
         catalog = parse(b"name,value,fr\nhello,Hola,Bonjour\n", ".csv", locale="es")
 
@@ -170,6 +225,17 @@ class TestTables(unittest.TestCase):
 
 
 class TestYaml(unittest.TestCase):
+    def test_single_locale_with_plurals_only(self):
+        data = b"songs:\n  one: '%d song'\n  other: '%d songs'\n"
+
+        catalog = parse(data, ".yaml")
+
+        self.assertEqual([DEFAULT_LOCALE], catalog.locales)
+        self.assertEqual(
+            {"one": "%d song", "other": "%d songs"},
+            catalog.entries[0].values[DEFAULT_LOCALE],
+        )
+
     def test_multi_locale(self):
         data = "default:\n  hello: Hello\nes:\n  hello: Hola\n".encode("utf-8")
 

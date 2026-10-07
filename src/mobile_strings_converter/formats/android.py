@@ -1,6 +1,5 @@
 """
-Android string resources (`strings.xml`). `<plurals>` and `<string-array>` resources
-are not supported and are skipped.
+Android string resources (`strings.xml`): `<string>`, `<plurals>` and `<string-array>`.
 
 A comment right before a resource is read as its comment for translators, unless the
 comment holds commented out resources, which are read as entries if `with_comments`
@@ -15,7 +14,7 @@ from typing import List, Optional
 from lxml import etree
 
 from ..exceptions import ConversionWarning
-from ..model import Catalog, Entry
+from ..model import Catalog, Entry, Value
 
 MULTI_LOCALE = False
 
@@ -78,7 +77,21 @@ def serialize(catalog: Catalog) -> bytes:
             comment = re.sub(r"-(?=-)", "- ", entry.comment)
             lines.append(f"\t<!-- {comment} -->")
 
-        lines.append(f"\t<string {attributes}>{_to_android_value(value)}</string>")
+        if isinstance(value, dict):
+            lines.append(f"\t<plurals {attributes}>")
+            for quantity, item in value.items():
+                lines.append(
+                    f'\t\t<item quantity="{html.escape(quantity)}">'
+                    f"{_to_android_value(item)}</item>"
+                )
+            lines.append("\t</plurals>")
+        elif isinstance(value, list):
+            lines.append(f"\t<string-array {attributes}>")
+            for item in value:
+                lines.append(f"\t\t<item>{_to_android_value(item)}</item>")
+            lines.append("\t</string-array>")
+        else:
+            lines.append(f"\t<string {attributes}>{_to_android_value(value)}</string>")
 
     lines.append("</resources>")
 
@@ -90,8 +103,19 @@ def _parse_resource(node, locale: str) -> Optional[Entry]:
     if name is None:
         return None
 
-    if node.tag != "string":
-        if node.tag in ("plurals", "string-array", "integer-array", "array"):
+    value: Value
+    if node.tag == "string":
+        value = _get_android_value(node)
+    elif node.tag == "plurals":
+        value = {
+            item.get("quantity"): _get_android_value(item)
+            for item in node
+            if item.tag == "item" and item.get("quantity") is not None
+        }
+    elif node.tag == "string-array":
+        value = [_get_android_value(item) for item in node if item.tag == "item"]
+    else:
+        if node.tag in ("integer-array", "array"):
             warnings.warn(
                 f'Skipped the <{node.tag} name="{name}"> resource because it is not '
                 f"supported.",
@@ -101,7 +125,7 @@ def _parse_resource(node, locale: str) -> Optional[Entry]:
 
     return Entry(
         name,
-        {locale: _get_android_value(node)},
+        {locale: value},
         translatable=node.get("translatable", "true").lower() != "false",
     )
 

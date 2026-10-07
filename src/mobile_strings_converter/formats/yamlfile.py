@@ -1,11 +1,13 @@
 """
 YAML files map names to values in single-locale catalogs. Multi-locale catalogs map
 each locale to its names and values, e.g. `es: {hello: Hola}`.
+
+Plurals are written as mappings (e.g. `{one: ..., other: ...}`) and arrays as lists.
 """
 
 import yaml
 
-from ..model import Catalog, Entry, to_value
+from ..model import PLURAL_QUANTITIES, Catalog, Entry, to_value
 from .text import decode
 
 
@@ -44,10 +46,13 @@ def serialize(catalog: Catalog) -> bytes:
 
 
 def _is_multi_locale(yaml_data: dict) -> bool:
-    """Returns True if every value is a mapping of names."""
+    """
+    Returns True if every value is a mapping of names, as opposed to a mapping of
+    plural quantities.
+    """
 
-    return bool(yaml_data) and all(
-        isinstance(value, dict) for value in yaml_data.values()
+    return all(isinstance(value, dict) for value in yaml_data.values()) and any(
+        key not in PLURAL_QUANTITIES for value in yaml_data.values() for key in value
     )
 
 

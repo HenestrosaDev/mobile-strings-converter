@@ -3,12 +3,14 @@ iOS strings files (`Localizable.strings`).
 
 A comment right before an entry is read as its comment for translators, unless the
 comment holds commented out entries, which are read as entries if `with_comments` is
-True.
+True. Plurals and arrays can't be written to `.strings` files, so they are skipped.
 """
 
 import re
+import warnings
 from typing import List
 
+from ..exceptions import ConversionWarning
 from ..model import Catalog, Entry
 from .text import decode
 
@@ -43,13 +45,24 @@ def serialize(catalog: Catalog) -> bytes:
         )
 
     lines = []
+    skipped = []
 
     for entry in catalog.entries:
         value = next(iter(entry.values.values()), "")
+        if not isinstance(value, str):
+            skipped.append(entry.name)
+            continue
 
         if entry.comment:
             lines.append(f"/* {entry.comment.replace('*/', '* /')} */")
         lines.append(f'"{_escape_ios(entry.name)}" = "{_escape_ios(value)}";')
+
+    if skipped:
+        warnings.warn(
+            f"Skipped {len(skipped)} plural(s)/array(s) because .strings files can't "
+            f"hold them: {', '.join(skipped)}",
+            ConversionWarning,
+        )
 
     return "".join(f"{line}\n" for line in lines).encode("utf-8")
 

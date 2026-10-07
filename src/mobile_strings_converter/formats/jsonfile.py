@@ -5,6 +5,7 @@ JSON files hold a list of records, one per entry:
 - Multi-locale catalogs: `{"name": ..., "value": ..., "es": ..., "fr": ...}`, where
   `value` holds the default locale.
 
+Plurals are written as objects (e.g. `{"one": ..., "other": ...}`) and arrays as lists.
 Entries with a comment have a `comment` field. A single object mapping names to values
 can be read as well.
 """

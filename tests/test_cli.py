@@ -152,7 +152,7 @@ class TestCli(unittest.TestCase):
         exit_code, stdout, _ = self._run(input_filepath, "-f", output_filepath)
 
         self.assertEqual(0, exit_code)
-        self.assertIn('Skipped the <string-array name="list"> resource', stdout)
+        self.assertIn("Skipped 1 plural(s)/array(s)", stdout)
 
     def test_module_entry_point(self):
         result = subprocess.run(

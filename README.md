@@ -110,6 +110,9 @@
 		- [Setting Up a Google Account](#setting-up-a-google-account)
 		- [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
 - [Notes](#notes)
+	- [Android Resources](#android-resources)
+	- [Plurals and Arrays](#plurals-and-arrays)
+	- [PDF Files](#pdf-files)
 	- [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
 	- [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
 - [Troubleshooting](#troubleshooting)
@@ -475,10 +478,23 @@ to_google_sheets(
 
 ### Android Resources
 
-- Only `<string>` resources are converted. `<plurals>` and `<string-array>` resources are skipped.
+- `<string>`, `<plurals>` and `<string-array>` resources are converted. See [Plurals and Arrays](#plurals-and-arrays).
 - `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
 - XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
 - Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
+
+### Plurals and Arrays
+
+Spreadsheets and other tables have a row for each item of a plural or array, named after the item:
+
+| NAME           | VALUE      |
+|:---------------|:-----------|
+| `songs[one]`   | `%d song`  |
+| `songs[other]` | `%d songs` |
+| `planets[0]`   | `Mercury`  |
+| `planets[1]`   | `Venus`    |
+
+These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead. iOS `.strings` files can't hold plurals or arrays, so they are skipped with a warning.
 
 ### PDF Files
 

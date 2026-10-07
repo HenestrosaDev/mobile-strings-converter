@@ -16,13 +16,14 @@ from .converter import (
 from .exceptions import ConversionWarning, UnsupportedCharactersWarning
 from .files import load, locale_from_path, save
 from .formats import SUPPORTED_FILE_TYPES, parse, serialize
-from .model import DEFAULT_LOCALE, Catalog, Entry
+from .model import DEFAULT_LOCALE, PLURAL_QUANTITIES, Catalog, Entry
 
 __all__ = [
     # Data model
     "Catalog",
     "Entry",
     "DEFAULT_LOCALE",
+    "PLURAL_QUANTITIES",
     # Content of the files
     "SUPPORTED_FILE_TYPES",
     "parse",
