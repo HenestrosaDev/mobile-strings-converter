@@ -1,3 +1,4 @@
+import codecs
 import unittest
 import warnings
 from dataclasses import replace
@@ -149,6 +150,11 @@ class TestIos(unittest.TestCase):
         catalog = parse(b'"a" = "A"; // Trailing\n"b" = "B";', ".strings")
 
         self.assertIsNone(catalog.entries[1].comment)
+
+    def test_utf16(self):
+        data = codecs.BOM_UTF16_LE + '"hello" = "Hola";'.encode("utf-16-le")
+
+        self.assertEqual([("hello", "Hola")], parse(data, ".strings").to_pairs())
 
 
 class TestTables(unittest.TestCase):
