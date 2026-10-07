@@ -44,8 +44,8 @@ def convert_strings(
 
     Supported formats and corresponding extraction functions:
     - .csv: to_csv
-    - .xlsx: to_sheet
-    - .ods: to_sheet
+    - .xlsx: to_xlsx
+    - .ods: to_ods
     - .md: to_md
     - .json: to_json
     - .yaml: to_yaml
@@ -68,8 +68,8 @@ def convert_strings(
     if output_filepath:
         conversion_functions = {
             ".csv": to_csv,
-            ".xlsx": to_sheet,
-            ".ods": to_sheet,
+            ".xlsx": to_xlsx,
+            ".ods": to_ods,
             ".md": to_md,
             ".json": to_json,
             ".yaml": to_yaml,
@@ -210,12 +210,12 @@ def to_csv(strings: List[str], output_filepath: Path):
             writer.writerow([name, value])
 
 
-def to_sheet(strings: List[str], output_filepath: Path):
+def to_xlsx(strings: List[Tuple[str, str]], output_filepath: Path):
     """
-    Formats strings to a .xlsx / .ods file
+    Formats strings to a .xlsx file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -237,6 +237,34 @@ def to_sheet(strings: List[str], output_filepath: Path):
 
     # Save the file
     workbook.save(output_filepath)
+
+
+def to_ods(strings: List[Tuple[str, str]], output_filepath: Path):
+    """
+    Formats strings to a .ods file
+
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
+
+    doc = ezodf.newdoc(doctype="ods", filename=str(output_filepath))
+    # Don't create a `.bak` file when overwriting an existing file
+    doc.backup = False
+    sheet = ezodf.Sheet("Sheet1", size=(len(strings) + 1, 2))
+    doc.sheets += sheet
+
+    # Write the header row
+    sheet[0, 0].set_value("NAME")
+    sheet[0, 1].set_value("VALUE")
+
+    # Write the data to the sheet
+    for i, (name, value) in enumerate(strings, start=1):
+        sheet[i, 0].set_value(name)
+        sheet[i, 1].set_value(value)
+
+    doc.save()
 
 
 def to_json(strings: List[str], output_filepath: Path):
@@ -576,13 +604,16 @@ def get_strings_from_ods(ods_filepath: Path) -> List[Tuple[str, str]]:
     data = []
 
     # Load the ODS file
-    doc = ezodf.opendoc(ods_filepath)
+    doc = ezodf.opendoc(str(ods_filepath))
 
     # Get the first sheet
     sheet = doc.sheets[0]
 
-    # Iterate over the rows in the sheet
-    for row in sheet.rows():
+    # Iterate over the rows in the sheet, skipping the header
+    for i, row in enumerate(sheet.rows()):
+        if i == 0:
+            continue
+
         # Extract NAME and VALUE from each row
         name, value = [cell.value for cell in row[:2]]
         data.append((name, value))
