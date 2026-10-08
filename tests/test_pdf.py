@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from base_tests import BaseTests
+
 from mobile_strings_converter.converter import convert_strings
 
 
@@ -19,9 +20,10 @@ class TestToPdf(BaseTests.ConvertToTest):
     ):
         convert_strings(input_filepath, self.output_filepath, with_comments)
 
-        with open(self.output_filepath, "rb") as test_file, open(
-            template_filepath, "rb"
-        ) as template_file:
+        with (
+            open(self.output_filepath, "rb") as test_file,
+            open(template_filepath, "rb") as template_file,
+        ):
             test_size = len(test_file.read())
             template_size = len(template_file.read())
 
@@ -53,9 +55,10 @@ class TestFromPdf(BaseTests.ConvertFromTest):
     ):
         convert_strings(input_filepath, self.output_filepath)
 
-        with open(self.output_filepath, "rb") as test_file, open(
-            template_filepath, "rb"
-        ) as template_file:
+        with (
+            open(self.output_filepath, "rb") as test_file,
+            open(template_filepath, "rb") as template_file,
+        ):
             test_size = len(test_file.read())
             template_size = len(template_file.read())
 

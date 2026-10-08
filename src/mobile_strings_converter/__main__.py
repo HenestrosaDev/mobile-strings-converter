@@ -4,6 +4,7 @@ from pathlib import Path
 
 from console_style import ConsoleStyle
 from converter import convert_strings, to_google_sheets
+
 from mobile_strings_converter import __version__
 
 

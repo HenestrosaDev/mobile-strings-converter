@@ -3,7 +3,6 @@ name: Publish
 on:
   release:
     types: [published]
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -12,12 +11,12 @@ jobs:
 
     steps:
       - name: Checkout sources  # Clones your repository into the machine running the action
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: |
