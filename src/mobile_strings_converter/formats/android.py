@@ -7,6 +7,7 @@ is True. iOS placeholders (e.g. `%@`) are converted to Android ones (e.g. `%s`) 
 writing.
 """
 
+import copy
 import html
 import re
 import warnings
@@ -20,6 +21,9 @@ from ..model import Catalog, Entry, Value
 MULTI_LOCALE = False
 
 _ANDROID_ESCAPES = {"n": "\n", "t": "\t"}
+
+# `<xliff:g>` marks the text that must not be translated, e.g. placeholders
+_XLIFF_G_TAG = "{urn:oasis:names:tc:xliff:document:1.2}g"
 
 # Matches, in order of appearance, escape sequences, double quotes, whitespace and any
 # other text
@@ -164,10 +168,18 @@ def _is_trailing(comment: etree._Element) -> bool:
 
 def _get_android_value(element: etree._Element) -> str:
     """
-    Returns the value of a `<string>` or `<item>` element. Values with inline markup
-    (e.g. `<b>bold</b>`) are returned verbatim, as they appear in the file. Otherwise,
-    the XML entities and Android escape sequences are decoded.
+    Returns the value of a `<string>` or `<item>` element. `<xliff:g>` tags are removed,
+    keeping their content (e.g. `<xliff:g id="name">%s</xliff:g>` -> `%s`). Values with
+    other inline markup (e.g. `<b>bold</b>`) are returned verbatim, as they appear in
+    the file. Otherwise, the XML entities and Android escape sequences are decoded.
     """
+
+    if len(element):
+        element = copy.deepcopy(element)
+        etree.strip_tags(element, _XLIFF_G_TAG)
+        # Otherwise, the namespaces of the file (e.g. `xmlns:tools`) are declared in
+        # every tag of the markup
+        etree.cleanup_namespaces(element)
 
     if len(element):
         inner_xml = element.text and html.escape(element.text, quote=False) or ""
