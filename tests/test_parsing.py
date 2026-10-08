@@ -167,6 +167,35 @@ class TestIosParsing(unittest.TestCase):
             self._get_strings(data, with_comments=True),
         )
 
+    def test_unquoted_names_and_values(self):
+        data = """
+        hello_world = "Hello, World!";
+        "version"=1.2.0;
+        settings.title = Settings;
+        "spaced" = "With spaces";
+        """
+
+        self.assertEqual(
+            [
+                ("hello_world", "Hello, World!"),
+                ("version", "1.2.0"),
+                ("settings.title", "Settings"),
+                ("spaced", "With spaces"),
+            ],
+            self._get_strings(data),
+        )
+
+    def test_comments_with_unquoted_entries_are_for_translators(self):
+        data = """
+        /* Shown when count = 0; */
+        "empty" = "No songs";
+        """
+
+        catalog = parse(data.encode(), ".strings", with_comments=True)
+
+        self.assertEqual(["empty"], [entry.name for entry in catalog.entries])
+        self.assertEqual("Shown when count = 0;", catalog.entries[0].comment)
+
 
 class TestReaders(unittest.TestCase):
     def _get_strings(self, data: str, extension: str) -> list[tuple[str, str]]:

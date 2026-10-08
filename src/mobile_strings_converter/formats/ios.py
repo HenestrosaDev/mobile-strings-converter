@@ -18,14 +18,39 @@ from .text import decode
 
 MULTI_LOCALE = False
 
-# Matches, in order of appearance, block comments, line comments and
-# `"name" = "value";` entries.
-_IOS_TOKEN_PATTERN = re.compile(
-    r"/\*(?P<block>.*?)\*/"
-    r"|//(?P<line>[^\n]*)"
-    r'|"(?P<name>(?:[^"\\]|\\.)*)"\s*=\s*"(?P<value>(?:[^"\\]|\\.)*)"\s*;',
-    re.DOTALL,
-)
+# Names and values can be written without quotes if they only have these characters,
+# e.g. `hello_world = "Hello, World!";`
+_IOS_UNQUOTED = r"[A-Za-z0-9_$+/:.-]+"
+
+
+def _token_pattern(unquoted: bool) -> re.Pattern[str]:
+    """
+    Matches, in order of appearance, block comments, line comments and
+    `"name" = "value";` entries, optionally with unquoted names and values.
+    """
+
+    def string(group: str) -> str:
+        quoted = rf'"(?P<{group}>(?:[^"\\]|\\.)*)"'
+        return (
+            f"(?:{quoted}|(?P<{group}_unquoted>{_IOS_UNQUOTED}))"
+            if unquoted
+            else quoted
+        )
+
+    return re.compile(
+        r"/\*(?P<block>.*?)\*/"
+        r"|//(?P<line>[^\n]*)"
+        rf"|{string('name')}\s*=\s*{string('value')}\s*;",
+        re.DOTALL,
+    )
+
+
+_IOS_TOKEN_PATTERN = _token_pattern(unquoted=True)
+
+# Comments only count as commented out entries if their names and values are quoted,
+# so that comments for translators such as `/* Shown when count = 0; */` are not
+# mistaken for entries
+_IOS_COMMENTED_TOKEN_PATTERN = _token_pattern(unquoted=False)
 
 _IOS_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "0": "\0"}
 
@@ -72,26 +97,31 @@ def serialize(catalog: Catalog) -> bytes:
     return "".join(f"{line}\n" for line in lines).encode("utf-8")
 
 
-def _parse_entries(data: str, locale: str, with_comments: bool) -> list[Entry]:
+def _parse_entries(
+    data: str,
+    locale: str,
+    with_comments: bool,
+    pattern: re.Pattern[str] = _IOS_TOKEN_PATTERN,
+) -> list[Entry]:
     entries = []
     comment = None
     previous_end = None
 
-    for match in _IOS_TOKEN_PATTERN.finditer(data):
-        if match.group("name") is not None:
+    for match in pattern.finditer(data):
+        groups = match.groupdict()
+        name = _string(groups, "name")
+        if name is not None:
             entries.append(
-                Entry(
-                    _unescape_ios(match.group("name")),
-                    {locale: _unescape_ios(match.group("value"))},
-                    comment,
-                )
+                Entry(name, {locale: _string(groups, "value") or ""}, comment)
             )
             comment = None
             previous_end = match.end()
             continue
 
         text = match.group("block") or match.group("line") or ""
-        commented_entries = _parse_entries(text, locale, with_comments=False)
+        commented_entries = _parse_entries(
+            text, locale, with_comments=False, pattern=_IOS_COMMENTED_TOKEN_PATTERN
+        )
 
         if commented_entries:
             if with_comments:
@@ -103,6 +133,15 @@ def _parse_entries(data: str, locale: str, with_comments: bool) -> list[Entry]:
             comment = text.strip() or None
 
     return entries
+
+
+def _string(groups: dict[str, str | None], group: str) -> str | None:
+    """Returns the unescaped string of a quoted or unquoted group of a match."""
+
+    quoted = groups[group]
+    if quoted is not None:
+        return _unescape_ios(quoted)
+    return groups.get(f"{group}_unquoted")
 
 
 def _unescape_ios(value: str) -> str:
