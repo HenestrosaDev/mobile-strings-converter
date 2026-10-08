@@ -9,6 +9,7 @@ on:
       - 'tests/**'
       - 'pyproject.toml'
       - 'uv.lock'
+      - 'action.yml'
       - '.github/workflows/build.yaml'
   workflow_dispatch:
 
@@ -99,3 +100,17 @@ jobs:
           ! uv run --isolated --no-project --with . mobile-strings-converter \
             tests/files/input/strings.xml -f "$RUNNER_TEMP/strings.pdf" 2> errors.txt
           grep "mobile-strings-converter\[pdf\]" errors.txt
+
+  # The GitHub Action of the repository must pass on a project without issues
+  test-action:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Check translations
+        uses: ./
+        with:
+          paths: tests/files/res
+          check-untranslated: "true"

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="greeting">Hola, %s</string>
+	<plurals name="songs">
+		<item quantity="one">%d canción</item>
+		<item quantity="other">%d canciones</item>
+	</plurals>
+</resources>

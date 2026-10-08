@@ -1,0 +1,55 @@
+name: Check mobile translations
+description: >-
+  Find missing translations, mismatched placeholders and other issues in the strings
+  of Android and iOS apps, and show them as errors in pull requests.
+author: HenestrosaDev
+
+branding:
+  icon: globe
+  color: green
+
+inputs:
+  paths:
+    description: >-
+      Files or directories with the strings to check, separated by spaces or new lines
+      (e.g. `app/src/main/res`). Glob patterns are expanded (e.g. `*/src/main/res`).
+    required: true
+  reference-locale:
+    description: >-
+      Locale to compare the others with (e.g. `en`). Defaults to the default strings,
+      or to the first locale if there are none.
+    required: false
+    default: ""
+  check-untranslated:
+    description: Also report the translations that are the same as the reference value.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v7
+
+    - name: Check translations
+      shell: bash
+      # Inputs are passed as environment variables so that they are not run as code
+      env:
+        INPUT_PATHS: ${{ inputs.paths }}
+        INPUT_REFERENCE_LOCALE: ${{ inputs.reference-locale }}
+        INPUT_CHECK_UNTRANSLATED: ${{ inputs.check-untranslated }}
+      run: |
+        # Split the paths on whitespace and expand their globs (e.g. `*/src/main/res`)
+        paths=($INPUT_PATHS)
+
+        options=(--check --check-format github)
+        if [ -n "$INPUT_REFERENCE_LOCALE" ]; then
+          options+=(--reference-locale "$INPUT_REFERENCE_LOCALE")
+        fi
+        if [ "$INPUT_CHECK_UNTRANSLATED" = "true" ]; then
+          options+=(--check-untranslated)
+        fi
+
+        # Runs the version of the package of the action's ref
+        uvx --from "$GITHUB_ACTION_PATH" mobile-strings-converter \
+          "${paths[@]}" "${options[@]}"
