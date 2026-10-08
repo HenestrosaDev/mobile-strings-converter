@@ -185,6 +185,27 @@ class TestCli(unittest.TestCase):
         self.assertEqual(1, exit_code)
         self.assertIn("not an Android resources file", stderr)
 
+    def test_broken_input_file(self):
+        broken_filepath = self.output_dir / "broken.xml"
+        broken_filepath.write_text("<resources><string", encoding="utf-8")
+
+        exit_code, _, stderr = self._run(
+            broken_filepath, "-f", self.output_dir / "strings.json"
+        )
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("broken.xml: The file provided is not a valid .xml file", stderr)
+
+    def test_file_without_strings_passed_explicitly_to_check(self):
+        res_dir = self._write_android_res_dir()
+
+        exit_code, _, stderr = self._run(
+            res_dir / "values/strings.xml", res_dir / "values/colors.xml", "--check"
+        )
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("colors.xml: The file provided has no strings", stderr)
+
     def test_to_google_sheets(self):
         credentials_filepath = self.output_dir / "service_account.json"
         credentials_filepath.write_text("{}")
