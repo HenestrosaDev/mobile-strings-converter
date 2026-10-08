@@ -172,6 +172,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 /
 │   .gitignore
 │   .pre-commit-config.yaml
+│   CHANGELOG.md
 │   LICENSE
 │   pyproject.toml
 │   README.md
