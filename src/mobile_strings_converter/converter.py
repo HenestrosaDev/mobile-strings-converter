@@ -20,6 +20,19 @@ from pypdf import PdfReader
 
 from .console_style import ConsoleStyle
 
+SUPPORTED_FILE_TYPES = [
+    ".csv",
+    ".xlsx",
+    ".ods",
+    ".md",
+    ".json",
+    ".yaml",
+    ".html",
+    ".strings",
+    ".xml",
+    ".pdf",
+]
+
 
 def convert_strings(
     input_filepath: Path, output_filepath: Path, with_comments: bool = False
@@ -82,7 +95,9 @@ def convert_strings(
             )
 
 
-def get_strings(input_filepath: Path, with_comments: bool) -> List[Tuple[str, str]]:
+def get_strings(
+    input_filepath: Path, with_comments: bool = False
+) -> List[Tuple[str, str]]:
     """
     Extracts strings from various file formats based on the file extension.
 
