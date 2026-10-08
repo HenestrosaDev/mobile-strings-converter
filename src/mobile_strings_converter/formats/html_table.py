@@ -53,7 +53,7 @@ def _escape(value: str) -> str:
 class _HTMLTableParser(HTMLParser):
     """Collects the text of the `<th>` header cells and `<td>` cells of every row."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.header: list[str] | None = None
         self.rows: list[list[str]] = []
@@ -61,7 +61,7 @@ class _HTMLTableParser(HTMLParser):
         self._row_is_header = False
         self._cell: list[str] | None = None
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag == "tr":
             self._row = []
             self._row_is_header = False
@@ -69,7 +69,7 @@ class _HTMLTableParser(HTMLParser):
             self._cell = []
             self._row_is_header = self._row_is_header or tag == "th"
 
-    def handle_endtag(self, tag):
+    def handle_endtag(self, tag: str) -> None:
         if tag in ("td", "th") and self._row is not None and self._cell is not None:
             self._row.append("".join(self._cell))
             self._cell = None
@@ -80,6 +80,6 @@ class _HTMLTableParser(HTMLParser):
                 self.header = self._row
             self._row = None
 
-    def handle_data(self, data):
+    def handle_data(self, data: str) -> None:
         if self._cell is not None:
             self._cell.append(data)

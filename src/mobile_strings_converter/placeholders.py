@@ -69,7 +69,7 @@ def to_android(value: str) -> str:
 def to_ios(value: str) -> str:
     """Converts Android placeholders to iOS ones, e.g. `%1$s` -> `%1$@`."""
 
-    def replace(match):
+    def replace(match: re.Match[str]) -> str:
         conversion = match.group("conversion")
         if conversion not in _TO_IOS_CONVERSIONS:
             return match.group(0)

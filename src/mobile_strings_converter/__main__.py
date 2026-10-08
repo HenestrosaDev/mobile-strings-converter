@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import warnings
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -24,7 +25,7 @@ from .model import Catalog
 _GOOGLE_SHEETS_SUFFIX = ".gsheet"
 
 
-def get_filepaths_from_dir(directory, extensions):
+def get_filepaths_from_dir(directory: str, extensions: Iterable[str]) -> list[Path]:
     """Return a list of filepaths in the directory matching the given extensions."""
     matched_files = []
     for root, dirs, files in os.walk(directory):
@@ -349,12 +350,16 @@ def _check(catalogs: list[tuple[Path, Catalog]]) -> int:
     return 0
 
 
-def _output_dir_filepath(output_dir, input_filepath, base_dir, target_type):
+def _output_dir_filepath(
+    output_dir: str, input_filepath: Path, base_dir: Path, target_type: str
+) -> Path:
     relative_path = input_filepath.relative_to(base_dir)
     return Path(output_dir) / relative_path.with_suffix(target_type)
 
 
-def _write_outputs(args, catalog, input_filepath, base_dir):
+def _write_outputs(
+    args: argparse.Namespace, catalog: Catalog, input_filepath: Path, base_dir: Path
+) -> None:
     if args.output_file:
         output_filepaths = [Path(args.output_file)]
         if catalog.is_multi_locale and not is_multi_locale(output_filepaths[0].suffix):
@@ -388,7 +393,7 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
 
 
 @contextmanager
-def _print_warnings():
+def _print_warnings() -> Iterator[None]:
     """Prints the warnings raised inside the context."""
 
     with warnings.catch_warnings(record=True) as caught_warnings:

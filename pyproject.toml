@@ -105,6 +105,11 @@ warn_unused_ignores = true
 warn_return_any = true
 no_implicit_optional = true
 
+# Every function of the package must have type hints
+[[tool.mypy.overrides]]
+module = ["mobile_strings_converter", "mobile_strings_converter.*"]
+disallow_untyped_defs = true
+
 [[tool.mypy.overrides]]
 module = ["ezodf", "ezodf.*", "arabic_reshaper", "bidi.*"]
 ignore_missing_imports = true
