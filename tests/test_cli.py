@@ -441,6 +441,16 @@ class TestCli(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertIn("Skipped 1 plural(s)/array(s)", stderr)
 
+    def test_redirected_output_has_no_colors(self):
+        with mock.patch.dict("os.environ", clear=True):
+            exit_code, stdout, _ = self._run(
+                ANDROID_FILEPATH, "-f", self.output_dir / "strings.json"
+            )
+
+        self.assertEqual(0, exit_code)
+        self.assertIn("Data successfully written", stdout)
+        self.assertNotIn("\033[", stdout)
+
     def test_pdf_input(self):
         input_filepath = self.output_dir / "strings.pdf"
         input_filepath.write_bytes(b"%PDF-1.4")
