@@ -1,0 +1,18 @@
+[project]
+name = "mobile-strings-converter-fonts"
+version = "1.0.0"
+description = "Fonts used by mobile-strings-converter to write PDF files."
+authors = [{ name = "José Carlos López", email = "henestrosadev@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+repository = "https://github.com/HenestrosaDev/mobile-strings-converter"
+
+[build-system]
+requires = ["uv_build>=0.11.18,<0.12.0"]
+build-backend = "uv_build"

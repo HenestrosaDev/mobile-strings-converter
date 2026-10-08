@@ -51,6 +51,7 @@ pdf = [
     "fpdf2 (>=2.8.9,<3.0.0)",
     "python-bidi (>=0.6.11,<0.7.0)",
     "arabic-reshaper (>=3.0.1,<4.0.0)",
+    "mobile-strings-converter-fonts (>=1.0.0,<2.0.0)",
 ]
 sheets = ["gspread (>=6.2.1,<7.0.0)"]
 all = ["mobile-strings-converter[pdf,sheets]"]
@@ -74,6 +75,14 @@ test = ["mobile-strings-converter[all]", "coverage>=7.16.2,<8.0.0"]
 
 [tool.uv]
 default-groups = "all"
+
+# The fonts of the PDF files are a package of their own, so that only the `pdf` extra
+# downloads them
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+mobile-strings-converter-fonts = { workspace = true }
 
 [build-system]
 requires = ["uv_build>=0.11.18,<0.12.0"]
