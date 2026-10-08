@@ -6,7 +6,14 @@ from unittest import mock
 import openpyxl
 from base_tests import BaseTests, get_strings
 
-from mobile_strings_converter import ConversionWarning, parse
+from mobile_strings_converter import (
+    DEFAULT_LOCALE,
+    Catalog,
+    ConversionWarning,
+    Entry,
+    parse,
+    serialize,
+)
 
 
 class TestGetStringsIos(BaseTests.GetStringsTest):
@@ -24,6 +31,7 @@ class TestGetStringsIos(BaseTests.GetStringsTest):
 class TestGetStringsAndroid(BaseTests.GetStringsTest):
     def setUp(self):
         super().setUp()
+        self.expected_chinese = "欢迎来到我的申请"
         self.data = """
         <?xml version="1.0" encoding="UTF-8"?>
         <resources>
@@ -81,6 +89,42 @@ class TestAndroidParsing(unittest.TestCase):
             ],
             self._get_strings(data, with_comments=True),
         )
+
+
+class TestAndroidWhitespace(unittest.TestCase):
+    def test_whitespace_is_collapsed_outside_quotes(self):
+        data = """<resources>
+            <string name="collapsed">
+                Hello,
+                World!   </string>
+            <string name="quoted">"  kept  "</string>
+            <string name="partly_quoted">a "  b  " c</string>
+            <string name="escaped">\\t Tab \\n</string>
+        </resources>"""
+
+        self.assertEqual(
+            [
+                ("collapsed", "Hello, World!"),
+                ("quoted", "  kept  "),
+                ("partly_quoted", "a   b   c"),
+                ("escaped", "\t Tab \n"),
+            ],
+            parse(data.encode(), ".xml").to_pairs(),
+        )
+
+    def test_whitespace_is_kept_when_writing(self):
+        catalog = Catalog(
+            [
+                Entry("spaces", {DEFAULT_LOCALE: "  two  spaces "}),
+                Entry("plain", {DEFAULT_LOCALE: "plain text"}),
+            ]
+        )
+
+        data = serialize(catalog, ".xml")
+
+        self.assertIn(b'<string name="spaces">"  two  spaces "</string>', data)
+        self.assertIn(b'<string name="plain">plain text</string>', data)
+        self.assertEqual(catalog, parse(data, ".xml"))
 
 
 class TestIosParsing(unittest.TestCase):
