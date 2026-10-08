@@ -21,7 +21,9 @@ class TestToPdf(BaseTests.ConvertToTest):
         super().setUp()
         self.file_name = "strings.pdf"
 
-    def _assert_same_content(self, output_filepath: Path, template_filepath: Path):
+    def _assert_same_content(
+        self, output_filepath: Path, template_filepath: Path
+    ) -> None:
         # PDF files can't be read back, and they hold their creation date
         data = output_filepath.read_bytes()
         self.assertTrue(data.startswith(b"%PDF-"))

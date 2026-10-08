@@ -6,7 +6,6 @@ projects (e.g. `values-pt-rBR/strings.xml` or `pt-BR.lproj/Localizable.strings`)
 import re
 import warnings
 from pathlib import Path
-from typing import Dict, Optional
 
 from .exceptions import UnsupportedCharactersWarning
 from .formats import INPUT_FILE_TYPES, normalize_file_type, parse, serialize
@@ -17,7 +16,7 @@ IOS_FILENAME = "Localizable"
 
 
 def load(
-    filepath: Path, locale: Optional[str] = None, with_comments: bool = False
+    filepath: Path, locale: str | None = None, with_comments: bool = False
 ) -> Catalog:
     """
     Reads the strings of a file.
@@ -26,7 +25,7 @@ def load(
     :type filepath: Path
     :param locale: Locale of the strings. If None, it's taken from the directory of the
         file (see `locale_from_path`).
-    :type locale: Optional[str]
+    :type locale: str | None
     :param with_comments: True to read the commented out strings of `.xml` and
         `.strings` files as well
     :type with_comments: bool
@@ -44,7 +43,7 @@ def load(
     return parse(filepath.read_bytes(), filepath.suffix, locale, with_comments)
 
 
-def save(catalog: Catalog, filepath: Path, source_language: Optional[str] = None):
+def save(catalog: Catalog, filepath: Path, source_language: str | None = None) -> None:
     """
     Writes the strings to a file, creating its directory if needed.
 
@@ -57,7 +56,7 @@ def save(catalog: Catalog, filepath: Path, source_language: Optional[str] = None
     :type filepath: Path
     :param source_language: Code of the language of the default strings (e.g. `en`).
         Required by `.xcstrings` files, and ignored by any other file type.
-    :type source_language: Optional[str]
+    :type source_language: str | None
     """
 
     filepath = Path(filepath)
@@ -84,7 +83,7 @@ def save(catalog: Catalog, filepath: Path, source_language: Optional[str] = None
         warnings.warn(warning, stacklevel=2)
 
 
-def save_split(catalog: Catalog, directory: Path, file_type: str) -> Dict[str, Path]:
+def save_split(catalog: Catalog, directory: Path, file_type: str) -> dict[str, Path]:
     """
     Writes a file per locale to the directory, following the layout of the file type
     (see `localized_path`).
@@ -96,7 +95,7 @@ def save_split(catalog: Catalog, directory: Path, file_type: str) -> Dict[str, P
     :param file_type: Extension of the files, e.g. `.xml` or `xml`
     :type file_type: str
     :return: The path of the file of each locale
-    :rtype: Dict[str, Path]
+    :rtype: dict[str, Path]
     """
 
     filepaths = {}
@@ -171,7 +170,7 @@ def localized_path(directory: Path, locale: str, file_type: str) -> Path:
     return directory / f"{locale}{file_type}"
 
 
-def _locale_from_android_qualifiers(qualifiers: Optional[str]) -> str:
+def _locale_from_android_qualifiers(qualifiers: str | None) -> str:
     if not qualifiers:
         return DEFAULT_LOCALE
 

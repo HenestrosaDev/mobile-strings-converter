@@ -57,7 +57,14 @@ repository = "https://github.com/HenestrosaDev/mobile-strings-converter"
 mobile-strings-converter = "mobile_strings_converter.__main__:main"
 
 [dependency-groups]
-dev = ["pre-commit>=4.0.0,<5.0.0"]
+dev = [
+    "pre-commit>=4.0.0,<5.0.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.0",
+    "types-pyyaml",
+    "types-openpyxl",
+    "lxml-stubs",
+]
 test = ["coverage>=7.16.2,<8.0.0"]
 
 [tool.uv]
@@ -66,3 +73,33 @@ default-groups = "all"
 [build-system]
 requires = ["uv_build>=0.11.18,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src", "tests"]
+mypy_path = "tests"
+check_untyped_defs = true
+disallow_incomplete_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["ezodf", "ezodf.*", "arabic_reshaper", "bidi.*"]
+ignore_missing_imports = true

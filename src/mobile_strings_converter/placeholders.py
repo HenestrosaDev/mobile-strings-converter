@@ -62,7 +62,7 @@ def to_ios(value: str) -> str:
     return _PLACEHOLDER_PATTERN.sub(replace, value)
 
 
-def _build(match, **overrides) -> str:
+def _build(match: re.Match[str], **overrides: str) -> str:
     parts = {**match.groupdict(), **overrides}
     return "%" + "".join(
         parts[group] or ""

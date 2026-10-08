@@ -56,6 +56,7 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
             f"Skipped {len(skipped)} entry(ies) because only plurals with a single "
             f"variable (`%#@variable@`) are supported: {', '.join(skipped)}",
             ConversionWarning,
+            stacklevel=2,
         )
 
     return Catalog(entries)
@@ -95,12 +96,13 @@ def serialize(catalog: Catalog) -> bytes:
             f"only hold plurals: {', '.join(skipped)}. Strings can be written to "
             f".strings or .xcstrings files.",
             ConversionWarning,
+            stacklevel=2,
         )
 
     return plistlib.dumps(plist, sort_keys=False)
 
 
-def _get_plural(definition):
+def _get_plural(definition: object) -> dict[str, str] | None:
     """Returns the plural of a definition, or None if it's not supported."""
 
     if not isinstance(definition, dict):
@@ -120,7 +122,7 @@ def _get_plural(definition):
     }
 
 
-def _get_value_type(plural) -> str:
+def _get_value_type(plural: dict[str, str]) -> str:
     """Returns the type of the number of the plural, e.g. `d` or `ld`."""
 
     for item in [plural.get("other", ""), *plural.values()]:

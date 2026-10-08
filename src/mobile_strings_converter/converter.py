@@ -4,7 +4,6 @@ and `formats` for the functions that work with `Catalog`s.
 """
 
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 import gspread
 
@@ -26,8 +25,8 @@ def convert_strings(
     input_filepath: Path,
     output_filepath: Path,
     with_comments: bool = False,
-    source_language: Optional[str] = None,
-):
+    source_language: str | None = None,
+) -> None:
     """
     Converts the strings of the input file to the type of the output file, which is
     set by its extension. See `SUPPORTED_FILE_TYPES`.
@@ -41,7 +40,7 @@ def convert_strings(
     :type with_comments: bool
     :param source_language: Code of the language of the default strings (e.g. `en`).
         Required to write `.xcstrings` files, and ignored by any other file type.
-    :type source_language: Optional[str]
+    :type source_language: str | None
     """
 
     output_filepath = Path(output_filepath)
@@ -59,7 +58,7 @@ def convert_strings(
 
 def get_strings(
     input_filepath: Path, with_comments: bool = False
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     """
     Extracts the strings of the first locale of a file as (name, value) pairs.
     Plurals and arrays are flattened, e.g. `songs[one]` or `planets[0]`.
@@ -69,8 +68,8 @@ def get_strings(
     :param with_comments: True if comments should be included (for .strings and
         .xml files), False otherwise.
     :type with_comments: bool
-    :return: A list of tuples containing extracted strings and their corresponding values.
-    :rtype: List[Tuple[str, str]]
+    :return: The (name, value) pairs of the strings
+    :rtype: list[tuple[str, str]]
     """
 
     return load(input_filepath, with_comments=with_comments).to_pairs()
@@ -81,7 +80,7 @@ def to_google_sheets(
     sheet_name: str,
     credentials_filepath: Path,
     with_comments: bool = False,
-):
+) -> None:
     """
     Writes the extracted strings from the input filepath to an existing Google
     spreadsheet. The spreadsheet must be shared with the service account's email.
@@ -106,8 +105,8 @@ def to_google_sheets(
 
 
 def write_google_sheets(
-    catalog: Catalog, sheet_name: str, credentials_filepath: Optional[Path]
-):
+    catalog: Catalog, sheet_name: str, credentials_filepath: Path
+) -> None:
     """
     Writes the strings to the first sheet of an existing Google spreadsheet, replacing
     its content. The spreadsheet must be shared with the service account's email.

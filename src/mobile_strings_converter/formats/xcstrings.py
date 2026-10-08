@@ -12,7 +12,7 @@ value, as Xcode does. Arrays, device variations and plurals with several variabl
 
 import json
 import warnings
-from typing import Dict, Optional
+from typing import Any
 
 from .. import placeholders
 from ..exceptions import ConversionWarning
@@ -70,18 +70,19 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
             f"Skipped {len(skipped)} translation(s) because only strings and plurals "
             f"with a single variable are supported: {', '.join(skipped)}",
             ConversionWarning,
+            stacklevel=2,
         )
 
     return Catalog(entries)
 
 
-def serialize(catalog: Catalog, source_language: Optional[str] = None) -> bytes:
+def serialize(catalog: Catalog, source_language: str | None = None) -> bytes:
     """
     :param catalog: Strings to write
     :type catalog: Catalog
     :param source_language: Code of the source language of the catalog (e.g. `en`),
         which the strings of the default locale are written as
-    :type source_language: Optional[str]
+    :type source_language: str | None
     """
 
     if not source_language:
@@ -103,7 +104,7 @@ def serialize(catalog: Catalog, source_language: Optional[str] = None) -> bytes:
     skipped = []
 
     for entry in catalog.entries:
-        definition = {}
+        definition: dict[str, Any] = {}
         if entry.comment:
             definition["comment"] = entry.comment
         definition["extractionState"] = "manual"
@@ -131,6 +132,7 @@ def serialize(catalog: Catalog, source_language: Optional[str] = None) -> bytes:
             f"Skipped {len(set(skipped))} array(s) because .xcstrings files can't hold "
             f"them: {', '.join(dict.fromkeys(skipped))}",
             ConversionWarning,
+            stacklevel=2,
         )
 
     catalog_data = {
@@ -146,7 +148,7 @@ def serialize(catalog: Catalog, source_language: Optional[str] = None) -> bytes:
     ).encode("utf-8")
 
 
-def _get_value(localization) -> Optional[Value]:
+def _get_value(localization: object) -> Value | None:
     """Returns the value of a localization, or None if it's not supported."""
 
     if not isinstance(localization, dict):
@@ -157,24 +159,25 @@ def _get_value(localization) -> Optional[Value]:
 
     plural = localization.get("variations", {}).get("plural")
     if isinstance(plural, dict) and set(localization) == {"variations"}:
-        values = {
-            quantity: _get_string_unit_value(plural[quantity].get("stringUnit"))
-            for quantity in PLURAL_QUANTITIES
-            if isinstance(plural.get(quantity), dict)
-        }
-        if all(value is not None for value in values.values()):
-            return values
+        values = {}
+        for quantity in PLURAL_QUANTITIES:
+            if isinstance(plural.get(quantity), dict):
+                value = _get_string_unit_value(plural[quantity].get("stringUnit"))
+                if value is None:
+                    return None
+                values[quantity] = value
+        return values
 
     return None
 
 
-def _get_string_unit_value(string_unit) -> Optional[str]:
+def _get_string_unit_value(string_unit: object) -> str | None:
     if not isinstance(string_unit, dict) or "value" not in string_unit:
         return None
     return str(string_unit["value"])
 
 
-def _to_localization(value: Value) -> Optional[Dict]:
+def _to_localization(value: Value) -> dict[str, Any] | None:
     if isinstance(value, str):
         return _string_unit(value)
 
@@ -190,5 +193,5 @@ def _to_localization(value: Value) -> Optional[Dict]:
     return None
 
 
-def _string_unit(value: str) -> Dict:
+def _string_unit(value: str) -> dict[str, Any]:
     return {"stringUnit": {"state": "translated", "value": placeholders.to_ios(value)}}

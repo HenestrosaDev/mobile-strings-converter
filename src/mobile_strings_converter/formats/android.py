@@ -10,7 +10,6 @@ writing.
 import html
 import re
 import warnings
-from typing import List, Optional
 
 from lxml import etree
 
@@ -100,7 +99,7 @@ def serialize(catalog: Catalog) -> bytes:
     return "".join(f"{line}\n" for line in lines).encode("utf-8")
 
 
-def _parse_resource(node, locale: str) -> Optional[Entry]:
+def _parse_resource(node: etree._Element, locale: str) -> Entry | None:
     name = node.get("name")
     if name is None:
         return None
@@ -110,9 +109,9 @@ def _parse_resource(node, locale: str) -> Optional[Entry]:
         value = _get_android_value(node)
     elif node.tag == "plurals":
         value = {
-            item.get("quantity"): _get_android_value(item)
+            quantity: _get_android_value(item)
             for item in node
-            if item.tag == "item" and item.get("quantity") is not None
+            if item.tag == "item" and (quantity := item.get("quantity")) is not None
         }
     elif node.tag == "string-array":
         value = [_get_android_value(item) for item in node if item.tag == "item"]
@@ -122,6 +121,7 @@ def _parse_resource(node, locale: str) -> Optional[Entry]:
                 f'Skipped the <{node.tag} name="{name}"> resource because it is not '
                 f"supported.",
                 ConversionWarning,
+                stacklevel=2,
             )
         return None
 
@@ -132,7 +132,7 @@ def _parse_resource(node, locale: str) -> Optional[Entry]:
     )
 
 
-def _parse_commented_resources(comment: str, locale: str) -> List[Entry]:
+def _parse_commented_resources(comment: str, locale: str) -> list[Entry]:
     try:
         root = etree.fromstring(f"<resources>{comment}</resources>")
     except etree.XMLSyntaxError:
@@ -145,7 +145,7 @@ def _parse_commented_resources(comment: str, locale: str) -> List[Entry]:
     return [entry for entry in entries if entry is not None]
 
 
-def _is_trailing(comment) -> bool:
+def _is_trailing(comment: etree._Element) -> bool:
     """Returns True if the comment is on the same line as the previous resource."""
 
     previous = comment.getprevious()
@@ -155,7 +155,7 @@ def _is_trailing(comment) -> bool:
     return "\n" not in (previous.tail or "")
 
 
-def _get_android_value(element) -> str:
+def _get_android_value(element: etree._Element) -> str:
     """
     Returns the value of a `<string>` or `<item>` element. Values with inline markup
     (e.g. `<b>bold</b>`) are returned verbatim, as they appear in the file. Otherwise,

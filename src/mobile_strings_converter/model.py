@@ -7,8 +7,8 @@ array (a list of strings).
 """
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
-from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 # Locale of the strings that are not tied to any language, such as the ones in
 # Android's `values` directory or iOS' `Base.lproj` directory
@@ -17,7 +17,7 @@ DEFAULT_LOCALE = "default"
 # CLDR plural categories, in the order they are written
 PLURAL_QUANTITIES = ("zero", "one", "two", "few", "many", "other")
 
-Value = Union[str, Dict[str, str], List[str]]
+Value = str | dict[str, str] | list[str]
 
 # Matches the names of flattened plurals and arrays, e.g. `songs[one]` or `planets[0]`
 _FLAT_NAME_PATTERN = re.compile(
@@ -30,9 +30,9 @@ class Entry:
     """A named string, plural or array with its value in each locale."""
 
     name: str
-    values: Dict[str, Value] = field(default_factory=dict)
+    values: dict[str, Value] = field(default_factory=dict)
     # Note for translators, e.g. `/* Title of the main screen */`
-    comment: Optional[str] = None
+    comment: str | None = None
     # Android's `translatable="false"`
     translatable: bool = True
 
@@ -42,18 +42,18 @@ class Row:
     """An entry flattened into strings, as written in a table."""
 
     name: str
-    values: Dict[str, str] = field(default_factory=dict)
-    comment: Optional[str] = None
+    values: dict[str, str] = field(default_factory=dict)
+    comment: str | None = None
 
 
 @dataclass
 class Catalog:
     """The strings of one or more locales."""
 
-    entries: List[Entry] = field(default_factory=list)
+    entries: list[Entry] = field(default_factory=list)
 
     @property
-    def locales(self) -> List[str]:
+    def locales(self) -> list[str]:
         """Locales with at least one value, in order of appearance."""
 
         locales = {}
@@ -67,7 +67,7 @@ class Catalog:
 
     @classmethod
     def from_pairs(
-        cls, pairs: Iterable[Tuple[str, str]], locale: str = DEFAULT_LOCALE
+        cls, pairs: Iterable[tuple[str, str]], locale: str = DEFAULT_LOCALE
     ) -> "Catalog":
         """
         Creates a catalog from (name, value) pairs. Flattened plurals and arrays (e.g.
@@ -83,7 +83,7 @@ class Catalog:
         `songs[one]` or `planets[0]`) are grouped back into a single entry.
         """
 
-        entries: Dict[str, Entry] = {}
+        entries: dict[str, Entry] = {}
 
         for row in rows:
             match = _FLAT_NAME_PATTERN.match(row.name)
@@ -95,12 +95,16 @@ class Catalog:
                     entry = entries[name] = Entry(name)
 
                 for locale, value in row.values.items():
+                    current = entry.values.get(locale)
                     if key.isdigit():
-                        array = entry.values.setdefault(locale, [])
+                        array = current if isinstance(current, list) else []
                         array.extend([""] * (int(key) + 1 - len(array)))
                         array[int(key)] = value
+                        entry.values[locale] = array
                     else:
-                        entry.values.setdefault(locale, {})[key] = value
+                        plural = current if isinstance(current, dict) else {}
+                        plural[key] = value
+                        entry.values[locale] = plural
             else:
                 # Later rows with the same name override the previous ones
                 entry = entries.setdefault(row.name, Entry(row.name))
@@ -117,7 +121,7 @@ class Catalog:
         name, and values of later catalogs override the ones of earlier catalogs.
         """
 
-        entries: Dict[str, Entry] = {}
+        entries: dict[str, Entry] = {}
 
         for catalog in catalogs:
             for entry in catalog.entries:
@@ -139,12 +143,12 @@ class Catalog:
             ]
         )
 
-    def split(self) -> Dict[str, "Catalog"]:
+    def split(self) -> dict[str, "Catalog"]:
         """Returns a single-locale catalog for each locale."""
 
         return {locale: self.for_locale(locale) for locale in self.locales}
 
-    def to_rows(self) -> List[Row]:
+    def to_rows(self) -> list[Row]:
         """
         Flattens the entries into rows of strings. Plurals and arrays are written as one
         row per item, named `name[quantity]` or `name[index]` respectively.
@@ -199,7 +203,7 @@ class Catalog:
 
         return rows
 
-    def to_pairs(self, locale: Optional[str] = None) -> List[Tuple[str, str]]:
+    def to_pairs(self, locale: str | None = None) -> list[tuple[str, str]]:
         """
         Returns the (name, value) pairs of the locale, or of the first locale if none
         is given. Plurals and arrays are flattened (see `to_rows`), and entries without
@@ -212,7 +216,7 @@ class Catalog:
         return [(row.name, row.values.get(locale, "")) for row in self.to_rows()]
 
 
-def to_value(raw) -> Optional[Value]:
+def to_value(raw: object) -> Value | None:
     """
     Converts a value read from a JSON or YAML file into a `Value`. Dicts are plurals,
     lists are arrays and any other value is converted into a string. Returns None for
@@ -228,7 +232,7 @@ def to_value(raw) -> Optional[Value]:
     return str(raw)
 
 
-def _to_str(raw) -> str:
+def _to_str(raw: object) -> str:
     return "" if raw is None else str(raw)
 
 
@@ -239,7 +243,7 @@ def _is_container(entry: Entry, key: str) -> bool:
     return all(isinstance(value, container_type) for value in entry.values.values())
 
 
-def _ordered_keys(plurals: Iterable[Dict[str, str]]) -> List[str]:
+def _ordered_keys(plurals: Iterable[dict[str, str]]) -> list[str]:
     keys = {}
     for plural in plurals:
         keys.update(dict.fromkeys(plural))

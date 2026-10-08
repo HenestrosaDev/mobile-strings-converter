@@ -5,9 +5,11 @@ each locale to its names and values, e.g. `es: {hello: Hola}`.
 Plurals are written as mappings (e.g. `{one: ..., other: ...}`) and arrays as lists.
 """
 
+from typing import Any
+
 import yaml
 
-from ..model import PLURAL_QUANTITIES, Catalog, Entry, to_value
+from ..model import DEFAULT_LOCALE, PLURAL_QUANTITIES, Catalog, Entry, Value, to_value
 from .text import decode
 
 
@@ -27,13 +29,14 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
 
 
 def serialize(catalog: Catalog) -> bytes:
+    yaml_data: dict[str, Any]
     if catalog.is_multi_locale:
         yaml_data = {
             locale: _to_mapping(catalog.for_locale(locale), locale)
             for locale in catalog.locales
         }
     else:
-        locale = next(iter(catalog.locales), None)
+        locale = next(iter(catalog.locales), DEFAULT_LOCALE)
         yaml_data = _to_mapping(catalog, locale)
 
     # Keep the order of the input file
@@ -65,5 +68,5 @@ def _parse_mapping(mapping: dict, locale: str) -> Catalog:
     return Catalog(entries)
 
 
-def _to_mapping(catalog: Catalog, locale) -> dict:
+def _to_mapping(catalog: Catalog, locale: str) -> dict[str, Value]:
     return {entry.name: entry.values.get(locale, "") for entry in catalog.entries}

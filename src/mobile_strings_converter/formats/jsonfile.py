@@ -12,7 +12,7 @@ can be read as well.
 
 import json
 
-from ..model import DEFAULT_LOCALE, Catalog, Entry, to_value
+from ..model import DEFAULT_LOCALE, Catalog, Entry, Value, to_value
 from .text import decode
 
 NAME_KEY = "name"
@@ -55,16 +55,12 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
 
 
 def serialize(catalog: Catalog) -> bytes:
-    return (dumps(catalog, indent=2) + "\n").encode("utf-8")
-
-
-def dumps(catalog: Catalog, indent=None) -> str:
     locales = catalog.locales or [DEFAULT_LOCALE]
     is_single_locale = len(locales) == 1
 
     records = []
     for entry in catalog.entries:
-        record = {NAME_KEY: entry.name}
+        record: dict[str, Value] = {NAME_KEY: entry.name}
 
         if is_single_locale:
             record[VALUE_KEY] = entry.values.get(locales[0], "")
@@ -77,7 +73,7 @@ def dumps(catalog: Catalog, indent=None) -> str:
 
         records.append(record)
 
-    return json.dumps(records, ensure_ascii=False, indent=indent)
+    return (json.dumps(records, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
 
 
 def _values(values):

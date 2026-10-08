@@ -29,4 +29,5 @@ def serialize(catalog: Catalog) -> bytes:
 
     # `doc.save()` does this before writing the file
     observer.broadcast("prepare_saving", root=doc.body.get_xmlroot())
-    return doc.tobytes()
+    data: bytes = doc.tobytes()
+    return data

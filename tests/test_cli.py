@@ -29,7 +29,7 @@ class TestCli(unittest.TestCase):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
             try:
-                exit_code = main([str(arg) for arg in args])
+                exit_code: int | str | None = main([str(arg) for arg in args])
             except SystemExit as e:
                 exit_code = e.code
         return exit_code, stdout.getvalue(), stderr.getvalue()

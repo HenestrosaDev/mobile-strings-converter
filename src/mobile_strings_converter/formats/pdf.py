@@ -10,11 +10,11 @@ import unicodedata
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Dict, Set
 
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from fpdf import FPDF
+from fpdf.fonts import TTFFont
 
 from ..exceptions import UnsupportedCharactersWarning
 from ..model import Catalog
@@ -56,14 +56,14 @@ def serialize(catalog: Catalog) -> bytes:
 
     fonts = _FontPicker(pdf)
     # Used as an ordered set
-    unsupported_values = {}
+    unsupported_values: dict[str, None] = {}
 
     # Add table data
     # https://stackoverflow.com/questions/53526311/fpdf-multicell-same-height
     for i, row in enumerate(rows):
         x = pdf.get_x()
         y = pdf.get_y()
-        max_height = 0
+        max_height = 0.0
 
         for j, value in enumerate(row):
             text = get_display(reshape(value)) if _is_rtl(value) else value
@@ -96,12 +96,17 @@ def serialize(catalog: Catalog) -> bytes:
     #
     # UnicodeEncodeError: 'charmap'
     # codec can't encode characters in position 0-9: character maps to <undefined>
-    with open(os.devnull, "w") as devnull:
-        with redirect_stdout(devnull), redirect_stderr(devnull):
-            output = bytes(pdf.output())
+    with (
+        open(os.devnull, "w") as devnull,
+        redirect_stdout(devnull),
+        redirect_stderr(devnull),
+    ):
+        output = bytes(pdf.output())
 
     if unsupported_values:
-        warnings.warn(UnsupportedCharactersWarning(list(unsupported_values)))
+        warnings.warn(
+            UnsupportedCharactersWarning(list(unsupported_values)), stacklevel=2
+        )
 
     return output
 
@@ -116,7 +121,7 @@ class _FontPicker:
 
     def __init__(self, pdf: FPDF):
         self._pdf = pdf
-        self._cmaps: Dict[str, Set[int]] = {}
+        self._cmaps: dict[str, set[int]] = {}
 
     def use_best_font_for(self, text: str) -> bool:
         """
@@ -138,10 +143,12 @@ class _FontPicker:
         self._pdf.set_font(best_font, size=FONT_SIZE)
         return best_missing == 0
 
-    def _get_cmap(self, font: str) -> Set[int]:
+    def _get_cmap(self, font: str) -> set[int]:
         if font not in self._cmaps:
             self._pdf.add_font(fname=str(FONTS_PATH / f"{font}.ttf"))
             self._pdf.set_font(font, size=FONT_SIZE)
-            self._cmaps[font] = set(self._pdf.current_font.cmap)
+            current_font = self._pdf.current_font
+            assert isinstance(current_font, TTFFont)
+            self._cmaps[font] = set(current_font.cmap)
 
         return self._cmaps[font]
