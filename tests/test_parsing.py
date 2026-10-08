@@ -128,6 +128,37 @@ class TestAndroidWhitespace(unittest.TestCase):
         self.assertIn(b'<string name="plain">plain text</string>', data)
         self.assertEqual(catalog, parse(data, ".xml"))
 
+    def test_xliff_tags_are_removed(self):
+        data = """<resources
+            xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
+            xmlns:tools="http://schemas.android.com/tools">
+            <string name="greeting">Hello, <xliff:g id="name" example="Bob">%s</xliff:g>!</string>
+            <string name="styled"><xliff:g id="count">%d</xliff:g> <b>new</b> songs</string>
+            <string name="escaped">It\\'s <xliff:g id="time">%1$s</xliff:g> &amp; more</string>
+            <plurals name="songs">
+                <item quantity="one"><xliff:g id="count">%d</xliff:g> song</item>
+            </plurals>
+        </resources>"""  # noqa: E501
+
+        self.assertEqual(
+            [
+                ("greeting", "Hello, %s!"),
+                ("styled", "%d <b>new</b> songs"),
+                ("escaped", "It's %1$s & more"),
+                ("songs[one]", "%d song"),
+            ],
+            parse(data.encode(), ".xml").to_pairs(),
+        )
+
+    def test_markup_has_no_namespaces_of_the_file(self):
+        data = b"""<resources xmlns:tools="http://schemas.android.com/tools">
+            <string name="bold">Hello, <b>World</b></string>
+        </resources>"""
+
+        self.assertEqual(
+            [("bold", "Hello, <b>World</b>")], parse(data, ".xml").to_pairs()
+        )
+
 
 class TestIosParsing(unittest.TestCase):
     def _get_strings(
