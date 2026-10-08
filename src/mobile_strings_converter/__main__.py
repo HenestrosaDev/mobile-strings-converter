@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from . import __version__
+from .check import check, find_duplicates
 from .console_style import ConsoleStyle
 from .files import load, save, save_split
 from .formats import (
@@ -126,6 +127,14 @@ def build_parser() -> argparse.ArgumentParser:
         "generate it in the Google Sheets section in the README.",
     )
     parser.add_argument(
+        "--check",
+        required=False,
+        action="store_true",
+        help="Check the translations instead of converting them: report missing and "
+        "obsolete translations, placeholders that differ from the default strings and "
+        "names defined more than once. Exits with code 1 if any issue is found.",
+    )
+    parser.add_argument(
         "-p",
         "--print-comments",
         required=False,
@@ -167,8 +176,12 @@ def main(argv: list[str] | None = None) -> int:
     if not (args.input_paths or args.from_google_sheets):
         parser.error("you must specify input paths or -G/--from-google-sheets.")
 
-    if not (args.output_file or args.output_dir or args.to_google_sheets):
-        parser.error("you must specify an output with -f, -d or -g.")
+    has_output = args.output_file or args.output_dir or args.to_google_sheets
+    if args.check and has_output:
+        parser.error("--check doesn't write files. Remove -f, -d and -g.")
+
+    if not (has_output or args.check):
+        parser.error("you must specify an output with -f, -d or -g, or use --check.")
 
     if args.output_file and args.output_dir:
         parser.error("-f/--output-file and -d/--output-dir cannot be used together.")
@@ -221,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     if not input_files:
         parser.error("no supported input files found.")
 
-    if len(input_files) > 1 and not args.merge:
+    if len(input_files) > 1 and not args.merge and not args.check:
         if args.output_file:
             parser.error(
                 "cannot use -f/--output-file with multiple input files. Use "
@@ -265,16 +278,20 @@ def main(argv: list[str] | None = None) -> int:
             return load(input_filepath, None, args.print_comments)
 
     # Each source is converted to the outputs: a single one with all the input files
-    # when merging, or one per input file
-    if args.merge:
+    # when merging or checking, or one per input file
+    if args.merge or args.check:
         catalogs = []
         for input_filepath, _ in input_files:
             try:
-                catalogs.append(read(input_filepath))
+                catalogs.append((input_filepath, read(input_filepath)))
             except Exception as e:
                 fail(f"Could not read {input_filepath}: {e}")
 
-        sources = [(input_files[0], Catalog.merge(catalogs))] if catalogs else []
+        if args.check:
+            return _check(catalogs) or exit_code
+
+        merged = Catalog.merge(catalog for _, catalog in catalogs)
+        sources = [(input_files[0], merged)] if catalogs else []
     else:
         sources = []
         for input_file in input_files:
@@ -309,6 +326,27 @@ def main(argv: list[str] | None = None) -> int:
 
 def _credentials(args: argparse.Namespace) -> Path | None:
     return Path(args.credentials) if args.credentials else None
+
+
+def _check(catalogs: list[tuple[Path, Catalog]]) -> int:
+    """Prints the issues of the catalogs. Returns 1 if there is any, or 0 otherwise."""
+
+    issues = [
+        f"{filepath}: {issue}"
+        for filepath, catalog in catalogs
+        for issue in find_duplicates(catalog)
+    ]
+    issues += [str(issue) for issue in check(Catalog.merge(c for _, c in catalogs))]
+
+    for issue in issues:
+        print(f"{ConsoleStyle.YELLOW}{issue}{ConsoleStyle.END}")
+
+    if issues:
+        print(f"{ConsoleStyle.RED}{len(issues)} issue(s) found{ConsoleStyle.END}")
+        return 1
+
+    print(f"{ConsoleStyle.GREEN}No issues found{ConsoleStyle.END}")
+    return 0
 
 
 def _output_dir_filepath(output_dir, input_filepath, base_dir, target_type):
