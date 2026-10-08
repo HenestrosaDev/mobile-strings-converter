@@ -1,8 +1,18 @@
 import unittest
+import warnings
 from pathlib import Path
 
 from base_tests import BaseTests
 
+from mobile_strings_converter import (
+    DEFAULT_LOCALE,
+    INPUT_FILE_TYPES,
+    Catalog,
+    Entry,
+    get_strings,
+    parse,
+    serialize,
+)
 from mobile_strings_converter.converter import convert_strings
 
 
@@ -11,72 +21,44 @@ class TestToPdf(BaseTests.ConvertToTest):
         super().setUp()
         self.file_name = "strings.pdf"
 
-    # Overriding method
-    def _converter_writes_correct_data(
-        self,
-        template_filepath: Path,
-        input_filepath: Path,
-        with_comments: bool,
-    ):
-        convert_strings(input_filepath, self.output_filepath, with_comments)
+    def _assert_same_content(self, output_filepath: Path, template_filepath: Path):
+        # PDF files can't be read back, and they hold their creation date
+        data = output_filepath.read_bytes()
+        self.assertTrue(data.startswith(b"%PDF-"))
+        self.assertTrue(data.rstrip().endswith(b"%%EOF"))
 
-        with (
-            open(self.output_filepath, "rb") as test_file,
-            open(template_filepath, "rb") as template_file,
-        ):
-            test_size = len(test_file.read())
-            template_size = len(template_file.read())
+    def test_converter_lists_unsupported_strings(self):
+        errors_filepath = self.output_dir / "strings-errors.txt"
 
-            # Error margin: 10% of the total size in bytes of both files. PDF is a
-            # very complex file format and, even if we write the exact same content
-            # in two files, there will be lots of differences between both. Through
-            # tests, I've come to realize that there is a 10% difference between two
-            # files with the same content, so I'll leave it at that. However,
-            # if you manage to find a package that compares the content of two PDFs,
-            # please do let me know.
-            size_delta = max(test_size, template_size) * 0.1
+        # The file is overwritten on each conversion
+        for _ in range(2):
+            convert_strings(self.input_filepath_android, self.output_filepath)
 
-            self.assertAlmostEqual(
-                test_size,
-                template_size,
-                delta=size_delta,
-                msg="File size does not match",
-            )
+        errors = errors_filepath.read_text(encoding="utf-8").splitlines()
+        self.assertIn("මගේ යෙදුම භුක්ති විඳින්න not supported", errors)
+        self.assertEqual(len(errors), len(set(errors)))
 
 
-class TestFromPdf(BaseTests.ConvertFromTest):
+class TestPdfIsOutputOnly(unittest.TestCase):
     def setUp(self):
-        super().setUp()
-        self.file_name = "strings.pdf"
+        catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"})])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.data = serialize(catalog, ".pdf")
 
-    # Overriding method
-    def _converter_writes_correct_data(
-        self, template_filepath: Path, input_filepath: Path
-    ):
-        convert_strings(input_filepath, self.output_filepath)
+    def test_parse(self):
+        with self.assertRaisesRegex(ValueError, "can only be written"):
+            parse(self.data, ".pdf")
 
-        with (
-            open(self.output_filepath, "rb") as test_file,
-            open(template_filepath, "rb") as template_file,
-        ):
-            test_size = len(test_file.read())
-            template_size = len(template_file.read())
+    def test_get_strings(self):
+        with self.assertRaises(ValueError):
+            get_strings(Path("strings.pdf"))
 
-            # Error margin: 10% of the total size in bytes of both files. PDF is a
-            # very complex file format and, even if we write the exact same content
-            # in two files, there will be lots of differences between both. Through
-            # tests, I've come to realize that there is a 10% difference between two
-            # files with the same content, so I'll leave it at that. However,
-            # if you manage to find a package that compares the content of two PDFs,
-            # please do let me know.
-            size_delta = max(test_size, template_size) * 0.1
+    def test_not_an_input_file_type(self):
+        self.assertNotIn(".pdf", INPUT_FILE_TYPES)
 
-            self.assertAlmostEqual(
-                test_size,
-                template_size,
-                delta=size_delta,
-                msg="File size does not match",
-            )
+    def test_strings_are_not_embedded(self):
+        self.assertNotIn(b"/EmbeddedFile", self.data)
 
 
 if __name__ == "__main__":

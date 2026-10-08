@@ -105,11 +105,17 @@
 		- [Script Arguments](#script-arguments)
 			- [Positional Arguments](#positional-arguments)
             - [Options](#options)
+	- [Working With Several Languages](#working-with-several-languages)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
 	- [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
 		- [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
 - [Notes](#notes)
+	- [Android Resources](#android-resources)
+	- [Plurals and Arrays](#plurals-and-arrays)
+	- [Placeholders](#placeholders)
+	- [String Catalogs](#string-catalogs)
+	- [PDF Files](#pdf-files)
 	- [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
 	- [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
 - [Troubleshooting](#troubleshooting)
@@ -140,12 +146,16 @@ In addition to being able to run this script on its own, it can also be installe
 - Google Sheets support
 - HTML
 - iOS strings format (`*.strings`)
+- iOS plurals format (`*.stringsdict`)
+- Xcode String Catalogs (`*.xcstrings`)
 - JSON
 - MD
 - ODS
-- PDF
+- PDF (output only)
 - XLSX
 - YAML
+
+Every file type except `.xml`, `.strings` and `.stringsdict` can hold several languages at once (e.g., a spreadsheet with a column per language). See [Working With Several Languages](#working-with-several-languages).
 
 <!-- PROJECT STRUCTURE -->
 
@@ -185,8 +195,29 @@ In addition to being able to run this script on its own, it can also be installe
 │   └───mobile_strings_converter
 │       │   console_style.py
 │       │   converter.py
+│       │   exceptions.py
+│       │   files.py
+│       │   model.py
+│       │   placeholders.py
 │       │   __init__.py
 │       │   __main__.py
+│       │
+│       ├───formats
+│       │       android.py
+│       │       csvfile.py
+│       │       html_table.py
+│       │       ios.py
+│       │       jsonfile.py
+│       │       markdown.py
+│       │       ods.py
+│       │       pdf.py
+│       │       stringsdict.py
+│       │       table.py
+│       │       text.py
+│       │       xcstrings.py
+│       │       xlsx.py
+│       │       yamlfile.py
+│       │       __init__.py
 │       │
 │       └───assets
 │           └───fonts
@@ -204,13 +235,21 @@ In addition to being able to run this script on its own, it can also be installe
     │   base_tests.py
     │   test_android.py
     │   test_csv.py
+    │   test_cli.py
+    │   test_files.py
+    │   test_formats.py
     │   test_get_strings.py
+    │   test_placeholders.py
+    │   test_google_sheets.py
     │   test_html.py
     │   test_ios.py
     │   test_json.py
     │   test_md.py
     │   test_ods.py
     │   test_pdf.py
+    │   test_round_trip.py
+    │   test_stringsdict.py
+    │   test_xcstrings.py
     │   test_xlsx.py
     │   test_yaml.py
     │
@@ -226,7 +265,6 @@ In addition to being able to run this script on its own, it can also be installe
         │       strings.json
         │       strings.md
         │       strings.ods
-        │       strings.pdf
         │       strings.xlsx
         │       strings.xml
         │       strings.yaml
@@ -238,7 +276,6 @@ In addition to being able to run this script on its own, it can also be installe
                 strings.json
                 strings.md
                 strings.ods
-                strings.pdf
                 strings.xlsx
                 strings.xml
                 strings.yaml
@@ -250,13 +287,14 @@ In addition to being able to run this script on its own, it can also be installe
 
 ### Built With
 
-- [openpyxl](https://pypi.org/project/openpyxl/) to generate ODS and XLSX files.
+- [openpyxl](https://pypi.org/project/openpyxl/) to generate XLSX files.
+- [ezodf](https://pypi.org/project/ezodf/) to generate ODS files.
+- [lxml](https://pypi.org/project/lxml/) to parse Android `.xml` files.
 - [gspread](https://pypi.org/project/gspread/) to generate spreadsheets in Google Sheets.
 - [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets.
 - [PyYAML](https://pypi.org/project/PyYAML/) to generate YAML files.
 - [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/) to add arabic characters support for PDF files.
 - [fpdf2](https://pypi.org/project/fpdf2/) to generate PDF files.
-- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/) to recognize the **value** language when writing a PDF in order to know what font to use.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -281,11 +319,11 @@ In addition to being able to run this script on its own, it can also be installe
 	 source venv/bin/activate
 	 ```
 
-4. Open the command line and run `pip install path/to/project/root` to install the required packages to run the script.
+4. Open the command line and run `pip install path/to/project/root` to install the required packages and the `mobile-strings-converter` command.
 
 ### Package Installation
 
-Install the PyPI package by running `pip install mobile-strings-converter`. It requires Python 3.10 or later.
+Install the PyPI package by running `pip install mobile-strings-converter`. It requires Python 3.10 or later and installs the `mobile-strings-converter` command.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -298,7 +336,7 @@ Install the PyPI package by running `pip install mobile-strings-converter`. It r
 To convert one file to another file:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE]
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE]
 ```
 
 ---
@@ -306,15 +344,15 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORT
 To include the comments of the `.xml`/`.strings` input file in the output file, add the `-p` (or `--print-comments`) option. Note that it will be ignored for other input file types.
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -f *.[SUPPORTED_FILE_TYPE] -p
 ```
 
 ---
 
-To convert multiple files at once and save them in the specified directory specified with the `-d` option, use the`-t` option followed by the desired file type extension (e.g., `.json`). Note that the program will create the directory if it doesn't exist.
+To convert multiple files at once and save them in the specified directory specified with the `-d` option, use the `-t` option followed by the desired file type extension (e.g., `json` or `.json`). Note that the program will create the directory if it doesn't exist.
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_FILE_TYPE] -d [DIR_PATH] -t [TARGET_TYPE]
 ```
 
 ---
@@ -322,7 +360,7 @@ python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] *.[SUPPORTED_
 To convert supported files in a directory and its subdirectories and save them to a directory:
 
 ```
-python path/to/mobile_strings_converter.py [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
+mobile-strings-converter [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
 ```
 
 ---
@@ -330,12 +368,12 @@ python path/to/mobile_strings_converter.py [INPUT_DIR_PATH] -d [OUTPUT_DIR_PATH]
 To convert supported files in multiple directories and their subdirectories and save them to a directory:
 
 ```
-python path/to/mobile_strings_converter.py [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
+mobile-strings-converter [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3] -d [OUTPUT_DIR_PATH] -t [TARGET_TYPE]
 ```
 
 ---
 
-For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`
+For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`. When converting a directory, its subdirectory structure is kept in the output directory, so `res/values-es/strings.xml` and `res/values-fr/strings.xml` become `[OUTPUT_DIR_PATH]/values-es/strings.[TARGET_TYPE]` and `[OUTPUT_DIR_PATH]/values-fr/strings.[TARGET_TYPE]`.
 
 See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section to create a spreadsheet in your Google account.
 
@@ -359,24 +397,85 @@ A full list of the program command's options are as follows:
 | `-v, --version`                                         | Show script version info and exit.                                                                                                                                                                                                                             |
 | `-f FILE_PATH, --output-file FILE_PATH`                 | File path to save the converted file. Only works if only one input file is provided. See [the list of supported file types](#file-types-supported).                                                                                                            |
 | `-d DIR_PATH, --output-dir DIR_PATH`                    | Directory path where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                          |
-| `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files. Required when specifying multiple file paths or `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
-| `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Create a Google spreadsheet with the output in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
+| `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files (e.g. `json` or `.json`). Required when using `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
+| `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Write the strings to the Google spreadsheet named after each input file (without its extension) in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
+| `-s LANGUAGE_CODE, --source-language LANGUAGE_CODE`     | Code of the language of the default strings (e.g., `en`), such as the ones in Android's `values` directory or iOS' `Base.lproj` directory. Required to write `.xcstrings` files. See [String Catalogs](#string-catalogs). |
+| `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+### Working With Several Languages
+
+To put all the languages of your app in one file to send to translators, pass the resources directory and the `-m` (or `--merge`) option:
+
+```
+mobile-strings-converter app/src/main/res -m -f translations.xlsx
+```
+
+The language of each file is taken from its directory:
+
+| DIRECTORY                                       | LANGUAGE COLUMN |
+|:------------------------------------------------|:----------------|
+| `values` or `Base.lproj`                        | `VALUE`         |
+| `values-es` or `es.lproj`                       | `es`            |
+| `values-pt-rBR` or `pt-BR.lproj`                | `pt-BR`         |
+| `values-b+sr+Latn` or `sr-Latn.lproj`           | `sr-Latn`       |
+
+Comments written right before a string (e.g., `<!-- Title of the home screen -->` or `/* Title of the home screen */`) go to the `COMMENT` column so translators can read them.
+
+To convert the translated file back, use `-d` with `.xml`, `.strings` or `.stringsdict` as the target type. A file is written for each language:
+
+```
+mobile-strings-converter translations.xlsx -d app/src/main/res -t xml
+mobile-strings-converter translations.xlsx -d MyApp -t strings
+mobile-strings-converter translations.xlsx -d MyApp -t stringsdict
+```
+
+This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`... respectively. Strings with no translation are left out of the file of that language. iOS plurals go to `.stringsdict` files, so run both of the last two commands to get every string.
+
+If your iOS app uses a [String Catalog](#string-catalogs), all the languages go to a single file instead:
+
+```
+mobile-strings-converter translations.xlsx -f MyApp/Localizable.xcstrings -s en
+```
+
+The `-s` (or `--source-language`) option sets the language of the `VALUE` column, as String Catalogs need its code. See [String Catalogs](#string-catalogs).
+
 ### Using the Package in Your Project
 
-After following the steps in the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use:
+After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use:
 
 ```python
 # Using the `get_strings` function
+from pathlib import Path
+
 from mobile_strings_converter import get_strings
 
 get_strings(
 	input_filepath=Path("strings.xml"),
 	with_comments=True
 )
+```
+
+The strings are read into a `Catalog`, which holds the value of each string in each language. `load` and `save` work with files, while `parse` and `serialize` work with their content, so you don't need a file system:
+
+```python
+from pathlib import Path
+
+from mobile_strings_converter import Catalog, load, parse, save, save_split, serialize
+
+# Merge the languages of an Android project into a single spreadsheet
+catalog = Catalog.merge(
+	load(path) for path in sorted(Path("app/src/main/res").glob("values*/strings.xml"))
+)
+save(catalog, Path("translations.xlsx"))
+
+# Write an iOS `.strings` file for each language
+save_split(load(Path("translations.xlsx")), Path("MyApp"), ".strings")
+
+# Convert the content of a file without touching the disk
+data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")
 ```
 
 ### Generating a Spreadsheet in Google Sheets
@@ -396,23 +495,25 @@ Before going further into running the commands to do this, note that you need to
 
 Alternatively, you can create an `.xlsx` file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
 
-Once you have the `service_account.json` file, you can create a spreadsheet in Google Sheets by running the following command:
+Once you have the `service_account.json` file, create an empty spreadsheet in Google Sheets named after the input file without its extension (e.g., `strings` for `strings.xml`), share it with the `client_email` as described in step 8, and run the following command:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -g path/to/service_account.json
 ```
 
 If you want to generate an output file along with the spreadsheet, run this:
 
 ```
-python path/to/mobile_strings_converter.py *.[SUPPORTED_FILE_TYPE] -g -c path/to/service_account.json -o *.[SUPPORTED_FILE_TYPE]
+mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -g path/to/service_account.json -f *.[SUPPORTED_FILE_TYPE]
 ```
 
-The name of the sheet will be the same as the name of the input file.
+The content of the first sheet of the spreadsheet will be replaced by the strings.
 
 #### Using the `to_google_sheets` Function in Your Project
 
 ```python
+from pathlib import Path
+
 from mobile_strings_converter import to_google_sheets
 
 to_google_sheets(
@@ -427,11 +528,64 @@ to_google_sheets(
 
 ## Notes
 
+### Android Resources
+
+- `<string>`, `<plurals>` and `<string-array>` resources are converted. See [Plurals and Arrays](#plurals-and-arrays).
+- `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
+- XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
+- Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
+
+### Plurals and Arrays
+
+Spreadsheets and other tables have a row for each item of a plural or array, named after the item:
+
+| NAME           | VALUE      |
+|:---------------|:-----------|
+| `songs[one]`   | `%d song`  |
+| `songs[other]` | `%d songs` |
+| `planets[0]`   | `Mercury`  |
+| `planets[1]`   | `Venus`    |
+
+These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead.
+
+On iOS, plurals go to `.stringsdict` or `.xcstrings` files, and strings go to `.strings` or `.xcstrings` files. iOS has no arrays. Whatever a file type can't hold is skipped with a warning. Only plurals with a single number (`%#@variable@`) are read from `.stringsdict` and `.xcstrings` files.
+
+### Placeholders
+
+Placeholders are converted when writing Android and iOS files, so the strings work on the other platform:
+
+| ANDROID         | IOS                         |
+|:----------------|:----------------------------|
+| `%s`, `%1$s`    | `%@`, `%1$@`                |
+| `%d`, `%1$d`    | `%d`, `%ld`, `%lld`, `%1$d` |
+| `%.2f`          | `%.2f`, `%.2lf`             |
+
+Other file types keep the placeholders of the input file.
+
+### String Catalogs
+
+Xcode String Catalogs (`.xcstrings`) hold every language of the app in a single file, with each language under its own code (e.g., `en` or `es`).
+
+The source language of a catalog is read as the default strings, like the ones in Android's `values` directory or iOS' `Base.lproj` directory, so it goes to the `VALUE` column of a spreadsheet and to `values/strings.xml` or `Base.lproj/Localizable.strings`. The other languages keep their code.
+
+When writing a catalog, pass the code of its source language with `-s` (or `--source-language`), as the default strings don't have one:
+
+```
+mobile-strings-converter app/src/main/res -m -f Localizable.xcstrings -s en
+```
+
+Strings, plurals, comments and `shouldTranslate` are converted. Device variations (e.g., a different string for Mac) and strings with several plurals (substitutions) are skipped with a warning.
+
+### PDF Files
+
+PDF files can only be written, as they are meant to be read by people. Convert your strings to another file type (e.g., `.xlsx`) if you need to convert them back later.
+
+Each cell is written with the first bundled font that has all of its characters. The strings that no font can render are listed in a `[FILE_NAME]-errors.txt` file next to the PDF.
+
 ### Indic Languages Supported by PDF Files
 
 - Hindi
-- Marathu
-- Oriya
+- Marathi
 - Tibetan
 - Gujarati
 - Telugu
@@ -440,17 +594,19 @@ to_google_sheets(
 
 ### Languages Not Supported by PDF Files
 
-- Bengali <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
-- Dhivehi <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Kannada <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Khmer <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Lao <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Malayalam <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Meiteilon (manipuri) <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Myanmar burmese <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
-- Odia (Oriya) <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub></sub>
-- Sinhala <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Tigrinya <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+None of the bundled fonts has the characters of these languages:
+
+- Bengali
+- Dhivehi
+- Japanese <sub>(some kanji, such as 楽, are missing from the font)</sub>
+- Kannada
+- Khmer
+- Malayalam
+- Meiteilon (manipuri)
+- Myanmar burmese
+- Odia (Oriya)
+- Sinhala
+- Tigrinya
 
 ## Troubleshooting
 
@@ -462,7 +618,7 @@ You may encounter this error on iOS when using a generated `.strings` file:
 validation failed: Couldn't parse property list because the input data was in an invalid format
 ```
 
-This is because the input file has double quotes in some NAME or VALUE. To identify the line with the error, you have to do the following on macOS:
+Generated `.strings` files escape double quotes and backslashes, but this error can still happen with files edited by hand, for example due to an unescaped double quote in some NAME or VALUE. To identify the line with the error, you have to do the following on macOS:
 
 1. `cd` into your project root.
 2. `cd [LANGUAGE_CODE].lproj` (e.g., `cd es.lproj`)
