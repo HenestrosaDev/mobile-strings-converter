@@ -100,6 +100,7 @@ class TestAndroidWhitespace(unittest.TestCase):
             <string name="quoted">"  kept  "</string>
             <string name="partly_quoted">a "  b  " c</string>
             <string name="escaped">\\t Tab \\n</string>
+            <string name="unicode">\\u00e9t\\u00e9 \\u0020</string>
         </resources>"""
 
         self.assertEqual(
@@ -108,6 +109,7 @@ class TestAndroidWhitespace(unittest.TestCase):
                 ("quoted", "  kept  "),
                 ("partly_quoted", "a   b   c"),
                 ("escaped", "\t Tab \n"),
+                ("unicode", "été  "),
             ],
             parse(data.encode(), ".xml").to_pairs(),
         )
