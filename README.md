@@ -669,6 +669,7 @@ save_split(catalog, Path("app/src/main/res"), ".xml")
 - `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
 - XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
 - Whitespace is read as Android does: outside double quotes, spaces, tabs and line breaks are collapsed into a single space, and the whitespace at the start and end of the string is removed. Strings whose whitespace would be lost (e.g., `"  indented"`) are written in double quotes.
+- `<xliff:g>` tags, which mark the text that must not be translated, are removed and their content is kept (e.g., `Hello <xliff:g id="name">%s</xliff:g>` is read as `Hello %s`), so that translators and iOS files get the plain text.
 - Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
 
 ### Plurals and Arrays
