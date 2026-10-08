@@ -1,6 +1,6 @@
 [project]
 name = "mobile-strings-converter"
-version = "0.1.5"
+version = "0.2.0"
 description = "Convert Android & iOS strings files to any supported file type and vice versa."
 authors = [{ name = "José Carlos López", email = "henestrosadev@gmail.com" }]
 license = "MIT"
@@ -66,7 +66,6 @@ pre-commit = "^4.0.0"
 
 [tool.poetry.group.test.dependencies]
 coverage = "^7.16.2"
-pandas = "^2.2.3"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

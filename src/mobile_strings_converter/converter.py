@@ -1,9 +1,12 @@
 import csv
+import html
 import json
 import os
 import re
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
+from functools import lru_cache
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import List, Tuple
 
@@ -14,8 +17,8 @@ import yaml
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from fpdf import FPDF
-from google.oauth2.credentials import Credentials
 from lingua import LanguageDetectorBuilder
+from lxml import etree
 from pypdf import PdfReader
 
 from .console_style import ConsoleStyle
@@ -33,19 +36,22 @@ SUPPORTED_FILE_TYPES = [
     ".pdf",
 ]
 
+# Name of the JSON file embedded in the generated PDFs. It holds the exact strings
+# written to the PDF so they can be read back losslessly.
+PDF_EMBEDDED_FILENAME = "strings.json"
+
 
 def convert_strings(
     input_filepath: Path, output_filepath: Path, with_comments: bool = False
 ):
     """
-    Extracts strings from the input file in either .xml or .strings format and converts
-    them to the desired output file format. The output file format can be any of the
-    following:
+    Extracts strings from the input file and converts them to the desired output file
+    format. The output file format can be any of the following:
 
     Supported formats and corresponding extraction functions:
     - .csv: to_csv
-    - .xlsx: to_sheet
-    - .ods: to_sheet
+    - .xlsx: to_xlsx
+    - .ods: to_ods
     - .md: to_md
     - .json: to_json
     - .yaml: to_yaml
@@ -54,45 +60,46 @@ def convert_strings(
     - .xml: to_android
     - .pdf: to_pdf
 
-    :param input_filepath: .strings or .xml file to extract the strings
+    :param input_filepath: File to extract the strings from
     :type input_filepath: Path
-    :param output_filepath: Name of the sheet to be generated
+    :param output_filepath: Path of the file to be generated
     :type output_filepath: Path
     :param with_comments: True if the user wants to include comments from
         .strings/.xml to the output file
     :type with_comments: bool
     """
 
-    strings = get_strings(input_filepath, with_comments)
+    output_filepath = Path(output_filepath)
 
-    if output_filepath:
-        conversion_functions = {
-            ".csv": to_csv,
-            ".xlsx": to_sheet,
-            ".ods": to_sheet,
-            ".md": to_md,
-            ".json": to_json,
-            ".yaml": to_yaml,
-            ".html": to_html,
-            ".strings": to_ios,
-            ".xml": to_android,
-            ".pdf": to_pdf,
-        }
+    conversion_functions = {
+        ".csv": to_csv,
+        ".xlsx": to_xlsx,
+        ".ods": to_ods,
+        ".md": to_md,
+        ".json": to_json,
+        ".yaml": to_yaml,
+        ".html": to_html,
+        ".strings": to_ios,
+        ".xml": to_android,
+        ".pdf": to_pdf,
+    }
 
-        if output_filepath.suffix in conversion_functions:
-            conversion_functions[output_filepath.suffix](strings, output_filepath)
+    output_type = output_filepath.suffix.lower()
+    if output_type not in conversion_functions:
+        raise ValueError(
+            f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
+            f"an issue here (https://github.com/HenestrosaDev/mobile-strings"
+            f"-converter/issues) if you want the file type to be supported by the "
+            f"package.{ConsoleStyle.END}"
+        )
 
-            print(
-                f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
-                f"{ConsoleStyle.END}"
-            )
-        else:
-            raise ValueError(
-                f"{ConsoleStyle.YELLOW}File type not supported. Feel free to create "
-                f"an issue here (https://github.com/HenestrosaDev/mobile-strings"
-                f"-converter/issues) if you want the file type to be supported by the "
-                f"package.{ConsoleStyle.END}"
-            )
+    strings = get_strings(Path(input_filepath), with_comments)
+    conversion_functions[output_type](strings, output_filepath)
+
+    print(
+        f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
+        f"{ConsoleStyle.END}"
+    )
 
 
 def get_strings(
@@ -125,6 +132,8 @@ def get_strings(
     :rtype: List[Tuple[str, str]]
     """
 
+    input_filepath = Path(input_filepath)
+
     conversion_functions = {
         ".csv": get_strings_from_csv,
         ".xlsx": get_strings_from_xlsx,
@@ -138,29 +147,32 @@ def get_strings(
         ".pdf": get_strings_from_pdf,
     }
 
-    if input_filepath.suffix in [".strings", ".xml"]:
-        return conversion_functions[input_filepath.suffix](
-            input_filepath, with_comments
-        )
+    input_type = input_filepath.suffix.lower()
+    if input_type not in conversion_functions:
+        raise ValueError(f"Input file type not supported: {input_filepath}")
+
+    if input_type in [".strings", ".xml"]:
+        return conversion_functions[input_type](input_filepath, with_comments)
     else:
-        return conversion_functions[input_filepath.suffix](input_filepath)
+        return conversion_functions[input_type](input_filepath)
 
 
 def to_google_sheets(
     input_filepath: Path,
     sheet_name: str,
     credentials_filepath: Path,
-    with_comments: bool,
+    with_comments: bool = False,
 ):
     """
-    Creates a Google spreadsheet with the extracted strings from the input filepath
+    Writes the extracted strings from the input filepath to an existing Google
+    spreadsheet. The spreadsheet must be shared with the service account's email.
 
-    :param input_filepath: .strings or .xml file to extract the strings
+    :param input_filepath: File to extract the strings from
     :type input_filepath: Path
-    :param sheet_name: Name of the sheet to be generated
+    :param sheet_name: Name of the spreadsheet to write to
     :type sheet_name: str
     :param credentials_filepath: Path to the service_account.json in order to be able
-        to create the sheet in the user's Google account
+        to access the sheet in the user's Google account
     :type credentials_filepath: Path
     :param with_comments: True if the user wants to include comments from
         .strings/.xml to the sheet
@@ -169,31 +181,29 @@ def to_google_sheets(
 
     strings = get_strings(input_filepath, with_comments)
 
-    # Authenticate with Google Sheets API
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive",
-    ]
-    credentials = Credentials.from_service_account_file(credentials_filepath, scope)
-    client = gspread.authorize(credentials)
+    client = gspread.service_account(filename=credentials_filepath)
 
-    # Open a new sheet or an existing one
-    sheet = client.open(sheet_name).sheet1
+    try:
+        spreadsheet = client.open(sheet_name)
+    except gspread.SpreadsheetNotFound:
+        raise ValueError(
+            f"Spreadsheet '{sheet_name}' not found. Create it in Google Sheets and "
+            f"share it with the `client_email` from your `service_account.json`."
+        ) from None
 
-    # Clear the existing data in the sheet
+    sheet = spreadsheet.sheet1
+
+    # Replace the existing data with the strings in a single request
     sheet.clear()
-
-    # Write the data to the sheet
-    for string in strings:
-        sheet.append_row(string)
+    sheet.update([["NAME", "VALUE"], *[[name, value] for name, value in strings]])
 
 
-def to_csv(strings: List[str], output_filepath: Path):
+def to_csv(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .csv file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -210,12 +220,12 @@ def to_csv(strings: List[str], output_filepath: Path):
             writer.writerow([name, value])
 
 
-def to_sheet(strings: List[str], output_filepath: Path):
+def to_xlsx(strings: List[Tuple[str, str]], output_filepath: Path):
     """
-    Formats strings to a .xlsx / .ods file
+    Formats strings to a .xlsx file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -239,12 +249,40 @@ def to_sheet(strings: List[str], output_filepath: Path):
     workbook.save(output_filepath)
 
 
-def to_json(strings: List[str], output_filepath: Path):
+def to_ods(strings: List[Tuple[str, str]], output_filepath: Path):
+    """
+    Formats strings to a .ods file
+
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
+    :param output_filepath: The path where the generated file will be saved.
+    :type output_filepath: Path
+    """
+
+    doc = ezodf.newdoc(doctype="ods", filename=str(output_filepath))
+    # Don't create a `.bak` file when overwriting an existing file
+    doc.backup = False
+    sheet = ezodf.Sheet("Sheet1", size=(len(strings) + 1, 2))
+    doc.sheets += sheet
+
+    # Write the header row
+    sheet[0, 0].set_value("NAME")
+    sheet[0, 1].set_value("VALUE")
+
+    # Write the data to the sheet
+    for i, (name, value) in enumerate(strings, start=1):
+        sheet[i, 0].set_value(name)
+        sheet[i, 1].set_value(value)
+
+    doc.save()
+
+
+def to_json(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .json file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -260,12 +298,12 @@ def to_json(strings: List[str], output_filepath: Path):
         file.write("\n")
 
 
-def to_yaml(strings: List[str], output_filepath: Path):
+def to_yaml(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .yaml file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -273,26 +311,35 @@ def to_yaml(strings: List[str], output_filepath: Path):
     # Convert the data to a dictionary
     strings_dict = {name: value for name, value in strings}
 
-    # Write the data to the YAML file
+    # Write the data to the YAML file, keeping the order of the input file
     with open(output_filepath, "w", encoding="utf-8") as file:
-        yaml.dump(strings_dict, file, default_flow_style=False, allow_unicode=True)
+        yaml.dump(
+            strings_dict,
+            file,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
 
-def to_html(strings: List[str], output_filepath: Path):
+def to_html(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .html file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
     # Create an HTML file
     with open(output_filepath, "w", encoding="utf-8") as file:
+        file.write("<!DOCTYPE html>\n")
+        file.write("<html>\n")
         file.write("<head>\n")
         file.write('\t<meta charset="UTF-8">\n')
         file.write("</head>\n")
+        file.write("<body>\n")
         file.write("<table>\n")
         file.write("\t<thead>\n")
         file.write("\t\t<tr>\n")
@@ -305,70 +352,87 @@ def to_html(strings: List[str], output_filepath: Path):
         # Write the data to the HTML file
         for name, value in strings:
             file.write("\t\t<tr>\n")
-            file.write(f"\t\t\t<td>{name}</td>\n")
-            file.write(f"\t\t\t<td>{value}</td>\n")
+            file.write(f"\t\t\t<td>{html.escape(name, quote=False)}</td>\n")
+            file.write(f"\t\t\t<td>{html.escape(value, quote=False)}</td>\n")
             file.write("\t\t</tr>\n")
 
         file.write("\t</tbody>\n")
         file.write("</table>\n")
+        file.write("</body>\n")
+        file.write("</html>\n")
 
 
-def to_ios(strings: List[str], output_filepath: Path):
+def to_ios(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .strings file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
     with open(output_filepath, "w", encoding="utf-8") as file:
-        for string in strings:
-            file.write(f'"{string[0]}" = "{string[1]}";\n')
+        for name, value in strings:
+            file.write(f'"{_escape_ios(name)}" = "{_escape_ios(value)}";\n')
 
 
-def to_android(strings: List[str], output_filepath: Path):
+def to_android(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .xml file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
     with open(output_filepath, "w", encoding="utf-8") as file:
+        file.write('<?xml version="1.0" encoding="utf-8"?>\n')
         file.write("<resources>\n")
-        for string in strings:
-            file.write(f'\t<string name="{string[0]}">{string[1]}</string>\n')
+        for name, value in strings:
+            file.write(
+                f'\t<string name="{html.escape(name)}">'
+                f"{_to_android_value(value)}</string>\n"
+            )
 
         file.write("</resources>\n")
 
 
-def to_pdf(strings: List[str], output_filepath: Path):
+def to_pdf(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .pdf file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
 
-    # Ignore the following warning when adding a font already added:
-    # UserWarning: Core font or font already added 'dejavusanscondensed': doing nothing
-    warnings.filterwarnings("ignore", category=UserWarning)
-
     def add_font(font_name, size=12):
         root_dir = Path(__file__).parent
-        pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
+        # Ignore the following warning when adding a font already added:
+        # UserWarning: Core font or font already added 'dejavusanscondensed': doing
+        # nothing
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            pdf.add_font(fname=str(root_dir / f"assets/fonts/{font_name}.ttf"))
         pdf.set_font(font_name, size=size)
 
     # Create a new PDF file
     pdf = FPDF(orientation="P", format="A4")
     pdf.add_page()
-    pdf.set_font("Arial", "B", 12)
+    pdf.set_font("helvetica", "B", 12)
+
+    # Embed the strings so they can be read back losslessly by get_strings_from_pdf
+    pdf.embed_file(
+        bytes=json.dumps(
+            [{"name": name, "value": value} for name, value in strings],
+            ensure_ascii=False,
+        ).encode("utf-8"),
+        basename=PDF_EMBEDDED_FILENAME,
+        mime_type="application/json",
+    )
 
     # Cell properties
     c_width = 95
@@ -379,11 +443,8 @@ def to_pdf(strings: List[str], output_filepath: Path):
     pdf.cell(c_width, c_height, "VALUE", border=1)
     pdf.ln()
 
-    detector = (
-        LanguageDetectorBuilder.from_all_languages()
-        .with_preloaded_language_models()
-        .build()
-    )
+    detector = _get_language_detector()
+    unsupported_values = []
 
     # Add table data
     # https://stackoverflow.com/questions/53526311/fpdf-multicell-same-height
@@ -400,9 +461,9 @@ def to_pdf(strings: List[str], output_filepath: Path):
                 if j % 2 == 0:  # Prevents 'name' language detection
                     add_font("DejaVuSansCondensed")
                 else:
-                    language_code = detector.detect_language_of(
-                        string[j]
-                    ).iso_code_639_1.name.lower()
+                    language = detector.detect_language_of(string[j])
+                    if language is not None:
+                        language_code = language.iso_code_639_1.name.lower()
 
                     if language_code in [
                         "bn",  # Bengali
@@ -432,6 +493,14 @@ def to_pdf(strings: List[str], output_filepath: Path):
                     else:
                         add_font("DejaVuSansCondensed")
 
+                # The font has no glyphs for some characters of the string
+                if any(
+                    ord(char) not in pdf.current_font.cmap
+                    for char in string[j]
+                    if not char.isspace()
+                ):
+                    unsupported_values.append(string[j])
+
                 if language_code in [
                     # RTL languages
                     "ar",  # Arabic
@@ -454,12 +523,7 @@ def to_pdf(strings: List[str], output_filepath: Path):
 
                 pdf.set_xy(x + (c_width * (j + 1)), y)
             except (Exception,):
-                with open(
-                    output_filepath.parent / f"{output_filepath.stem}-errors.txt",
-                    "a",
-                    encoding="utf-8",
-                ) as f:
-                    f.write(f"{string[1]} not supported\n")
+                unsupported_values.append(string[j])
 
         for j in range(cells_in_row + 1):
             pdf.line(x + c_width * j, y, x + c_width * j, y + max_height)
@@ -486,13 +550,24 @@ def to_pdf(strings: List[str], output_filepath: Path):
             # Save the PDF file
             pdf.output(str(output_filepath))
 
+    if unsupported_values:
+        errors_filepath = output_filepath.parent / f"{output_filepath.stem}-errors.txt"
+        with open(errors_filepath, "w", encoding="utf-8") as f:
+            for value in unsupported_values:
+                f.write(f"{value} not supported\n")
 
-def to_md(strings: List[str], output_filepath: Path):
+        print(
+            f"{ConsoleStyle.YELLOW}{len(unsupported_values)} string(s) could not be "
+            f"rendered in the PDF. See {errors_filepath}{ConsoleStyle.END}"
+        )
+
+
+def to_md(strings: List[Tuple[str, str]], output_filepath: Path):
     """
     Formats strings to a .md file
 
-    :param strings: Strings extracted from a .strings or .xml file
-    :type strings: List[str]
+    :param strings: Strings extracted from a supported file
+    :type strings: List[Tuple[str, str]]
     :param output_filepath: The path where the generated file will be saved.
     :type output_filepath: Path
     """
@@ -501,14 +576,14 @@ def to_md(strings: List[str], output_filepath: Path):
         # Write each string to the Markdown file in a table format
         f.write("| NAME | VALUE |\n")
         f.write("| ----------- | ----------- |\n")
-        for name, translation in strings:
-            f.write(f"| {name} | {translation} |\n")
+        for name, value in strings:
+            f.write(f"| {_escape_md(name)} | {_escape_md(value)} |\n")
 
 
 # GET STRINGS FROM
 
 
-def get_strings_from_csv(csv_filepath: Path):
+def get_strings_from_csv(csv_filepath: Path) -> List[Tuple[str, str]]:
     """
     Extract data from a CSV file with NAME and VALUE columns and return it as a
     list of tuples.
@@ -523,40 +598,42 @@ def get_strings_from_csv(csv_filepath: Path):
     data = []
 
     # Open the CSV file and read its contents
-    with open(csv_filepath, "r", newline="", encoding="utf-8") as file:
+    with open(csv_filepath, "r", newline="", encoding="utf-8-sig") as file:
         csv_reader = csv.reader(file)
-        next(csv_reader)  # Skip the header row
+        next(csv_reader, None)  # Skip the header row
 
         # Iterate over the rows in the CSV file
         for row in csv_reader:
-            name, value = row
-            data.append((name, value))
+            if _is_valid_row(row):
+                data.append(_to_string_pair(row))
 
     return data
 
 
-def get_strings_from_xlsx(sheet_filepath: Path):
+def get_strings_from_xlsx(sheet_filepath: Path) -> List[Tuple[str, str]]:
     """
     Extract data from an Excel file with NAME and VALUE columns and return it as a list
     of tuples.
 
     :param sheet_filepath: The path to the input Excel file.
-    :type sheet_filepath: str
+    :type sheet_filepath: Path
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
 
     # Load the workbook and select the active sheet
-    workbook = openpyxl.load_workbook(sheet_filepath)
+    workbook = openpyxl.load_workbook(sheet_filepath, read_only=True)
     sheet = workbook.active
 
     # Initialize a list to hold the tuples
     data = []
 
     # Iterate over the rows in the sheet starting from the second row to skip the header
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        name, value = row
-        data.append((name, value))
+    for row in sheet.iter_rows(min_row=2, max_col=2, values_only=True):
+        if _is_valid_row(row):
+            data.append(_to_string_pair(row))
+
+    workbook.close()
 
     return data
 
@@ -567,7 +644,7 @@ def get_strings_from_ods(ods_filepath: Path) -> List[Tuple[str, str]]:
     and return it as a list of tuples.
 
     :param ods_filepath: The path to the input ODS file.
-    :type ods_filepath: str
+    :type ods_filepath: Path
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
@@ -576,16 +653,20 @@ def get_strings_from_ods(ods_filepath: Path) -> List[Tuple[str, str]]:
     data = []
 
     # Load the ODS file
-    doc = ezodf.opendoc(ods_filepath)
+    doc = ezodf.opendoc(str(ods_filepath))
 
     # Get the first sheet
     sheet = doc.sheets[0]
 
-    # Iterate over the rows in the sheet
-    for row in sheet.rows():
+    # Iterate over the rows in the sheet, skipping the header
+    for i, row in enumerate(sheet.rows()):
+        if i == 0:
+            continue
+
         # Extract NAME and VALUE from each row
-        name, value = [cell.value for cell in row[:2]]
-        data.append((name, value))
+        values = [cell.value for cell in row[:2]]
+        if _is_valid_row(values):
+            data.append(_to_string_pair(values))
 
     return data
 
@@ -616,30 +697,33 @@ def get_strings_from_md(
     start_index = None
     end_index = None
     for i, line in enumerate(lines):
-        if line.strip().startswith("|"):
+        if line.strip().startswith(delimiter):
             start_index = i
             break
     for i in range(len(lines) - 1, -1, -1):
-        if lines[i].strip().startswith("|"):
+        if lines[i].strip().startswith(delimiter):
             end_index = i
             break
+
+    # Split on delimiters that are not escaped with a backslash
+    split_pattern = rf"(?<!\\){re.escape(delimiter)}"
 
     # Extract data from the table, skipping the first two lines (header)
     if start_index is not None and end_index is not None:
         for row in lines[start_index + 2 : end_index + 1]:
             # Split the line by the delimiter and extract NAME and VALUE
-            parts = row.strip().strip(delimiter).split(delimiter)
+            parts = re.split(split_pattern, row.strip())[1:-1]
             if len(parts) >= 2:
                 name, value = parts[:2]
-                data.append((name.strip(), value.strip()))
+                data.append((_unescape_md(name.strip()), _unescape_md(value.strip())))
 
     return data
 
 
 def get_strings_from_json(json_filepath: Path) -> List[Tuple[str, str]]:
     """
-    Extract data from a JSON file with objects containing NAME and VALUE fields and
-    return it as a list of tuples.
+    Extract data from a JSON file with objects containing NAME and VALUE fields (or a
+    single object mapping names to values) and return it as a list of tuples.
 
     :param json_filepath: The path to the input JSON file.
     :type json_filepath: Path
@@ -654,10 +738,13 @@ def get_strings_from_json(json_filepath: Path) -> List[Tuple[str, str]]:
     with open(json_filepath, "r", encoding="utf-8") as file:
         json_data = json.load(file)
 
+    if isinstance(json_data, dict):
+        return [_to_string_pair(item) for item in json_data.items()]
+
     # Iterate over each object in the JSON data
     for record in json_data:
         if "name" in record and "value" in record:
-            data.append((record["name"], record["value"]))
+            data.append(_to_string_pair((record["name"], record["value"])))
 
     return data
 
@@ -673,18 +760,12 @@ def get_strings_from_yaml(yaml_filepath: Path) -> List[Tuple[str, str]]:
     :rtype: List[Tuple[str, str]]
     """
 
-    # Initialize a list to hold the tuples
-    data = []
-
     # Open the YAML file and load its contents
     with open(yaml_filepath, "r", encoding="utf-8") as file:
-        yaml_data = yaml.safe_load(file)
+        yaml_data = yaml.safe_load(file) or {}
 
     # Iterate over each key-value pair in the YAML data
-    for key, value in yaml_data.items():
-        data.append((key, value))
-
-    return data
+    return [_to_string_pair(item) for item in yaml_data.items()]
 
 
 def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
@@ -698,40 +779,25 @@ def get_strings_from_html(html_filepath: Path) -> List[Tuple[str, str]]:
     :rtype: List[Tuple[str, str]]
     """
 
-    # Initialize a list to hold the tuples
-    data = []
-
     # Open the HTML file and read its contents
     with open(html_filepath, "r", encoding="utf-8") as file:
         html_content = file.read()
 
-    # Find the start and end indices of the table
-    table_start = html_content.find("<table")
-    table_end = html_content.find("</table>", table_start)
+    parser = _HTMLTableParser()
+    parser.feed(html_content)
+    parser.close()
 
-    # Extract data from the table if it exists
-    if table_start != -1 and table_end != -1:
-        table_content = html_content[table_start:table_end]
-        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_content, re.DOTALL)
-
-        # Extract data from each row
-        for row in rows:
-            cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
-            if len(cells) >= 2:
-                name = re.sub(r"<.*?>", "", cells[0].strip())
-                value = re.sub(r"<.*?>", "", cells[1].strip())
-                data.append((name, value))
-
-    return data
+    # Rows with fewer than two cells (e.g. the header row) are skipped
+    return [(row[0], row[1]) for row in parser.rows if len(row) >= 2]
 
 
 def get_strings_from_ios(
-    ios_filepath: Path, with_comments: bool
+    ios_filepath: Path, with_comments: bool = False
 ) -> List[Tuple[str, str]]:
     """
-    Get strings from the .strings or .xml file.
+    Get strings from the .strings file.
 
-    :param ios_filepath: .strings or .xml file to extract the strings
+    :param ios_filepath: .strings file to extract the strings
     :type ios_filepath: Path
     :param with_comments: True if the user wants to include comments from
         the .strings to the output file
@@ -740,17 +806,11 @@ def get_strings_from_ios(
     :rtype: List[Tuple[str, str]]
     """
 
-    if with_comments:
-        pattern = r'"(.*?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
-    else:
-        pattern = r'^(?!\s*//)\s*"(.+?)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;'
-
     # Open the strings file
     with open(ios_filepath, "r", encoding="utf-8") as file:
         strings_data = file.read()
 
-    # Extract the strings using a regular expression
-    strings = re.findall(pattern, strings_data, re.MULTILINE)
+    strings = _parse_ios_strings(strings_data, with_comments)
 
     if len(strings) >= 1:
         return strings
@@ -759,31 +819,50 @@ def get_strings_from_ios(
 
 
 def get_strings_from_xml(
-    xml_filepath: Path, with_comments: bool
+    xml_filepath: Path, with_comments: bool = False
 ) -> List[Tuple[str, str]]:
     """
-    Get strings from the .strings or .xml file.
+    Get strings from the Android .xml file.
 
-    :param xml_filepath: .strings or .xml file to extract the strings
+    `<plurals>` and `<string-array>` resources are not supported and are skipped.
+
+    :param xml_filepath: .xml file to extract the strings
     :type xml_filepath: Path
     :param with_comments: True if the user wants to include comments from
-        the .strings to the output file
+        the .xml to the output file
     :type with_comments: bool
     :return: A list of tuples where each tuple contains a NAME and VALUE.
     :rtype: List[Tuple[str, str]]
     """
 
-    if with_comments:
-        pattern = r'<string name="(.*?)">(.*?)</string>'
-    else:
-        pattern = r'^(?!\s*<!--)\s*<string name="(.*?)">(.*?)</string>(?!\s*-->)'
-
     # Open the strings file
-    with open(xml_filepath, "r", encoding="utf-8") as file:
+    with open(xml_filepath, "rb") as file:
         strings_data = file.read()
 
-    # Extract the strings using a regular expression
-    strings = re.findall(pattern, strings_data, re.MULTILINE)
+    try:
+        root = etree.fromstring(strings_data.strip())
+    except etree.XMLSyntaxError:
+        raise ValueError("The file provided is not a valid .xml file.") from None
+
+    strings = []
+    skipped_resources = 0
+
+    if root.tag == "resources":
+        for node in root:
+            if node.tag is etree.Comment:
+                if with_comments:
+                    strings.extend(_parse_commented_android_strings(node.text or ""))
+            elif node.tag == "string" and node.get("name") is not None:
+                strings.append((node.get("name"), _get_android_value(node)))
+            elif node.tag in ["plurals", "string-array"]:
+                skipped_resources += 1
+
+    if skipped_resources:
+        print(
+            f"{ConsoleStyle.YELLOW}Skipped {skipped_resources} <plurals>/"
+            f"<string-array> resource(s) in {xml_filepath} because they are not "
+            f"supported.{ConsoleStyle.END}"
+        )
 
     if len(strings) >= 1:
         return strings
@@ -796,6 +875,10 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
     Extract data from a PDF file with a table containing NAME and VALUE columns and
     return it as a list of tuples.
 
+    PDFs generated by this package embed the original strings, which are read
+    losslessly. For any other PDF, the strings are extracted from the text of the
+    table, which only works for single-line values.
+
     :param pdf_filepath: The path to the input PDF file.
     :type pdf_filepath: Path
     :return: A list of tuples where each tuple contains a NAME and VALUE.
@@ -807,20 +890,231 @@ def get_strings_from_pdf(pdf_filepath: Path) -> List[Tuple[str, str]]:
     # Create a PdfReader object
     pdf_reader = PdfReader(pdf_filepath)
 
+    embedded_files = pdf_reader.attachments.get(PDF_EMBEDDED_FILENAME)
+    if embedded_files:
+        records = json.loads(embedded_files[0].decode("utf-8"))
+        return [_to_string_pair((r["name"], r["value"])) for r in records]
+
     # Extract text from each page
-    for page in pdf_reader.pages:
+    for page_number, page in enumerate(pdf_reader.pages):
         text = page.extract_text()
 
         # Find patterns for table rows
         rows = text.split("\n")
 
         # Skip the header
-        rows = rows[1:]
+        if page_number == 0:
+            rows = rows[1:]
 
         for row in rows:
-            match = re.match(r"(\w+)\s+(.*)", row.strip())
+            match = re.match(r"(\S+)\s+(.*)", row.strip())
             if match:
                 name, value = match.groups()
                 data.append((name.strip(), value.strip()))
 
     return data
+
+
+# HELPERS
+
+
+@lru_cache(maxsize=1)
+def _get_language_detector():
+    return (
+        LanguageDetectorBuilder.from_all_languages()
+        .with_preloaded_language_models()
+        .build()
+    )
+
+
+def _is_valid_row(row) -> bool:
+    """Returns True if the row has a name in the first column."""
+    return len(row) >= 1 and row[0] is not None and str(row[0]).strip() != ""
+
+
+def _to_string_pair(row) -> Tuple[str, str]:
+    """Converts a row of cells into a (name, value) tuple of strings."""
+    name = row[0]
+    value = row[1] if len(row) >= 2 else None
+    return str(name), "" if value is None else str(value)
+
+
+# iOS
+
+# Matches, in order of appearance, block comments, line comments and
+# `"name" = "value";` entries.
+_IOS_TOKEN_PATTERN = re.compile(
+    r"/\*(?P<block>.*?)\*/"
+    r"|//(?P<line>[^\n]*)"
+    r'|"(?P<name>(?:[^"\\]|\\.)*)"\s*=\s*"(?P<value>(?:[^"\\]|\\.)*)"\s*;',
+    re.DOTALL,
+)
+
+_IOS_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "0": "\0"}
+
+
+def _parse_ios_strings(data: str, with_comments: bool) -> List[Tuple[str, str]]:
+    strings = []
+
+    for match in _IOS_TOKEN_PATTERN.finditer(data):
+        if match.group("name") is not None:
+            strings.append(
+                (
+                    _unescape_ios(match.group("name")),
+                    _unescape_ios(match.group("value")),
+                )
+            )
+        elif with_comments:
+            comment = match.group("block") or match.group("line") or ""
+            strings.extend(_parse_ios_strings(comment, with_comments=False))
+
+    return strings
+
+
+def _unescape_ios(value: str) -> str:
+    def replace(match):
+        escaped = match.group(1)
+        if escaped[0] in "uU" and len(escaped) > 1:
+            return chr(int(escaped[1:], 16))
+        return _IOS_ESCAPES.get(escaped, escaped)
+
+    return re.sub(r"\\([uU][0-9a-fA-F]{4}|.)", replace, value, flags=re.DOTALL)
+
+
+def _escape_ios(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+        .replace("\r", "\\r")
+    )
+
+
+# Android
+
+_ANDROID_ESCAPES = {"n": "\n", "t": "\t"}
+
+
+def _get_android_value(element) -> str:
+    """
+    Returns the value of a `<string>` element. Values with inline markup (e.g.
+    `<b>bold</b>`) are returned verbatim, as they appear in the file. Otherwise, the
+    XML entities and Android escape sequences are decoded.
+    """
+
+    if len(element):
+        inner_xml = element.text and html.escape(element.text, quote=False) or ""
+        for child in element:
+            inner_xml += etree.tostring(child, encoding="unicode", with_tail=True)
+        return inner_xml
+
+    return _unescape_android(element.text or "")
+
+
+def _parse_commented_android_strings(comment: str) -> List[Tuple[str, str]]:
+    try:
+        root = etree.fromstring(f"<resources>{comment}</resources>")
+    except etree.XMLSyntaxError:
+        # The comment is not a commented out string
+        return []
+
+    return [
+        (node.get("name"), _get_android_value(node))
+        for node in root
+        if node.tag == "string" and node.get("name") is not None
+    ]
+
+
+def _unescape_android(value: str) -> str:
+    # Values wrapped in unescaped double quotes are taken literally
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"' and value[-2] != "\\":
+        value = value[1:-1]
+
+    def replace(match):
+        escaped = match.group(1)
+        if escaped[0] == "u" and len(escaped) > 1:
+            return chr(int(escaped[1:], 16))
+        return _ANDROID_ESCAPES.get(escaped, escaped)
+
+    return re.sub(r"\\(u[0-9a-fA-F]{4}|.)", replace, value, flags=re.DOTALL)
+
+
+def _escape_android(value: str) -> str:
+    value = (
+        value.replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+    )
+
+    # `@` and `?` at the start of a value are resource references
+    if value.startswith(("@", "?")):
+        value = "\\" + value
+
+    return html.escape(value, quote=False)
+
+
+def _to_android_value(value: str) -> str:
+    """
+    Returns the value ready to be written inside a `<string>` element. Values with
+    well-formed inline markup (as returned by `_get_android_value`) are written
+    verbatim.
+    """
+
+    if "<" in value:
+        try:
+            if len(etree.fromstring(f"<string>{value}</string>")):
+                return value
+        except etree.XMLSyntaxError:
+            pass
+
+    return _escape_android(value)
+
+
+# Markdown
+
+
+def _escape_md(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\")
+        .replace("|", "\\|")
+        .replace("\r\n", "<br>")
+        .replace("\n", "<br>")
+    )
+
+
+def _unescape_md(value: str) -> str:
+    return re.sub(r"\\(.)|<br>", lambda m: m.group(1) or "\n", value, flags=re.DOTALL)
+
+
+# HTML
+
+
+class _HTMLTableParser(HTMLParser):
+    """Collects the text of the `<td>` cells of every `<tr>` row."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.rows: List[List[str]] = []
+        self._row = None
+        self._cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self._row = []
+        elif tag == "td" and self._row is not None:
+            self._cell = []
+
+    def handle_endtag(self, tag):
+        if tag == "td" and self._cell is not None:
+            self._row.append("".join(self._cell))
+            self._cell = None
+        elif tag == "tr" and self._row is not None:
+            self.rows.append(self._row)
+            self._row = None
+
+    def handle_data(self, data):
+        if self._cell is not None:
+            self._cell.append(data)

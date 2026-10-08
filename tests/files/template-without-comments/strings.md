@@ -17,8 +17,8 @@
 | message_georgian | ისიამოვნე ჩემი აპლიკაციით |
 | message_greek | απολαύστε την εφαρμογή μου |
 | message_gujarati | મારી એપ્લિકેશનનો આનંદ માણો |
-| message_english | I\'m happy to be here |
-| message_french | C\'est comme ça |
+| message_english | I'm happy to be here |
+| message_french | C'est comme ça |
 | message_german | Viel Spaß mit meiner App |
 | message_hebrew | תהנה מהאפליקציה שלי |
 | message_hindi | मेरे ऐप का आनंद लें |
@@ -44,7 +44,7 @@
 | message_mongolian | миний програмыг сайхан өнгөрүүлээрэй |
 | message_myanmar_burmese | ငါ့ app ကိုခံစားပါ။ |
 | message_nepali | मेरो एपको मजा लिनुहोस् |
-| message_odia_oriya | ମୋର ଆପ୍ ଉପଭୋଗ କରନ୍ତୁ | |
+| message_odia_oriya | ମୋର ଆପ୍ ଉପଭୋଗ କରନ୍ତୁ \| |
 | message_pashto | زما ایپ څخه خوند واخلئ |
 | message_persian | از برنامه من لذت ببرید |
 | message_punjabi | ਮੇਰੀ ਐਪ ਦਾ ਆਨੰਦ ਮਾਣੋ |

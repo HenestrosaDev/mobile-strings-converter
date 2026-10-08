@@ -1,31 +1,50 @@
 import unittest
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from mobile_strings_converter.converter import convert_strings, get_strings
+
+FILES_PATH = Path(__file__).parent / "files"
 
 
 # This is a wrapper class that prevents its nested classes from running as tests.
 class BaseTests(object):
-    # For `test_to_*` files
+    class OutputDirTest(unittest.TestCase):
+        """Writes the generated files to a temporary directory."""
 
-    class ConvertToTest(unittest.TestCase):
+        def setUp(self):
+            self._temp_dir = TemporaryDirectory()
+            self.output_dir = Path(self._temp_dir.name)
+
+        def tearDown(self):
+            self._temp_dir.cleanup()
+
+        def _assert_same_content(self, output_filepath: Path, template_filepath: Path):
+            """
+            Checks that both files have the same content. Binary file types override
+            this method.
+            """
+
+            with (
+                open(output_filepath, "rb") as test_file,
+                open(template_filepath, "rb") as template_file,
+            ):
+                self.assertEqual(
+                    test_file.read().decode("utf-8").replace("\r\n", "\n"),
+                    template_file.read().decode("utf-8").replace("\r\n", "\n"),
+                )
+
+    # For converting Android & iOS files to each supported file type
+
+    class ConvertToTest(OutputDirTest):
         # Hook methods
 
         def setUp(self):
+            super().setUp()
             self._file_name: str | None = None
 
-            self.files_path = "files"
-            self.input_filepath_android = (
-                Path(__file__).parent / self.files_path / "input/strings.xml"
-            )
-            self.input_filepath_ios = (
-                Path(__file__).parent / self.files_path / "input/Localizable.strings"
-            )
-
-        def tearDown(self):
-            if self.output_filepath.exists():
-                self.output_filepath.unlink()
+            self.input_filepath_android = FILES_PATH / "input/strings.xml"
+            self.input_filepath_ios = FILES_PATH / "input/Localizable.strings"
 
         # Properties
 
@@ -37,16 +56,12 @@ class BaseTests(object):
         def file_name(self, value):
             self._file_name = value
             self.template_with_comments_filepath: Path = (
-                Path(__file__).parent
-                / self.files_path
-                / f"template-with-comments/{self._file_name}"
+                FILES_PATH / f"template-with-comments/{self._file_name}"
             )
             self.template_without_comments_filepath: Path = (
-                Path(__file__).parent
-                / self.files_path
-                / f"template-without-comments/{self._file_name}"
+                FILES_PATH / f"template-without-comments/{self._file_name}"
             )
-            self.output_filepath = Path(self._file_name)
+            self.output_filepath = self.output_dir / self._file_name
 
         # Test methods
 
@@ -123,35 +138,23 @@ class BaseTests(object):
             with_comments: bool,
         ):
             convert_strings(input_filepath, self.output_filepath, with_comments)
+            self._assert_same_content(self.output_filepath, template_filepath)
 
-            with (
-                open(self.output_filepath, "rb") as test_file,
-                open(template_filepath, "rb") as template_file,
-            ):
-                self.assertEqual(
-                    test_file.read().decode("utf-8").replace("\r\n", "\n"),
-                    template_file.read().decode("utf-8").replace("\r\n", "\n"),
-                )
+    # For converting each supported file type to Android & iOS files
 
-    # For `test_from_*` files
-
-    class ConvertFromTest(unittest.TestCase):
+    class ConvertFromTest(OutputDirTest):
         # Hook methods
 
         def setUp(self):
+            super().setUp()
             self._file_name: str | None = None
 
-            self.files_path = "files"
-            self.android_filepath = (
-                Path(__file__).parent / self.files_path / "input/strings.xml"
+            self.template_android_filepath = (
+                FILES_PATH / "template-without-comments/strings.xml"
             )
-            self.ios_filepath = (
-                Path(__file__).parent / self.files_path / "input/Localizable.strings"
+            self.template_ios_filepath = (
+                FILES_PATH / "template-without-comments/Localizable.strings"
             )
-
-        def tearDown(self):
-            if self.output_filepath.exists():
-                self.output_filepath.unlink()
 
         # Properties
 
@@ -161,12 +164,7 @@ class BaseTests(object):
 
         @file_name.setter
         def file_name(self, value):
-            self.input_filepath = (
-                Path(__file__).parent
-                / self.files_path
-                / f"template-without-comments/{value}"
-            )
-            self.output_filepath = Path(value)
+            self.input_filepath = FILES_PATH / f"template-without-comments/{value}"
             self._file_name = value
 
         # Test methods
@@ -174,48 +172,38 @@ class BaseTests(object):
         # ------------ ANDROID ------------
 
         def test_converter_creates_file_android(self):
-            self._converter_creates_file(self.input_filepath)
+            self._converter_creates_file(self.output_dir / "strings.xml")
 
         def test_converter_writes_correct_data_android(self):
             self._converter_writes_correct_data(
-                template_filepath=self.input_filepath,
-                input_filepath=self.android_filepath,
+                template_filepath=self.template_android_filepath,
+                output_filepath=self.output_dir / "strings.xml",
             )
 
         # -------------- iOS --------------
 
         def test_converter_creates_file_ios(self):
-            self._converter_creates_file(self.input_filepath)
+            self._converter_creates_file(self.output_dir / "Localizable.strings")
 
         def test_converter_writes_correct_data_ios(self):
             self._converter_writes_correct_data(
-                template_filepath=self.input_filepath, input_filepath=self.ios_filepath
+                template_filepath=self.template_ios_filepath,
+                output_filepath=self.output_dir / "Localizable.strings",
             )
 
         # Private methods
 
-        def _converter_creates_file(
-            self,
-            input_filepath: Path,
-        ):
-            convert_strings(input_filepath, self.output_filepath)
-            self.assertTrue(self.output_filepath.exists())
+        def _converter_creates_file(self, output_filepath: Path):
+            convert_strings(self.input_filepath, output_filepath)
+            self.assertTrue(output_filepath.exists())
 
         def _converter_writes_correct_data(
             self,
             template_filepath: Path,
-            input_filepath: Path,
+            output_filepath: Path,
         ):
-            convert_strings(input_filepath, self.output_filepath)
-
-            with (
-                open(self.output_filepath, "rb") as test_file,
-                open(template_filepath, "rb") as template_file,
-            ):
-                self.assertEqual(
-                    test_file.read().decode("utf-8").replace("\r\n", "\n"),
-                    template_file.read().decode("utf-8").replace("\r\n", "\n"),
-                )
+            convert_strings(self.input_filepath, output_filepath)
+            self._assert_same_content(output_filepath, template_filepath)
 
     class GetStringsTest(unittest.TestCase):
         def setUp(self):
@@ -257,7 +245,7 @@ class BaseTests(object):
             # fmt: off
             expected_output = [
                 ("chinese", "  欢迎来到我的申请  "),
-                ("escaped_quote", "MyA\\\"pp"),
+                ("escaped_quote", 'MyA"pp'),
                 ("hindi", "मेरे ऐप का आनंद लें"),
                 ("korean", "내 앱을 즐기세요")
             ]
@@ -328,3 +316,10 @@ class BaseTests(object):
 
             # Clean up the temporary file
             filepath.unlink()
+
+
+class SameStringsMixin:
+    """For binary file types, whose content is compared by the strings they hold."""
+
+    def _assert_same_content(self, output_filepath: Path, template_filepath: Path):
+        self.assertEqual(get_strings(output_filepath), get_strings(template_filepath))
