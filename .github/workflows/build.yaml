@@ -37,15 +37,21 @@ jobs:
       - name: Type check
         run: uv run mypy
 
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: macos-latest
+            python-version: "3.14"
+          - os: windows-latest
+            python-version: "3.14"
 
     steps:
-      - name: Checkout sources  # Clones your repository into the machine running the action
+      - name: Checkout sources
         uses: actions/checkout@v5
 
       - name: Setup uv with Python ${{ matrix.python-version }}
@@ -56,16 +62,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
-      - name: Run tests
-        run: uv run python -m unittest discover tests
-
-      - name: Coverage run
+      - name: Run tests with coverage
         run: |
           uv run coverage run -m unittest discover tests
           uv run coverage report -m --fail-under 80
           uv run coverage xml
 
       - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

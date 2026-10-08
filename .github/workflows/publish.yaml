@@ -8,9 +8,15 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Trusted publishing: PyPI must list this repository, workflow and environment as
+    # a trusted publisher (https://docs.pypi.org/trusted-publishers/)
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-      - name: Checkout sources  # Clones your repository into the machine running the action
+      - name: Checkout sources
         uses: actions/checkout@v5
 
       - name: Setup uv
@@ -22,6 +28,4 @@ jobs:
         run: uv build
 
       - name: Publish
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: uv publish
