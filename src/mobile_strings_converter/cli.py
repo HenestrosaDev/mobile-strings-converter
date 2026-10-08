@@ -1,3 +1,5 @@
+"""Command-line interface of the package."""
+
 import argparse
 import json
 import os
@@ -524,7 +526,3 @@ def _print_warnings() -> Iterator[None]:
         finally:
             for caught in caught_warnings:
                 _print(str(caught.message), ConsoleStyle.YELLOW, sys.stderr)
-
-
-if __name__ == "__main__":
-    sys.exit(main())

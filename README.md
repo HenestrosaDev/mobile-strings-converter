@@ -198,6 +198,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 ├───src
 │   └───mobile_strings_converter
 │       │   check.py
+│       │   cli.py
 │       │   console_style.py
 │       │   exceptions.py
 │       │   files.py

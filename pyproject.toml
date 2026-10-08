@@ -59,7 +59,7 @@ all = ["mobile-strings-converter[pdf,sheets]"]
 repository = "https://github.com/HenestrosaDev/mobile-strings-converter"
 
 [project.scripts]
-mobile-strings-converter = "mobile_strings_converter.__main__:main"
+mobile-strings-converter = "mobile_strings_converter.cli:main"
 
 [dependency-groups]
 dev = [
