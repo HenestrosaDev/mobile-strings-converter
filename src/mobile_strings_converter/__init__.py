@@ -2,7 +2,7 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from .check import Issue, check, find_duplicates
+from .check import ISSUE_CODES, Issue, check, find_duplicates
 from .exceptions import (
     ConversionWarning,
     MissingDependencyError,
@@ -36,6 +36,7 @@ __all__ = [
     "write_google_sheets",
     # Checks
     "Issue",
+    "ISSUE_CODES",
     "check",
     "find_duplicates",
     # Errors and warnings

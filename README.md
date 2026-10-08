@@ -420,6 +420,9 @@ A full list of the program command's options are as follows:
 | `-G SPREADSHEET_NAME, --from-google-sheets SPREADSHEET_NAME` | Read the strings from the first sheet of a Google spreadsheet instead of input files. See [Google Sheets](#google-sheets). |
 | `-c CREDENTIALS_PATH, --credentials CREDENTIALS_PATH`   | Path of the `service_account.json` file used to access Google Sheets. Defaults to `~/.config/gspread/service_account.json`. See [Setting Up a Google Account](#setting-up-a-google-account). |
 | `--check`                                               | Check the translations instead of converting them. Exits with code 1 if any issue is found. See [Checking Translations](#checking-translations). |
+| `--reference-locale LOCALE`                             | Locale to compare the others with when using `--check` (e.g., `en`). Defaults to the default strings, or to the first locale if there are none. |
+| `--check-untranslated`                                  | Also report the translations that are the same as the reference value when using `--check`. |
+| `--check-format {text,json,github}`                     | Format of the issues found by `--check`: `text` (the default), `json` or `github` (annotations of GitHub Actions workflows). |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
 | `-s LANGUAGE_CODE, --source-language LANGUAGE_CODE`     | Code of the language of the default strings (e.g., `en`), such as the ones in Android's `values` directory or iOS' `Base.lproj` directory. Required to write `.xcstrings` files. See [String Catalogs](#string-catalogs). |
 | `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
@@ -478,7 +481,12 @@ Every language is compared with the default strings (`values`, `Base.lproj` or t
 - **Obsolete translations**: strings that have a value in a language, but no default value.
 - **Placeholders that differ from the default value**, e.g. `Hello, %s` translated as `Hola, %d`. Android and iOS placeholders are compared as equivalent (e.g. `%s` and `%@`), and positional placeholders can be reordered (e.g. `%1$s has %2$d` and `%2$d %1$s`). The number of a plural can be left out of some quantities (e.g. `One song`).
 - **Plurals, arrays and strings that are a different kind of value** than the default value, and arrays with a different number of items.
+- **Empty translations** of strings that are not empty.
 - **Names defined more than once** in the same file.
+
+To compare the languages with another one, pass it with `--reference-locale` (e.g., `--reference-locale en`).
+
+Translations that are the same as the default value (e.g., `Settings` left in English in the Spanish file) are only reported with `--check-untranslated`, as some strings are the same in several languages (e.g., `OK`). Values without letters, such as `%d`, are never reported.
 
 The command exits with code 1 if any issue is found, so you can use it in your CI pipeline:
 
@@ -487,6 +495,26 @@ The command exits with code 1 if any issue is found, so you can use it in your C
 [es] bye: missing translation
 [fr] songs: is a string, but the default value is a plural
 3 issue(s) found
+```
+
+Use `--check-format json` to process the issues with other tools. Each issue has the file it was found in, its locale, the name of the string, a message and one of these codes: `missing`, `obsolete`, `placeholders`, `kind`, `empty`, `untranslated` and `duplicate`.
+
+```json
+[
+  {
+    "file": "app/src/main/res/values-es/strings.xml",
+    "locale": "es",
+    "name": "bye",
+    "code": "missing",
+    "message": "missing translation"
+  }
+]
+```
+
+In a GitHub Actions workflow, use `--check-format github` to show the issues as errors in the summary of the run and in the files changed by a pull request:
+
+```
+mobile-strings-converter app/src/main/res --check --check-format github
 ```
 
 ### Using the Package in Your Project

@@ -94,6 +94,12 @@ def _build(match: re.Match[str], **overrides: str) -> str:
     )
 
 
+def remove(value: str) -> str:
+    """Returns the value without its placeholders, e.g. `%1$s has %d` -> ` has `."""
+
+    return _PLACEHOLDER_PATTERN.sub("", value)
+
+
 def signature(value: str) -> list[tuple[int, str]]:
     """
     Returns the (position, conversion) of each placeholder of the value, sorted by

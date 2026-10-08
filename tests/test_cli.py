@@ -351,6 +351,112 @@ class TestCli(unittest.TestCase):
         self.assertEqual(2, exit_code)
         self.assertIn("--check", stderr)
 
+    def _write_project_with_issues(self):
+        res_dir = self.output_dir / "res"
+        files = {
+            "values": '<string name="hello">Hello, %s</string>'
+            '<string name="ok">Settings</string>',
+            "values-es": '<string name="hello">Hola, %d</string>'
+            '<string name="ok">Settings</string>',
+        }
+        for directory, resources in files.items():
+            (res_dir / directory).mkdir(parents=True)
+            (res_dir / directory / "strings.xml").write_text(
+                f"<resources>{resources}</resources>", encoding="utf-8"
+            )
+        return res_dir
+
+    def test_check_json(self):
+        res_dir = self._write_project_with_issues()
+
+        exit_code, stdout, _ = self._run(res_dir, "--check", "--check-format", "json")
+
+        self.assertEqual(1, exit_code)
+        self.assertEqual(
+            [
+                {
+                    "file": str(res_dir / "values-es/strings.xml"),
+                    "locale": "es",
+                    "name": "hello",
+                    "code": "placeholders",
+                    "message": "has the placeholders %1$d, but the default value has "
+                    "%1$s",
+                }
+            ],
+            json.loads(stdout),
+        )
+
+    def test_check_json_without_issues(self):
+        res_dir = self._write_android_project()
+
+        exit_code, stdout, _ = self._run(res_dir, "--check", "--check-format", "json")
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual([], json.loads(stdout))
+
+    def test_check_github(self):
+        res_dir = self._write_project_with_issues()
+
+        exit_code, stdout, _ = self._run(
+            res_dir, "--check", "--check-format", "github", "--check-untranslated"
+        )
+
+        self.assertEqual(1, exit_code)
+        self.assertEqual(
+            [
+                f"::error file={(res_dir / 'values-es/strings.xml').as_posix()},"
+                f"title=The placeholders differ from the ones of the reference value"
+                f"::[es] hello: has the placeholders %251$d, but the default value "
+                f"has %251$s",
+                f"::error file={(res_dir / 'values-es/strings.xml').as_posix()},"
+                f"title=The value is the same as the reference value"
+                f"::[es] ok: is the same as the default value",
+            ],
+            stdout.splitlines(),
+        )
+
+    def test_check_untranslated(self):
+        res_dir = self._write_project_with_issues()
+
+        _, stdout, _ = self._run(res_dir, "--check")
+        self.assertNotIn("[es] ok:", stdout)
+
+        _, stdout, _ = self._run(res_dir, "--check", "--check-untranslated")
+        self.assertIn("[es] ok: is the same as the default value", stdout)
+
+    def test_check_reference_locale(self):
+        res_dir = self._write_project_with_issues()
+
+        exit_code, stdout, _ = self._run(res_dir, "--check", "--reference-locale", "es")
+
+        self.assertEqual(1, exit_code)
+        self.assertIn(
+            "[default] hello: has the placeholders %1$s, but the es value has %1$d",
+            stdout,
+        )
+
+    def test_check_unknown_reference_locale(self):
+        res_dir = self._write_project_with_issues()
+
+        exit_code, _, stderr = self._run(res_dir, "--check", "--reference-locale", "fr")
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("The reference locale fr has no strings", stderr)
+
+    def test_check_options_require_check(self):
+        for option in [
+            ["--reference-locale", "es"],
+            ["--check-untranslated"],
+            ["--check-format", "json"],
+        ]:
+            with self.subTest(option=option[0]):
+                exit_code, _, stderr = self._run(
+                    ANDROID_FILEPATH, "-f", self.output_dir / "strings.json", *option
+                )
+
+                self.assertEqual(2, exit_code)
+                self.assertIn(f"{option[0]} only works with --check", stderr)
+
     def _write_android_project(self):
         res_dir = self.output_dir / "res"
         for directory, value in [("values", "Hello"), ("values-es", "Hola")]:
