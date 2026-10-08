@@ -107,6 +107,8 @@
             - [Options](#options)
 	- [Working With Several Languages](#working-with-several-languages)
 	- [Checking Translations](#checking-translations)
+		- [GitHub Actions](#github-actions)
+		- [pre-commit](#pre-commit)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
 	- [Google Sheets](#google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
@@ -516,6 +518,46 @@ In a GitHub Actions workflow, use `--check-format github` to show the issues as 
 ```
 mobile-strings-converter app/src/main/res --check --check-format github
 ```
+
+#### GitHub Actions
+
+To check the translations of every pull request, add the action of this repository to a workflow. The issues are shown as errors in the files changed by the pull request:
+
+```yaml
+name: Translations
+
+on: pull_request
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: HenestrosaDev/mobile-strings-converter@v0.2.0
+        with:
+          paths: app/src/main/res
+```
+
+| INPUT                | DESCRIPTION                                                                                                        |
+|:---------------------|:-------------------------------------------------------------------------------------------------------------------|
+| `paths`              | Files or directories with the strings to check, separated by spaces or new lines. Glob patterns are expanded (e.g., `*/src/main/res`). Required. |
+| `reference-locale`   | Locale to compare the others with (e.g., `en`). Defaults to the default strings.                                    |
+| `check-untranslated` | `true` to also report the translations that are the same as the reference value. Defaults to `false`.            |
+
+#### pre-commit
+
+To check the translations before each commit with [pre-commit](https://pre-commit.com), add this to your `.pre-commit-config.yaml` file, passing the files or directories to check as `args`:
+
+```yaml
+repos:
+  - repo: https://github.com/HenestrosaDev/mobile-strings-converter
+    rev: v0.2.0
+    hooks:
+      - id: check-translations
+        args: [app/src/main/res]
+```
+
+The hook runs when a strings file changes, and checks all the files in `args` so that every language is compared with the default strings.
 
 ### Using the Package in Your Project
 

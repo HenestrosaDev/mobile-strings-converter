@@ -1,0 +1,13 @@
+# Hooks of this repository for https://pre-commit.com. Pass the files or directories
+# with the strings to check as `args`, e.g. `args: [app/src/main/res]`.
+- id: check-translations
+  name: check translations
+  description: >-
+    Find missing translations, mismatched placeholders and other issues in the strings
+    of Android and iOS apps.
+  entry: mobile-strings-converter --check
+  language: python
+  # Every language is compared with the default strings, so the hook checks the
+  # files in `args` instead of the changed files only
+  pass_filenames: false
+  files: \.(xml|strings|stringsdict|xcstrings)$
