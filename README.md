@@ -623,6 +623,8 @@ Placeholders are converted when writing Android and iOS files, so the strings wo
 | `%d`, `%1$d`    | `%d`, `%ld`, `%lld`, `%1$d` |
 | `%.2f`          | `%.2f`, `%.2lf`             |
 
+Android doesn't build strings with several placeholders unless they have positions, so they are added when writing `.xml` files (e.g., `%@ has %ld songs` becomes `%1$s has %2$d songs`).
+
 Other file types keep the placeholders of the input file.
 
 ### String Catalogs
