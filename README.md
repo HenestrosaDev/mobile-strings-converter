@@ -542,10 +542,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: HenestrosaDev/mobile-strings-converter@v0.2.0
+      - uses: HenestrosaDev/mobile-strings-converter@v0
         with:
           paths: app/src/main/res
 ```
+
+`v0` always points to the latest `0.x` release. To pin a version instead, use its tag (e.g., `@v0.2.0`).
 
 | INPUT                | DESCRIPTION                                                                                                        |
 |:---------------------|:-------------------------------------------------------------------------------------------------------------------|

@@ -6,7 +6,35 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Runs the lint, the tests and the checks of the GitHub Action before publishing
+  build:
+    uses: ./.github/workflows/build.yaml
+    secrets: inherit
+
+  check-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+
+      # A release tagged `v0.2.0` must publish version 0.2.0 of `pyproject.toml`
+      - name: Check that the tag matches the version of the package
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(uv version --short)"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::The tag $TAG doesn't match the version $version of pyproject.toml"
+            exit 1
+          fi
+
   publish:
+    needs: [build, check-version]
     runs-on: ubuntu-latest
     # Trusted publishing: PyPI must list this repository, workflow and environment as
     # a trusted publisher (https://docs.pypi.org/trusted-publishers/)
@@ -32,3 +60,24 @@ jobs:
       # skipped instead of failing the upload
       - name: Publish
         run: uv publish --check-url https://pypi.org/simple/
+
+  # Moves the major version tag (e.g. `v0`) to the release, so that the users of the
+  # GitHub Action get its updates with `uses: HenestrosaDev/mobile-strings-converter@v0`
+  update-major-tag:
+    needs: publish
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Move the major version tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          major="${TAG%%.*}"
+          git tag --force "$major" "$GITHUB_SHA"
+          git push --force origin "refs/tags/$major"

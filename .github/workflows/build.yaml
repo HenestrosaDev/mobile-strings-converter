@@ -17,6 +17,8 @@ on:
       - 'action.yml'
       - '.github/workflows/build.yaml'
   workflow_dispatch:
+  # Called by the `Publish` workflow before publishing
+  workflow_call:
 
 jobs:
   lint:
