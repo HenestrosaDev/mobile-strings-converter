@@ -126,6 +126,65 @@ class TestCli(unittest.TestCase):
         self.assertEqual(1, exit_code)
         self.assertIn("Could not convert", stderr)
 
+    def _write_android_res_dir(self):
+        res_dir = self.output_dir / "res"
+        files = {
+            "values/strings.xml": '<resources><string name="hi">Hello</string>'
+            "</resources>",
+            "values-es/strings.xml": '<resources><string name="hi">Hola</string>'
+            "</resources>",
+            "values/colors.xml": '<resources><color name="red">#F00</color>'
+            "</resources>",
+            "layout/activity_main.xml": "<LinearLayout />",
+            "drawable/icon.xml": "<vector />",
+        }
+        for path, content in files.items():
+            (res_dir / path).parent.mkdir(parents=True, exist_ok=True)
+            (res_dir / path).write_text(content, encoding="utf-8")
+        return res_dir
+
+    def test_files_without_strings_in_directories_are_skipped(self):
+        res_dir = self._write_android_res_dir()
+        output_dir = self.output_dir / "output"
+
+        args_list: list[list[str | Path]] = [
+            ["--check"],
+            ["-m", "-f", self.output_dir / "strings.csv"],
+            ["-d", output_dir, "-t", "json"],
+        ]
+        for args in args_list:
+            with self.subTest(args=args[0]):
+                exit_code, _, stderr = self._run(res_dir, *args)
+
+                self.assertEqual(0, exit_code, stderr)
+                self.assertEqual("", stderr)
+
+        self.assertEqual(
+            ["values-es/strings.json", "values/strings.json"],
+            sorted(
+                p.relative_to(output_dir).as_posix() for p in output_dir.rglob("*.*")
+            ),
+        )
+
+    def test_invalid_files_in_directories_are_reported(self):
+        res_dir = self._write_android_res_dir()
+        (res_dir / "values/broken.xml").write_text("<resources><string", "utf-8")
+
+        exit_code, _, stderr = self._run(res_dir, "--check")
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("broken.xml: The file provided is not a valid .xml file", stderr)
+
+    def test_layout_passed_explicitly(self):
+        res_dir = self._write_android_res_dir()
+
+        exit_code, _, stderr = self._run(
+            res_dir / "layout/activity_main.xml", "-f", self.output_dir / "out.json"
+        )
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("not an Android resources file", stderr)
+
     def test_to_google_sheets(self):
         credentials_filepath = self.output_dir / "service_account.json"
         credentials_filepath.write_text("{}")
