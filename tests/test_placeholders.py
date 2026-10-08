@@ -1,7 +1,7 @@
 import unittest
 
 from mobile_strings_converter import DEFAULT_LOCALE, Catalog, Entry, parse, serialize
-from mobile_strings_converter.placeholders import to_android, to_ios
+from mobile_strings_converter.placeholders import signature, to_android, to_ios
 
 
 class TestPlaceholders(unittest.TestCase):
@@ -33,6 +33,26 @@ class TestPlaceholders(unittest.TestCase):
         for value, expected in cases.items():
             with self.subTest(value=value):
                 self.assertEqual(expected, to_android(value))
+
+    def test_to_android_numbers_several_placeholders(self):
+        cases = {
+            "%@ has %ld songs": "%1$s has %2$d songs",
+            "%.1f%% of %@": "%1$.1f%% of %2$s",
+            "%2$@ by %1$@": "%2$s by %1$s",
+            # Placeholders without position take the next argument, as in Java
+            "%2$@ %@ %@": "%2$s %1$s %2$s",
+            "Hello %@": "Hello %s",
+            "%d%%": "%d%%",
+        }
+
+        for value, expected in cases.items():
+            with self.subTest(value=value):
+                self.assertEqual(expected, to_android(value))
+
+    def test_numbered_placeholders_have_the_same_signature(self):
+        value = "%@ has %ld songs"
+
+        self.assertEqual(signature(value), signature(to_android(value)))
 
     def test_text_with_percent_signs(self):
         for value in ["100% sure", "50% of 10", "% off"]:
