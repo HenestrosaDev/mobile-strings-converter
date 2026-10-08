@@ -142,6 +142,29 @@ class TestCli(unittest.TestCase):
             load(ANDROID_FILEPATH), "My strings", credentials_filepath
         )
 
+    def test_to_google_sheets_error(self):
+        with mock.patch(
+            "mobile_strings_converter.__main__.write_google_sheets",
+            side_effect=ValueError("Spreadsheet 'My strings' not found."),
+        ):
+            exit_code, _, stderr = self._run(ANDROID_FILEPATH, "-g", "My strings")
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("Could not write", stderr)
+        self.assertIn("not found", stderr)
+
+    def test_from_google_sheets_error(self):
+        with mock.patch(
+            "mobile_strings_converter.__main__.read_google_sheets",
+            side_effect=ValueError("Spreadsheet 'My strings' not found."),
+        ):
+            exit_code, _, stderr = self._run(
+                "-G", "My strings", "-m", "-f", self.output_dir / "strings.json"
+            )
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("Could not read", stderr)
+
     def test_to_google_sheets_with_multiple_files(self):
         exit_code, _, stderr = self._run(
             ANDROID_FILEPATH, IOS_FILEPATH, "-g", "My strings"
