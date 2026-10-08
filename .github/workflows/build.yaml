@@ -21,24 +21,22 @@ jobs:
       - name: Checkout sources  # Clones your repository into the machine running the action
         uses: actions/checkout@v5
 
-      - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+      - name: Setup uv with Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
+        run: uv sync --locked
 
       - name: Run tests
-        run: poetry run python -m unittest discover tests
+        run: uv run python -m unittest discover tests
 
       - name: Coverage run
         run: |
-          poetry run coverage run -m unittest discover tests
-          poetry run coverage report -m --fail-under 80
-          poetry run coverage xml
+          uv run coverage run -m unittest discover tests
+          uv run coverage report -m --fail-under 80
+          uv run coverage xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
