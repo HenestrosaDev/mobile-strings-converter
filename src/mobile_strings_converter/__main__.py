@@ -1,28 +1,29 @@
 import argparse
 import os
 import sys
+import warnings
+from contextlib import contextmanager
 from pathlib import Path
 
 from . import __version__
 from .console_style import ConsoleStyle
-from .converter import SUPPORTED_FILE_TYPES, convert_strings, to_google_sheets
+from .converter import write_google_sheets
+from .files import load, save, save_split
+from .formats import SUPPORTED_FILE_TYPES, is_multi_locale, normalize_file_type
+from .model import Catalog
 
 
 def get_filepaths_from_dir(directory, extensions):
     """Return a list of filepaths in the directory matching the given extensions."""
     matched_files = []
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        # Walk the subdirectories in a stable order
+        dirs.sort()
         for file in sorted(files):
             if file.lower().endswith(tuple(extensions)):
                 matched_files.append(Path(root) / file)
 
     return matched_files
-
-
-def normalize_file_type(file_type):
-    """Return the file type as a lowercase extension with a leading dot."""
-    file_type = file_type.lower()
-    return file_type if file_type.startswith(".") else f".{file_type}"
 
 
 def build_parser():
@@ -57,7 +58,8 @@ def build_parser():
         type=str,
         metavar="FILE_PATH",
         help="File path to save the converted file. Only works if only one input file "
-        "is specified. Check the list of the supported file types above.",
+        "is specified, or with `--merge`. Check the list of the supported file types "
+        "above.",
     )
     parser.add_argument(
         "-d",
@@ -67,7 +69,9 @@ def build_parser():
         metavar="DIR_PATH",
         help="Directory path to save the converted files. Compatible with single and "
         "multiple input files as well as directories. The specified directory will be "
-        "created if it does not already exist.",
+        "created if it does not already exist. Files with several locales (e.g. a "
+        "spreadsheet with a column per language) converted to `.xml` or `.strings` are "
+        "split into a file per locale (e.g. `values-es/strings.xml`).",
     )
     parser.add_argument(
         "-t",
@@ -97,6 +101,15 @@ def build_parser():
         help="Print commented strings from the input file to the output file. "
         "Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
     )
+    parser.add_argument(
+        "-m",
+        "--merge",
+        required=False,
+        action="store_true",
+        help="Merge the input files into a single output with a column per locale. The "
+        "locale of each file is taken from its directory (e.g. `values-es` or "
+        "`es.lproj`). Use it with `--output-file` or `--google-sheets`.",
+    )
 
     return parser
 
@@ -110,6 +123,12 @@ def main(argv=None):
 
     if args.output_file and args.output_dir:
         parser.error("-f/--output-file and -d/--output-dir cannot be used together.")
+
+    if args.merge and args.output_dir:
+        parser.error(
+            "-m/--merge writes a single file. Use -f/--output-file instead of "
+            "-d/--output-dir."
+        )
 
     if args.output_file and (
         Path(args.output_file).suffix.lower() not in SUPPORTED_FILE_TYPES
@@ -153,27 +172,19 @@ def main(argv=None):
     if not input_files:
         parser.error("no supported input files found.")
 
-    # Ensure the correct output options are used
-    conversions = []
+    if args.output_file and len(input_files) > 1 and not args.merge:
+        parser.error(
+            "cannot use -f/--output-file with multiple input files. Use "
+            "-d/--output-dir or -m/--merge instead."
+        )
 
-    if args.output_file:
-        if len(input_files) > 1:
-            parser.error(
-                "cannot use -f/--output-file with multiple input files. Use "
-                "-d/--output-dir instead."
-            )
-        conversions.append((input_files[0][0], Path(args.output_file)))
-    elif args.output_dir:
-        output_dir = Path(args.output_dir)
-        for input_filepath, base_dir in input_files:
-            relative_path = input_filepath.relative_to(base_dir)
-            conversions.append(
-                (input_filepath, output_dir / relative_path.with_suffix(target_type))
-            )
-
+    if args.output_dir:
         # Different input files may have the same name (e.g. `values-es/strings.xml`
         # and `values-fr/strings.xml` passed as files)
-        output_filepaths = [output_filepath for _, output_filepath in conversions]
+        output_filepaths = [
+            _output_dir_filepath(args.output_dir, filepath, base_dir, target_type)
+            for filepath, base_dir in input_files
+        ]
         duplicates = sorted(
             {str(p) for p in output_filepaths if output_filepaths.count(p) > 1}
         )
@@ -187,40 +198,110 @@ def main(argv=None):
 
     exit_code = 0
 
-    for input_filepath, output_filepath in conversions:
-        try:
-            output_filepath.parent.mkdir(parents=True, exist_ok=True)
-            convert_strings(input_filepath, output_filepath, args.print_comments)
-        except Exception as e:
-            exit_code = 1
-            print(
-                f"{ConsoleStyle.RED}Could not convert {input_filepath}: {e}"
-                f"{ConsoleStyle.END}",
-                file=sys.stderr,
-            )
+    def fail(message):
+        nonlocal exit_code
+        exit_code = 1
+        print(f"{ConsoleStyle.RED}{message}{ConsoleStyle.END}", file=sys.stderr)
 
-    if args.google_sheets:
+    # Each source is converted to the outputs: a single one with all the input files
+    # when merging, or one per input file
+    if args.merge:
+        catalogs = []
         for input_filepath, _ in input_files:
             try:
-                to_google_sheets(
-                    input_filepath,
-                    sheet_name=input_filepath.stem,
-                    credentials_filepath=Path(args.google_sheets),
-                    with_comments=args.print_comments,
-                )
+                with _print_warnings():
+                    catalogs.append(load(input_filepath, None, args.print_comments))
+            except Exception as e:
+                fail(f"Could not read {input_filepath}: {e}")
+
+        sources = [(input_files[0], Catalog.merge(catalogs))] if catalogs else []
+    else:
+        sources = []
+        for input_file in input_files:
+            try:
+                with _print_warnings():
+                    sources.append(
+                        (input_file, load(input_file[0], None, args.print_comments))
+                    )
+            except Exception as e:
+                fail(f"Could not convert {input_file[0]}: {e}")
+
+    for (input_filepath, base_dir), catalog in sources:
+        if args.output_file or args.output_dir:
+            try:
+                with _print_warnings():
+                    _write_outputs(args, catalog, input_filepath, base_dir)
+            except Exception as e:
+                fail(f"Could not convert {input_filepath}: {e}")
+
+        if args.google_sheets:
+            sheet_name = Path(args.output_file or input_filepath).stem
+            try:
+                with _print_warnings():
+                    write_google_sheets(
+                        catalog,
+                        sheet_name=sheet_name,
+                        credentials_filepath=Path(args.google_sheets),
+                    )
                 print(
                     f"{ConsoleStyle.GREEN}Data successfully written to the "
-                    f"'{input_filepath.stem}' Google spreadsheet{ConsoleStyle.END}"
+                    f"'{sheet_name}' Google spreadsheet{ConsoleStyle.END}"
                 )
             except Exception as e:
-                exit_code = 1
-                print(
-                    f"{ConsoleStyle.RED}Could not write {input_filepath} to Google "
-                    f"Sheets: {e}{ConsoleStyle.END}",
-                    file=sys.stderr,
-                )
+                fail(f"Could not write {input_filepath} to Google Sheets: {e}")
 
     return exit_code
+
+
+def _output_dir_filepath(output_dir, input_filepath, base_dir, target_type):
+    relative_path = input_filepath.relative_to(base_dir)
+    return Path(output_dir) / relative_path.with_suffix(target_type)
+
+
+def _write_outputs(args, catalog, input_filepath, base_dir):
+    if args.output_file:
+        output_filepaths = [Path(args.output_file)]
+        if catalog.is_multi_locale and not is_multi_locale(output_filepaths[0].suffix):
+            raise ValueError(
+                f"the strings have {len(catalog.locales)} locales and "
+                f"{output_filepaths[0].suffix} files can only hold one. Use "
+                f"-d/--output-dir to write a file per locale."
+            )
+        save(catalog, output_filepaths[0])
+    else:
+        target_type = normalize_file_type(args.target_type)
+        output_filepath = _output_dir_filepath(
+            args.output_dir, input_filepath, base_dir, target_type
+        )
+
+        if catalog.is_multi_locale and not is_multi_locale(target_type):
+            # Write `values-es/strings.xml`, `es.lproj/Localizable.strings`... next to
+            # where the converted file would be
+            output_filepaths = save_split(
+                catalog, output_filepath.parent, target_type
+            ).values()
+        else:
+            save(catalog, output_filepath)
+            output_filepaths = [output_filepath]
+
+    for output_filepath in output_filepaths:
+        print(
+            f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
+            f"{ConsoleStyle.END}"
+        )
+
+
+@contextmanager
+def _print_warnings():
+    """Prints the warnings raised inside the context."""
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        try:
+            yield
+        finally:
+            for caught in caught_warnings:
+                print(f"{ConsoleStyle.YELLOW}{caught.message}{ConsoleStyle.END}")
 
 
 if __name__ == "__main__":

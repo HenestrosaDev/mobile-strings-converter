@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
 
+from mobile_strings_converter import load
 from mobile_strings_converter.__main__ import main
 from mobile_strings_converter.converter import get_strings
 
@@ -128,17 +129,88 @@ class TestCli(unittest.TestCase):
         credentials_filepath.write_text("{}")
 
         with mock.patch(
-            "mobile_strings_converter.__main__.to_google_sheets"
-        ) as to_google_sheets:
+            "mobile_strings_converter.__main__.write_google_sheets"
+        ) as write_google_sheets:
             exit_code, _, _ = self._run(ANDROID_FILEPATH, "-g", credentials_filepath)
 
         self.assertEqual(0, exit_code)
-        to_google_sheets.assert_called_once_with(
-            ANDROID_FILEPATH,
+        write_google_sheets.assert_called_once_with(
+            load(ANDROID_FILEPATH),
             sheet_name="strings",
             credentials_filepath=credentials_filepath,
-            with_comments=False,
         )
+
+    def _write_android_project(self):
+        res_dir = self.output_dir / "res"
+        for directory, value in [("values", "Hello"), ("values-es", "Hola")]:
+            (res_dir / directory).mkdir(parents=True)
+            (res_dir / directory / "strings.xml").write_text(
+                f'<resources><string name="hello">{value}</string></resources>',
+                encoding="utf-8",
+            )
+        return res_dir
+
+    def test_merge(self):
+        res_dir = self._write_android_project()
+        output_filepath = self.output_dir / "strings.csv"
+
+        exit_code, _, _ = self._run(res_dir, "-m", "-f", output_filepath)
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual(
+            "name,value,es\nhello,Hello,Hola\n",
+            output_filepath.read_text(encoding="utf-8").replace("\r\n", "\n"),
+        )
+
+    def test_merge_requires_output_file(self):
+        exit_code, _, stderr = self._run(
+            ANDROID_FILEPATH, "-m", "-d", self.output_dir, "-t", "csv"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("--merge", stderr)
+
+    def test_output_dir_splits_locales(self):
+        input_filepath = self.output_dir / "translations.csv"
+        input_filepath.write_text("name,value,es\nhello,Hello,Hola\n", encoding="utf-8")
+        output_dir = self.output_dir / "output"
+
+        exit_code, _, _ = self._run(input_filepath, "-d", output_dir, "-t", "strings")
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual(
+            [("hello", "Hola")],
+            get_strings(output_dir / "es.lproj/Localizable.strings"),
+        )
+        self.assertEqual(
+            [("hello", "Hello")],
+            get_strings(output_dir / "Base.lproj/Localizable.strings"),
+        )
+
+    def test_output_file_with_several_locales(self):
+        input_filepath = self.output_dir / "translations.csv"
+        input_filepath.write_text("name,value,es\nhello,Hello,Hola\n", encoding="utf-8")
+
+        exit_code, _, stderr = self._run(
+            input_filepath, "-f", self.output_dir / "strings.xml"
+        )
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("-d/--output-dir", stderr)
+
+    def test_warnings_are_printed(self):
+        output_filepath = self.output_dir / "Localizable.strings"
+        input_filepath = self.output_dir / "strings.xml"
+        input_filepath.write_text(
+            '<resources><string-array name="list"><item>A</item></string-array>'
+            '<string name="a">A</string></resources>',
+            encoding="utf-8",
+        )
+
+        exit_code, stdout, _ = self._run(input_filepath, "-f", output_filepath)
+
+        self.assertEqual(0, exit_code)
+        self.assertIn("Skipped 1 plural(s)/array(s)", stdout)
 
     def test_module_entry_point(self):
         result = subprocess.run(

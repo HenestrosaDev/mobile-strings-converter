@@ -105,11 +105,15 @@
 		- [Script Arguments](#script-arguments)
 			- [Positional Arguments](#positional-arguments)
             - [Options](#options)
+	- [Working With Several Languages](#working-with-several-languages)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
 	- [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
 		- [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
 - [Notes](#notes)
+	- [Android Resources](#android-resources)
+	- [Plurals and Arrays](#plurals-and-arrays)
+	- [PDF Files](#pdf-files)
 	- [Indic Languages Supported by PDF Files](#indic-languages-supported-by-pdf-files)
 	- [Languages Not Supported by PDF Files](#languages-not-supported-by-pdf-files)
 - [Troubleshooting](#troubleshooting)
@@ -146,6 +150,8 @@ In addition to being able to run this script on its own, it can also be installe
 - PDF
 - XLSX
 - YAML
+
+Every file type except `.xml` and `.strings` can hold several languages at once (e.g., a spreadsheet with a column per language). See [Working With Several Languages](#working-with-several-languages).
 
 <!-- PROJECT STRUCTURE -->
 
@@ -185,8 +191,26 @@ In addition to being able to run this script on its own, it can also be installe
 │   └───mobile_strings_converter
 │       │   console_style.py
 │       │   converter.py
+│       │   exceptions.py
+│       │   files.py
+│       │   model.py
 │       │   __init__.py
 │       │   __main__.py
+│       │
+│       ├───formats
+│       │       android.py
+│       │       csvfile.py
+│       │       html_table.py
+│       │       ios.py
+│       │       jsonfile.py
+│       │       markdown.py
+│       │       ods.py
+│       │       pdf.py
+│       │       table.py
+│       │       text.py
+│       │       xlsx.py
+│       │       yamlfile.py
+│       │       __init__.py
 │       │
 │       └───assets
 │           └───fonts
@@ -205,6 +229,8 @@ In addition to being able to run this script on its own, it can also be installe
     │   test_android.py
     │   test_csv.py
     │   test_cli.py
+    │   test_files.py
+    │   test_formats.py
     │   test_get_strings.py
     │   test_google_sheets.py
     │   test_html.py
@@ -253,13 +279,15 @@ In addition to being able to run this script on its own, it can also be installe
 
 ### Built With
 
-- [openpyxl](https://pypi.org/project/openpyxl/) to generate ODS and XLSX files.
+- [openpyxl](https://pypi.org/project/openpyxl/) to generate XLSX files.
+- [ezodf](https://pypi.org/project/ezodf/) to generate ODS files.
+- [lxml](https://pypi.org/project/lxml/) to parse Android `.xml` files.
+- [pypdf](https://pypi.org/project/pypdf/) to read PDF files.
 - [gspread](https://pypi.org/project/gspread/) to generate spreadsheets in Google Sheets.
 - [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets.
 - [PyYAML](https://pypi.org/project/PyYAML/) to generate YAML files.
 - [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/) to add arabic characters support for PDF files.
 - [fpdf2](https://pypi.org/project/fpdf2/) to generate PDF files.
-- [lingua-language-detector](https://pypi.org/project/lingua-language-detector/) to recognize the **value** language when writing a PDF in order to know what font to use.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -365,12 +393,41 @@ A full list of the program command's options are as follows:
 | `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files (e.g. `json` or `.json`). Required when using `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
 | `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Write the strings to the Google spreadsheet named after each input file (without its extension) in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
+| `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+### Working With Several Languages
+
+To put all the languages of your app in one file to send to translators, pass the resources directory and the `-m` (or `--merge`) option:
+
+```
+mobile-strings-converter app/src/main/res -m -f translations.xlsx
+```
+
+The language of each file is taken from its directory:
+
+| DIRECTORY                                       | LANGUAGE COLUMN |
+|:------------------------------------------------|:----------------|
+| `values` or `Base.lproj`                        | `VALUE`         |
+| `values-es` or `es.lproj`                       | `es`            |
+| `values-pt-rBR` or `pt-BR.lproj`                | `pt-BR`         |
+| `values-b+sr+Latn` or `sr-Latn.lproj`           | `sr-Latn`       |
+
+Comments written right before a string (e.g., `<!-- Title of the home screen -->` or `/* Title of the home screen */`) go to the `COMMENT` column so translators can read them.
+
+To convert the translated file back, use `-d` with `.xml` or `.strings` as the target type. A file is written for each language:
+
+```
+mobile-strings-converter translations.xlsx -d app/src/main/res -t xml
+mobile-strings-converter translations.xlsx -d MyApp -t strings
+```
+
+This writes `values/strings.xml`, `values-es/strings.xml`... or `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`... respectively. Strings with no translation are left out of the file of that language.
+
 ### Using the Package in Your Project
 
-After following the steps in the [Getting Started](#getting-started) section, import the package and the wrapper function(s) you want to use:
+After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use:
 
 ```python
 # Using the `get_strings` function
@@ -382,6 +439,26 @@ get_strings(
 	input_filepath=Path("strings.xml"),
 	with_comments=True
 )
+```
+
+The strings are read into a `Catalog`, which holds the value of each string in each language. `load` and `save` work with files, while `parse` and `serialize` work with their content, so you don't need a file system:
+
+```python
+from pathlib import Path
+
+from mobile_strings_converter import Catalog, load, parse, save, save_split, serialize
+
+# Merge the languages of an Android project into a single spreadsheet
+catalog = Catalog.merge(
+	load(path) for path in sorted(Path("app/src/main/res").glob("values*/strings.xml"))
+)
+save(catalog, Path("translations.xlsx"))
+
+# Write an iOS `.strings` file for each language
+save_split(load(Path("translations.xlsx")), Path("MyApp"), ".strings")
+
+# Convert the content of a file without touching the disk
+data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")
 ```
 
 ### Generating a Spreadsheet in Google Sheets
@@ -436,19 +513,34 @@ to_google_sheets(
 
 ### Android Resources
 
-- Only `<string>` resources are converted. `<plurals>` and `<string-array>` resources are skipped.
+- `<string>`, `<plurals>` and `<string-array>` resources are converted. See [Plurals and Arrays](#plurals-and-arrays).
+- `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
 - XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
 - Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
+
+### Plurals and Arrays
+
+Spreadsheets and other tables have a row for each item of a plural or array, named after the item:
+
+| NAME           | VALUE      |
+|:---------------|:-----------|
+| `songs[one]`   | `%d song`  |
+| `songs[other]` | `%d songs` |
+| `planets[0]`   | `Mercury`  |
+| `planets[1]`   | `Venus`    |
+
+These rows are grouped back into a plural or array when converting the table to an `.xml` file. JSON and YAML files hold them as objects and lists instead. iOS `.strings` files can't hold plurals or arrays, so they are skipped with a warning.
 
 ### PDF Files
 
 Generated PDF files embed the original strings, so they can be converted back without losing any data. For PDF files not generated by this package, the strings are extracted from the text of the table, which only works for single-line values.
 
+Each cell is written with the first bundled font that has all of its characters. The strings that no font can render are listed in a `[FILE_NAME]-errors.txt` file next to the PDF.
+
 ### Indic Languages Supported by PDF Files
 
 - Hindi
 - Marathi
-- Oriya
 - Tibetan
 - Gujarati
 - Telugu
@@ -457,18 +549,19 @@ Generated PDF files embed the original strings, so they can be converted back wi
 
 ### Languages Not Supported by PDF Files
 
-- Bengali <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
-- Dhivehi <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+None of the bundled fonts has the characters of these languages:
+
+- Bengali
+- Dhivehi
 - Japanese <sub>(some kanji, such as 楽, are missing from the font)</sub>
-- Kannada <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Khmer <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Lao <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Malayalam <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Meiteilon (manipuri) <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Myanmar burmese <sub>(not possible to print correctly using [fpdf2](https://pypi.org/project/fpdf2/))</sub>
-- Odia (Oriya) <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub></sub>
-- Sinhala <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
-- Tigrinya <sub>(not recognized by [lingua-language-detector](https://pypi.org/project/lingua-language-detector/))</sub>
+- Kannada
+- Khmer
+- Malayalam
+- Meiteilon (manipuri)
+- Myanmar burmese
+- Odia (Oriya)
+- Sinhala
+- Tigrinya
 
 ## Troubleshooting
 

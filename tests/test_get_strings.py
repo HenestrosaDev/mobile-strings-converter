@@ -47,7 +47,7 @@ class TestAndroidParsing(unittest.TestCase):
         finally:
             filepath.unlink()
 
-    def test_attributes_multiline_and_unsupported_resources(self):
+    def test_attributes_multiline_plurals_and_arrays(self):
         data = """<?xml version="1.0" encoding="utf-8"?>
         <resources>
             <string name="app_name" translatable="false">My App</string>
@@ -70,6 +70,9 @@ class TestAndroidParsing(unittest.TestCase):
                 ("app_name", "My App"),
                 ("multiline", "first\nsecond"),
                 ("quoted", "It's quoted"),
+                ("songs[one]", "%d song"),
+                ("songs[other]", "%d songs"),
+                ("planets[0]", "Mercury"),
             ],
             self._get_strings(data, with_comments=True),
         )
