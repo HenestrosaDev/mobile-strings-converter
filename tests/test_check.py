@@ -92,6 +92,26 @@ class TestCheck(unittest.TestCase):
 
         self.assertEqual("has 1 items, but the default value has 2", issue.message)
 
+    def test_array_placeholders(self):
+        [issue] = self._check(
+            Entry(
+                "steps", {DEFAULT_LOCALE: ["Step %d", "Done"], "es": ["Paso", "Hecho"]}
+            )
+        )
+
+        self.assertEqual(
+            "item 0 has the placeholders none, but the default value has %1$d",
+            issue.message,
+        )
+
+    def test_arrays_without_issues(self):
+        self.assertEqual(
+            [], self._check(Entry("planets", {DEFAULT_LOCALE: ["A"], "es": ["B"]}))
+        )
+
+    def test_empty_catalog(self):
+        self.assertEqual([], self._check())
+
     def test_reference_locale(self):
         self.assertEqual(
             [Issue("fr", "bye", "missing translation")],
