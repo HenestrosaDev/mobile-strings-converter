@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import re
 import sys
@@ -8,7 +9,7 @@ from pathlib import Path
 from typing import TextIO
 
 from . import __version__
-from .check import check, find_duplicates
+from .check import ISSUE_CODES, Issue, check, find_duplicates
 from .console_style import ConsoleStyle, colorize
 from .exceptions import NoStringsError
 from .files import load, save, save_split
@@ -137,6 +138,30 @@ def build_parser() -> argparse.ArgumentParser:
         "names defined more than once. Exits with code 1 if any issue is found.",
     )
     parser.add_argument(
+        "--reference-locale",
+        required=False,
+        type=str,
+        metavar="LOCALE",
+        help="Locale to compare the others with when using `--check` (e.g. `en` or "
+        "`pt-BR`). Defaults to the default strings (`default`), or to the first "
+        "locale if there are none.",
+    )
+    parser.add_argument(
+        "--check-untranslated",
+        required=False,
+        action="store_true",
+        help="Also report the translations that are the same as the reference value "
+        "when using `--check`. Values without letters, such as `%%d`, are skipped.",
+    )
+    parser.add_argument(
+        "--check-format",
+        required=False,
+        choices=["text", "json", "github"],
+        default="text",
+        help="Format of the issues found by `--check`: `text` (the default), `json` or "
+        "`github` (annotations of GitHub Actions workflows).",
+    )
+    parser.add_argument(
         "-p",
         "--print-comments",
         required=False,
@@ -184,6 +209,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if not (has_output or args.check):
         parser.error("you must specify an output with -f, -d or -g, or use --check.")
+
+    check_options = {
+        "--reference-locale": args.reference_locale is not None,
+        "--check-untranslated": args.check_untranslated,
+        "--check-format": args.check_format != "text",
+    }
+    for option, is_used in check_options.items():
+        if is_used and not args.check:
+            parser.error(f"{option} only works with --check.")
 
     if args.output_file and args.output_dir:
         parser.error("-f/--output-file and -d/--output-dir cannot be used together.")
@@ -298,7 +332,7 @@ def main(argv: list[str] | None = None) -> int:
                 fail(f"Could not read {input_filepath}: {e}")
 
         if args.check:
-            return _check(catalogs) or exit_code
+            return _check(catalogs, args) or exit_code
 
         merged = Catalog.merge(catalog for _, catalog in catalogs)
         sources = [(input_files[0], merged)] if catalogs else []
@@ -342,25 +376,90 @@ def _credentials(args: argparse.Namespace) -> Path | None:
     return Path(args.credentials) if args.credentials else None
 
 
-def _check(catalogs: list[tuple[Path, Catalog]]) -> int:
-    """Prints the issues of the catalogs. Returns 1 if there is any, or 0 otherwise."""
+def _check(catalogs: list[tuple[Path, Catalog]], args: argparse.Namespace) -> int:
+    """
+    Prints the issues of the catalogs in the format of `--check-format`. Returns 1 if
+    there is any, 2 if the reference locale doesn't exist, or 0 otherwise.
+    """
 
-    issues = [
-        f"{filepath}: {issue}"
+    # File of each locale, to tell where each issue is
+    locale_filepaths: dict[str, Path] = {}
+    for filepath, catalog in catalogs:
+        for locale in catalog.locales:
+            locale_filepaths.setdefault(locale, filepath)
+
+    issues: list[tuple[Path | None, Issue]] = [
+        (filepath, issue)
         for filepath, catalog in catalogs
         for issue in find_duplicates(catalog)
     ]
-    issues += [str(issue) for issue in check(Catalog.merge(c for _, c in catalogs))]
+    try:
+        issues += [
+            (locale_filepaths.get(issue.locale), issue)
+            for issue in check(
+                Catalog.merge(catalog for _, catalog in catalogs),
+                args.reference_locale,
+                args.check_untranslated,
+            )
+        ]
+    except ValueError as e:
+        _print(str(e), ConsoleStyle.RED, sys.stderr)
+        return 2
 
-    for issue in issues:
-        _print(issue, ConsoleStyle.YELLOW)
+    if args.check_format == "json":
+        print(
+            json.dumps(
+                [
+                    {
+                        "file": str(issue_filepath) if issue_filepath else None,
+                        "locale": issue.locale,
+                        "name": issue.name,
+                        "code": issue.code,
+                        "message": issue.message,
+                    }
+                    for issue_filepath, issue in issues
+                ],
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+    elif args.check_format == "github":
+        for issue_filepath, issue in issues:
+            print(_github_annotation(issue_filepath, issue))
+    else:
+        for issue_filepath, issue in issues:
+            # Duplicates are found per file, so their file is printed
+            prefix = f"{issue_filepath}: " if issue.code == "duplicate" else ""
+            _print(f"{prefix}{issue}", ConsoleStyle.YELLOW)
 
-    if issues:
-        _print(f"{len(issues)} issue(s) found", ConsoleStyle.RED)
-        return 1
+        if issues:
+            _print(f"{len(issues)} issue(s) found", ConsoleStyle.RED)
+        else:
+            _print("No issues found", ConsoleStyle.GREEN)
 
-    _print("No issues found", ConsoleStyle.GREEN)
-    return 0
+    return 1 if issues else 0
+
+
+def _github_annotation(filepath: Path | None, issue: Issue) -> str:
+    """
+    Returns the issue as an error annotation of GitHub Actions (see
+    https://docs.github.com/actions/reference/workflow-commands-for-github-actions).
+    """
+
+    def escape(value: str, is_property: bool = False) -> str:
+        value = value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        if is_property:
+            value = value.replace(":", "%3A").replace(",", "%2C")
+        return value
+
+    title = ISSUE_CODES[issue.code].capitalize()
+    properties = f"title={escape(title, is_property=True)}"
+    if filepath is not None:
+        properties = (
+            f"file={escape(filepath.as_posix(), is_property=True)},{properties}"
+        )
+
+    return f"::error {properties}::{escape(str(issue))}"
 
 
 def _output_dir_filepath(output_dir, input_filepath, base_dir, target_type):

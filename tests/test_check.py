@@ -28,7 +28,7 @@ class TestCheck(unittest.TestCase):
 
     def test_missing_translation(self):
         self.assertEqual(
-            [Issue("es", "bye", "missing translation")],
+            [Issue("es", "bye", "missing translation", "missing")],
             self._check(
                 Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"}),
                 Entry("bye", {DEFAULT_LOCALE: "Bye"}),
@@ -37,7 +37,14 @@ class TestCheck(unittest.TestCase):
 
     def test_obsolete_translation(self):
         self.assertEqual(
-            [Issue("es", "old", "obsolete translation, as there is no default value")],
+            [
+                Issue(
+                    "es",
+                    "old",
+                    "obsolete translation, as there is no default value",
+                    "obsolete",
+                )
+            ],
             self._check(
                 Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"}),
                 Entry("old", {"es": "Viejo"}),
@@ -114,7 +121,7 @@ class TestCheck(unittest.TestCase):
 
     def test_reference_locale(self):
         self.assertEqual(
-            [Issue("fr", "bye", "missing translation")],
+            [Issue("fr", "bye", "missing translation", "missing")],
             self._check(
                 Entry("hello", {"en": "Hello", "fr": "Bonjour"}),
                 Entry("bye", {"en": "Bye"}),
@@ -124,7 +131,7 @@ class TestCheck(unittest.TestCase):
 
     def test_first_locale_is_the_reference_without_default_locale(self):
         self.assertEqual(
-            [Issue("fr", "bye", "missing translation")],
+            [Issue("fr", "bye", "missing translation", "missing")],
             self._check(
                 Entry("hello", {"en": "Hello", "fr": "Bonjour"}),
                 Entry("bye", {"en": "Bye"}),
@@ -143,7 +150,7 @@ class TestFindDuplicates(unittest.TestCase):
         )
 
         self.assertEqual(
-            [Issue("es", "a", "defined 2 times")], find_duplicates(catalog)
+            [Issue("es", "a", "defined 2 times", "duplicate")], find_duplicates(catalog)
         )
 
 
