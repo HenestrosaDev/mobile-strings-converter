@@ -1,3 +1,10 @@
+class NoStringsError(ValueError):
+    """
+    The file is valid, but has no strings, such as the layouts and `colors.xml` files of
+    Android projects.
+    """
+
+
 class ConversionWarning(UserWarning):
     """Some data of the input could not be converted to the output file type."""
 

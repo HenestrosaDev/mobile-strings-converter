@@ -10,6 +10,7 @@ from pathlib import Path
 from . import __version__
 from .check import check, find_duplicates
 from .console_style import ConsoleStyle
+from .exceptions import NoStringsError
 from .files import load, save, save_split
 from .formats import (
     INPUT_FILE_TYPES,
@@ -212,6 +213,9 @@ def main(argv: list[str] | None = None) -> int:
     # Each input is paired with the base directory used to mirror its relative path
     # inside the output directory
     input_files = []
+    # Files found in the input directories, which are skipped if they have no strings,
+    # such as the layouts and `values/colors.xml` of an Android `res` directory
+    found_filepaths = set()
 
     if args.from_google_sheets:
         # Named like a file so that `-d` writes `[SPREADSHEET_NAME].[TARGET_TYPE]`
@@ -223,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
             # If it's a directory, get all matching files
             for filepath in get_filepaths_from_dir(path, INPUT_FILE_TYPES):
                 input_files.append((filepath, Path(path)))
+                found_filepaths.add(filepath)
         elif os.path.isfile(path) and path.lower().endswith(tuple(INPUT_FILE_TYPES)):
             # If it's a supported file type, add it to the list
             input_files.append((Path(path), Path(path).parent))
@@ -285,6 +290,9 @@ def main(argv: list[str] | None = None) -> int:
         for input_filepath, _ in input_files:
             try:
                 catalogs.append((input_filepath, read(input_filepath)))
+            except NoStringsError as e:
+                if input_filepath not in found_filepaths:
+                    fail(f"Could not read {input_filepath}: {e}")
             except Exception as e:
                 fail(f"Could not read {input_filepath}: {e}")
 
@@ -298,6 +306,9 @@ def main(argv: list[str] | None = None) -> int:
         for input_file in input_files:
             try:
                 sources.append((input_file, read(input_file[0])))
+            except NoStringsError as e:
+                if input_file[0] not in found_filepaths:
+                    fail(f"Could not convert {input_file[0]}: {e}")
             except Exception as e:
                 fail(f"Could not convert {input_file[0]}: {e}")
 

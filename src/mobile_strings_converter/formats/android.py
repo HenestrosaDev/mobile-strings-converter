@@ -14,7 +14,7 @@ import warnings
 from lxml import etree
 
 from .. import placeholders
-from ..exceptions import ConversionWarning
+from ..exceptions import ConversionWarning, NoStringsError
 from ..model import Catalog, Entry, Value
 
 MULTI_LOCALE = False
@@ -35,31 +35,34 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
     except etree.XMLSyntaxError:
         raise ValueError("The file provided is not a valid .xml file.") from None
 
-    entries = []
+    if root.tag != "resources":
+        # e.g. a layout or a drawable
+        raise NoStringsError("The file provided is not an Android resources file.")
 
-    if root.tag == "resources":
+    entries = []
+    comment = None
+
+    for node in root:
+        if node.tag is etree.Comment:
+            commented_entries = _parse_commented_resources(node.text or "", locale)
+            if commented_entries:
+                if with_comments:
+                    entries.extend(commented_entries)
+                # A comment before commented out resources is about them
+                comment = None
+            elif not _is_trailing(node):
+                comment = (node.text or "").strip() or None
+            continue
+
+        entry = _parse_resource(node, locale)
+        if entry is not None:
+            entry.comment = comment
+            entries.append(entry)
         comment = None
 
-        for node in root:
-            if node.tag is etree.Comment:
-                commented_entries = _parse_commented_resources(node.text or "", locale)
-                if commented_entries:
-                    if with_comments:
-                        entries.extend(commented_entries)
-                    # A comment before commented out resources is about them
-                    comment = None
-                elif not _is_trailing(node):
-                    comment = (node.text or "").strip() or None
-                continue
-
-            entry = _parse_resource(node, locale)
-            if entry is not None:
-                entry.comment = comment
-                entries.append(entry)
-            comment = None
-
     if not entries:
-        raise ValueError("The file provided is not a valid .xml file.")
+        # e.g. `colors.xml` or `dimens.xml`
+        raise NoStringsError("The file provided has no strings.")
 
     return Catalog(entries)
 

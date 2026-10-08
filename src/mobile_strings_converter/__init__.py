@@ -6,6 +6,7 @@ from .check import Issue, check, find_duplicates
 from .exceptions import (
     ConversionWarning,
     MissingDependencyError,
+    NoStringsError,
     UnsupportedCharactersWarning,
 )
 from .files import load, locale_from_path, localized_path, save, save_split
@@ -40,6 +41,7 @@ __all__ = [
     # Errors and warnings
     "ConversionWarning",
     "MissingDependencyError",
+    "NoStringsError",
     "UnsupportedCharactersWarning",
 ]
 

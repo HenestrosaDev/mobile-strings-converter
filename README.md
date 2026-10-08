@@ -593,6 +593,7 @@ save_split(catalog, Path("app/src/main/res"), ".xml")
 ### Android Resources
 
 - `<string>`, `<plurals>` and `<string-array>` resources are converted. See [Plurals and Arrays](#plurals-and-arrays).
+- When a directory is passed (e.g., `app/src/main/res`), the `.xml` files without strings, such as layouts, drawables or `values/colors.xml`, are skipped.
 - `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
 - XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
 - Whitespace is read as Android does: outside double quotes, spaces, tabs and line breaks are collapsed into a single space, and the whitespace at the start and end of the string is removed. Strings whose whitespace would be lost (e.g., `"  indented"`) are written in double quotes.
