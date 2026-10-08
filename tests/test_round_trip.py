@@ -3,12 +3,8 @@ import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from mobile_strings_converter import Catalog, save
-from mobile_strings_converter.converter import (
-    SUPPORTED_FILE_TYPES,
-    convert_strings,
-    get_strings,
-)
+from mobile_strings_converter import INPUT_FILE_TYPES, Catalog, save
+from mobile_strings_converter.converter import convert_strings, get_strings
 
 # fmt: off
 TRICKY_STRINGS = [
@@ -39,10 +35,16 @@ class TestRoundTrip(unittest.TestCase):
         self._temp_dir.cleanup()
 
     def test_round_trip(self):
-        for file_type in SUPPORTED_FILE_TYPES:
+        for file_type in INPUT_FILE_TYPES:
+            if file_type == ".stringsdict":
+                # It only holds plurals
+                continue
+
             with self.subTest(file_type=file_type):
                 output_filepath = self.output_dir / f"strings{file_type}"
-                convert_strings(self.input_filepath, output_filepath)
+                convert_strings(
+                    self.input_filepath, output_filepath, source_language="en"
+                )
                 self.assertEqual(TRICKY_STRINGS, get_strings(output_filepath))
 
     def test_ods_is_an_opendocument_spreadsheet(self):

@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from .exceptions import UnsupportedCharactersWarning
-from .formats import SUPPORTED_FILE_TYPES, normalize_file_type, parse, serialize
+from .formats import INPUT_FILE_TYPES, normalize_file_type, parse, serialize
 from .model import DEFAULT_LOCALE, Catalog
 
 ANDROID_FILENAME = "strings.xml"
-IOS_FILENAME = "Localizable.strings"
+IOS_FILENAME = "Localizable"
 
 
 def load(
@@ -35,7 +35,7 @@ def load(
     """
 
     filepath = Path(filepath)
-    if normalize_file_type(filepath.suffix) not in SUPPORTED_FILE_TYPES:
+    if normalize_file_type(filepath.suffix) not in INPUT_FILE_TYPES:
         raise ValueError(f"Input file type not supported: {filepath}")
 
     if locale is None:
@@ -44,7 +44,7 @@ def load(
     return parse(filepath.read_bytes(), filepath.suffix, locale, with_comments)
 
 
-def save(catalog: Catalog, filepath: Path):
+def save(catalog: Catalog, filepath: Path, source_language: Optional[str] = None):
     """
     Writes the strings to a file, creating its directory if needed.
 
@@ -55,13 +55,16 @@ def save(catalog: Catalog, filepath: Path):
     :type catalog: Catalog
     :param filepath: File to write. Its extension sets the file type.
     :type filepath: Path
+    :param source_language: Code of the language of the default strings (e.g. `en`).
+        Required by `.xcstrings` files, and ignored by any other file type.
+    :type source_language: Optional[str]
     """
 
     filepath = Path(filepath)
 
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.simplefilter("always")
-        data = serialize(catalog, filepath.suffix)
+        data = serialize(catalog, filepath.suffix, source_language)
 
     filepath.parent.mkdir(parents=True, exist_ok=True)
     filepath.write_bytes(data)
@@ -139,6 +142,8 @@ def localized_path(directory: Path, locale: str, file_type: str) -> Path:
 
     - `.xml`: `values/strings.xml`, `values-es/strings.xml`, `values-pt-rBR/strings.xml`
     - `.strings`: `Base.lproj/Localizable.strings`, `es.lproj/Localizable.strings`
+    - `.stringsdict`: `Base.lproj/Localizable.stringsdict`,
+      `es.lproj/Localizable.stringsdict`
     - Any other file type: `default.json`, `es.json`, `pt-BR.json`
 
     :param directory: Directory of the files
@@ -159,9 +164,9 @@ def localized_path(directory: Path, locale: str, file_type: str) -> Path:
         values_dir = "values" if is_default else f"values-{_android_qualifier(locale)}"
         return directory / values_dir / ANDROID_FILENAME
 
-    if file_type == ".strings":
+    if file_type in (".strings", ".stringsdict"):
         lproj_dir = "Base.lproj" if is_default else f"{locale}.lproj"
-        return directory / lproj_dir / IOS_FILENAME
+        return directory / lproj_dir / f"{IOS_FILENAME}{file_type}"
 
     return directory / f"{locale}{file_type}"
 

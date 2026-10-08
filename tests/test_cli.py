@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import subprocess
 import sys
 import unittest
@@ -162,6 +163,24 @@ class TestCli(unittest.TestCase):
             output_filepath.read_text(encoding="utf-8").replace("\r\n", "\n"),
         )
 
+    def test_merge_to_string_catalog(self):
+        res_dir = self._write_android_project()
+        output_filepath = self.output_dir / "Localizable.xcstrings"
+
+        exit_code, _, stderr = self._run(res_dir, "-m", "-f", output_filepath)
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("--source-language", stderr)
+
+        exit_code, _, _ = self._run(res_dir, "-m", "-f", output_filepath, "-s", "en")
+
+        self.assertEqual(0, exit_code)
+        catalog_data = json.loads(output_filepath.read_text(encoding="utf-8"))
+        self.assertEqual("en", catalog_data["sourceLanguage"])
+        self.assertEqual(
+            {"en", "es"}, set(catalog_data["strings"]["hello"]["localizations"])
+        )
+
     def test_merge_requires_output_file(self):
         exit_code, _, stderr = self._run(
             ANDROID_FILEPATH, "-m", "-d", self.output_dir, "-t", "csv"
@@ -211,6 +230,18 @@ class TestCli(unittest.TestCase):
 
         self.assertEqual(0, exit_code)
         self.assertIn("Skipped 1 plural(s)/array(s)", stdout)
+
+    def test_pdf_input(self):
+        input_filepath = self.output_dir / "strings.pdf"
+        input_filepath.write_bytes(b"%PDF-1.4")
+
+        exit_code, stdout, stderr = self._run(
+            input_filepath, "-f", self.output_dir / "strings.json"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("Skipping unsupported file", stdout)
+        self.assertIn("no supported input files", stderr)
 
     def test_module_entry_point(self):
         result = subprocess.run(

@@ -4,7 +4,7 @@ files (bytes), not with paths, so they can be used without a file system.
 """
 
 from types import ModuleType
-from typing import Dict
+from typing import Dict, Optional
 
 from ..model import DEFAULT_LOCALE, Catalog
 from . import (
@@ -16,6 +16,8 @@ from . import (
     markdown,
     ods,
     pdf,
+    stringsdict,
+    xcstrings,
     xlsx,
     yamlfile,
 )
@@ -29,11 +31,19 @@ FORMATS: Dict[str, ModuleType] = {
     ".yaml": yamlfile,
     ".html": html_table,
     ".strings": ios,
+    ".stringsdict": stringsdict,
+    ".xcstrings": xcstrings,
     ".xml": android,
     ".pdf": pdf,
 }
 
+# File types that can be written
 SUPPORTED_FILE_TYPES = list(FORMATS)
+
+# File types that can be read. PDF files can only be written.
+INPUT_FILE_TYPES = [
+    file_type for file_type, module in FORMATS.items() if hasattr(module, "parse")
+]
 
 
 def normalize_file_type(file_type: str) -> str:
@@ -72,25 +82,41 @@ def parse(
     :rtype: Catalog
     """
 
-    return _get_format(file_type).parse(data, locale, with_comments)
+    file_format = _get_format(file_type)
+    if not hasattr(file_format, "parse"):
+        raise ValueError(
+            f"{normalize_file_type(file_type)} files can only be written, not read."
+        )
+
+    return file_format.parse(data, locale, with_comments)
 
 
-def serialize(catalog: Catalog, file_type: str) -> bytes:
+def serialize(
+    catalog: Catalog, file_type: str, source_language: Optional[str] = None
+) -> bytes:
     """
     Writes the strings to the content of a file.
 
-    `.xml` and `.strings` files can only hold one locale, so a `ValueError` is raised
-    for multi-locale catalogs. Use `Catalog.for_locale` to write a file per locale.
+    `.xml`, `.strings` and `.stringsdict` files can only hold one locale, so a
+    `ValueError` is raised for multi-locale catalogs. Use `Catalog.split` to write a
+    file per locale.
 
     :param catalog: Strings to write
     :type catalog: Catalog
     :param file_type: Extension of the file, e.g. `.xml` or `xml`
     :type file_type: str
+    :param source_language: Code of the language of the default strings (e.g. `en`).
+        Required by `.xcstrings` files, and ignored by any other file type.
+    :type source_language: Optional[str]
     :return: The content of the file
     :rtype: bytes
     """
 
-    return _get_format(file_type).serialize(catalog)
+    file_format = _get_format(file_type)
+    if file_format is xcstrings:
+        return xcstrings.serialize(catalog, source_language)
+
+    return file_format.serialize(catalog)
 
 
 def _get_format(file_type: str) -> ModuleType:

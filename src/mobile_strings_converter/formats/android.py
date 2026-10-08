@@ -3,7 +3,8 @@ Android string resources (`strings.xml`): `<string>`, `<plurals>` and `<string-a
 
 A comment right before a resource is read as its comment for translators, unless the
 comment holds commented out resources, which are read as entries if `with_comments`
-is True.
+is True. iOS placeholders (e.g. `%@`) are converted to Android ones (e.g. `%s`) when
+writing.
 """
 
 import html
@@ -13,6 +14,7 @@ from typing import List, Optional
 
 from lxml import etree
 
+from .. import placeholders
 from ..exceptions import ConversionWarning
 from ..model import Catalog, Entry, Value
 
@@ -201,10 +203,12 @@ def _escape_android(value: str) -> str:
 
 def _to_android_value(value: str) -> str:
     """
-    Returns the value ready to be written inside a `<string>` element. Values with
-    well-formed inline markup (as returned by `_get_android_value`) are written
-    verbatim.
+    Returns the value ready to be written inside a `<string>` element, with iOS
+    placeholders converted to Android ones. Values with well-formed inline markup (as
+    returned by `_get_android_value`) are written verbatim.
     """
+
+    value = placeholders.to_android(value)
 
     if "<" in value:
         try:

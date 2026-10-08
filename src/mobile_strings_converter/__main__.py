@@ -9,7 +9,12 @@ from . import __version__
 from .console_style import ConsoleStyle
 from .converter import write_google_sheets
 from .files import load, save, save_split
-from .formats import SUPPORTED_FILE_TYPES, is_multi_locale, normalize_file_type
+from .formats import (
+    INPUT_FILE_TYPES,
+    SUPPORTED_FILE_TYPES,
+    is_multi_locale,
+    normalize_file_type,
+)
 from .model import Catalog
 
 
@@ -27,7 +32,10 @@ def get_filepaths_from_dir(directory, extensions):
 
 
 def build_parser():
-    supported_file_types_str = "\n".join(f"  - {ext}" for ext in SUPPORTED_FILE_TYPES)
+    supported_file_types_str = "\n".join(
+        f"  - {ext}" + ("" if ext in INPUT_FILE_TYPES else " (output only)")
+        for ext in SUPPORTED_FILE_TYPES
+    )
 
     parser = argparse.ArgumentParser(
         prog="mobile-strings-converter",
@@ -70,8 +78,9 @@ def build_parser():
         help="Directory path to save the converted files. Compatible with single and "
         "multiple input files as well as directories. The specified directory will be "
         "created if it does not already exist. Files with several locales (e.g. a "
-        "spreadsheet with a column per language) converted to `.xml` or `.strings` are "
-        "split into a file per locale (e.g. `values-es/strings.xml`).",
+        "spreadsheet with a column per language) converted to `.xml`, `.strings` or "
+        "`.stringsdict` are split into a file per locale (e.g. "
+        "`values-es/strings.xml`).",
     )
     parser.add_argument(
         "-t",
@@ -100,6 +109,17 @@ def build_parser():
         action="store_true",
         help="Print commented strings from the input file to the output file. "
         "Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
+    )
+    parser.add_argument(
+        "-s",
+        "--source-language",
+        required=False,
+        type=str,
+        metavar="LANGUAGE_CODE",
+        help="Code of the language of the default strings (e.g. `en`), such as the "
+        "ones in Android's `values` directory or iOS' `Base.lproj` directory. "
+        "Required to write `.xcstrings` files, which need the code of their source "
+        "language.",
     )
     parser.add_argument(
         "-m",
@@ -156,11 +176,9 @@ def main(argv=None):
     for path in args.input_paths:
         if os.path.isdir(path):
             # If it's a directory, get all matching files
-            for filepath in get_filepaths_from_dir(path, SUPPORTED_FILE_TYPES):
+            for filepath in get_filepaths_from_dir(path, INPUT_FILE_TYPES):
                 input_files.append((filepath, Path(path)))
-        elif os.path.isfile(path) and path.lower().endswith(
-            tuple(SUPPORTED_FILE_TYPES)
-        ):
+        elif os.path.isfile(path) and path.lower().endswith(tuple(INPUT_FILE_TYPES)):
             # If it's a supported file type, add it to the list
             input_files.append((Path(path), Path(path).parent))
         else:
@@ -267,7 +285,7 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
                 f"{output_filepaths[0].suffix} files can only hold one. Use "
                 f"-d/--output-dir to write a file per locale."
             )
-        save(catalog, output_filepaths[0])
+        save(catalog, output_filepaths[0], args.source_language)
     else:
         target_type = normalize_file_type(args.target_type)
         output_filepath = _output_dir_filepath(
@@ -281,7 +299,7 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
                 catalog, output_filepath.parent, target_type
             ).values()
         else:
-            save(catalog, output_filepath)
+            save(catalog, output_filepath, args.source_language)
             output_filepaths = [output_filepath]
 
     for output_filepath in output_filepaths:

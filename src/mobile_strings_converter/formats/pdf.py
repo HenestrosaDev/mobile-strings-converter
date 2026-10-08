@@ -1,14 +1,11 @@
 """
 PDF files with a table of the strings. See `table` for the columns.
 
-Generated PDFs embed the strings as a JSON file, so they can be read back losslessly.
-For any other PDF, the strings are extracted from the text of the table, which only
-works for single-line values.
+PDF files can only be written, as they are meant to be read by people. Reading the
+strings back from the text of a table is not reliable.
 """
 
-import io
 import os
-import re
 import unicodedata
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
@@ -18,15 +15,10 @@ from typing import Dict, Set
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from fpdf import FPDF
-from pypdf import PdfReader
 
 from ..exceptions import UnsupportedCharactersWarning
 from ..model import Catalog
-from . import jsonfile, table
-
-# Name of the JSON file embedded in the generated PDFs. It holds the exact strings
-# written to the PDF so they can be read back losslessly.
-EMBEDDED_FILENAME = "strings.json"
+from . import table
 
 FONTS_PATH = Path(__file__).parent.parent / "assets/fonts"
 
@@ -48,44 +40,11 @@ PAGE_WIDTH = 190
 CELL_HEIGHT = 10
 
 
-def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
-    pdf_reader = PdfReader(io.BytesIO(data))
-
-    embedded_files = pdf_reader.attachments.get(EMBEDDED_FILENAME)
-    if embedded_files:
-        return jsonfile.parse(embedded_files[0], locale)
-
-    pairs = []
-
-    # Extract text from each page
-    for page_number, page in enumerate(pdf_reader.pages):
-        rows = page.extract_text().split("\n")
-
-        # Skip the header
-        if page_number == 0:
-            rows = rows[1:]
-
-        for row in rows:
-            match = re.match(r"(\S+)\s+(.*)", row.strip())
-            if match:
-                name, value = match.groups()
-                pairs.append((name.strip(), value.strip()))
-
-    return Catalog.from_pairs(pairs, locale)
-
-
 def serialize(catalog: Catalog) -> bytes:
     header, *rows = table.to_table(catalog)
 
     pdf = FPDF(orientation="P", format="A4")
     pdf.add_page()
-
-    # Embed the strings so they can be read back losslessly by `parse`
-    pdf.embed_file(
-        bytes=jsonfile.dumps(catalog).encode("utf-8"),
-        basename=EMBEDDED_FILENAME,
-        mime_type="application/json",
-    )
 
     cell_width = PAGE_WIDTH / len(header)
 
