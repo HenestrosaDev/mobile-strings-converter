@@ -199,6 +199,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 │       │   files.py
 │       │   model.py
 │       │   placeholders.py
+│       │   py.typed
 │       │   __init__.py
 │       │   __main__.py
 │       │
@@ -452,10 +453,7 @@ from pathlib import Path
 
 from mobile_strings_converter import get_strings
 
-get_strings(
-	input_filepath=Path("strings.xml"),
-	with_comments=True
-)
+get_strings(input_filepath=Path("strings.xml"), with_comments=True)
 ```
 
 The strings are read into a `Catalog`, which holds the value of each string in each language. `load` and `save` work with files, while `parse` and `serialize` work with their content, so you don't need a file system:
@@ -467,7 +465,7 @@ from mobile_strings_converter import Catalog, load, parse, save, save_split, ser
 
 # Merge the languages of an Android project into a single spreadsheet
 catalog = Catalog.merge(
-	load(path) for path in sorted(Path("app/src/main/res").glob("values*/strings.xml"))
+    load(path) for path in sorted(Path("app/src/main/res").glob("values*/strings.xml"))
 )
 save(catalog, Path("translations.xlsx"))
 
@@ -477,6 +475,8 @@ save_split(load(Path("translations.xlsx")), Path("MyApp"), ".strings")
 # Convert the content of a file without touching the disk
 data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")
 ```
+
+The package ships type hints, so type checkers such as mypy can check your code against it.
 
 ### Generating a Spreadsheet in Google Sheets
 
@@ -517,10 +517,10 @@ from pathlib import Path
 from mobile_strings_converter import to_google_sheets
 
 to_google_sheets(
-	input_filepath=Path("path/to/strings-file"),
-	sheet_name="MyProject strings",
-	credentials_filepath=Path("path/to/service_account.json"),
-	with_comments=True,
+    input_filepath=Path("path/to/strings-file"),
+    sheet_name="MyProject strings",
+    credentials_filepath=Path("path/to/service_account.json"),
+    with_comments=True,
 )
 ```
 
@@ -665,6 +665,16 @@ You can propose a new feature creating an [issue](https://github.com/HenestrosaD
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/.github/CONTRIBUTING.md) file, where you can find more detailed information about how to contribute to the project.
+
+The project uses [uv](https://docs.astral.sh/uv/). To set up your environment and run the checks of the CI:
+
+```bash
+uv sync                          # Install the package and the dev tools
+uv run pre-commit install        # Run Ruff and mypy before each commit
+uv run python -m unittest discover tests
+uv run ruff check && uv run ruff format --check
+uv run mypy
+```
 
 <!-- LICENSE -->
 

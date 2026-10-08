@@ -235,7 +235,7 @@ class TestYaml(unittest.TestCase):
         )
 
     def test_multi_locale(self):
-        data = "default:\n  hello: Hello\nes:\n  hello: Hola\n".encode("utf-8")
+        data = b"default:\n  hello: Hello\nes:\n  hello: Hola\n"
 
         self.assertEqual(
             {DEFAULT_LOCALE: "Hello", "es": "Hola"},

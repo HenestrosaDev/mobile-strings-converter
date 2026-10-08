@@ -8,7 +8,7 @@ FILES_PATH = Path(__file__).parent / "files"
 
 
 # This is a wrapper class that prevents its nested classes from running as tests.
-class BaseTests(object):
+class BaseTests:
     class OutputDirTest(unittest.TestCase):
         """Writes the generated files to a temporary directory."""
 
@@ -19,7 +19,9 @@ class BaseTests(object):
         def tearDown(self):
             self._temp_dir.cleanup()
 
-        def _assert_same_content(self, output_filepath: Path, template_filepath: Path):
+        def _assert_same_content(
+            self, output_filepath: Path, template_filepath: Path
+        ) -> None:
             """
             Checks that both files have the same content. Binary file types override
             this method.
@@ -127,7 +129,7 @@ class BaseTests(object):
             self,
             input_filepath: Path,
             with_comments: bool,
-        ):
+        ) -> None:
             convert_strings(input_filepath, self.output_filepath, with_comments)
             self.assertTrue(self.output_filepath.exists())
 
@@ -136,7 +138,7 @@ class BaseTests(object):
             template_filepath: Path,
             input_filepath: Path,
             with_comments: bool,
-        ):
+        ) -> None:
             convert_strings(input_filepath, self.output_filepath, with_comments)
             self._assert_same_content(self.output_filepath, template_filepath)
 
@@ -193,7 +195,7 @@ class BaseTests(object):
 
         # Private methods
 
-        def _converter_creates_file(self, output_filepath: Path):
+        def _converter_creates_file(self, output_filepath: Path) -> None:
             convert_strings(self.input_filepath, output_filepath)
             self.assertTrue(output_filepath.exists())
 
@@ -201,14 +203,14 @@ class BaseTests(object):
             self,
             template_filepath: Path,
             output_filepath: Path,
-        ):
+        ) -> None:
             convert_strings(self.input_filepath, output_filepath)
             self._assert_same_content(output_filepath, template_filepath)
 
     class GetStringsTest(unittest.TestCase):
         def setUp(self):
-            self.data: str | None = None
-            self.extension: str | None = None
+            self.data: str = ""
+            self.extension: str = ""
 
         def test_valid_file_without_printing_comments(self):
             # Create a temporary file with valid data
@@ -318,8 +320,10 @@ class BaseTests(object):
             filepath.unlink()
 
 
-class SameStringsMixin:
+class SameStringsMixin(unittest.TestCase):
     """For binary file types, whose content is compared by the strings they hold."""
 
-    def _assert_same_content(self, output_filepath: Path, template_filepath: Path):
+    def _assert_same_content(
+        self, output_filepath: Path, template_filepath: Path
+    ) -> None:
         self.assertEqual(get_strings(output_filepath), get_strings(template_filepath))

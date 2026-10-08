@@ -6,7 +6,7 @@ multi-locale catalog has one column per locale, named after it (`VALUE` for the
 default locale). A `COMMENT` column is added if any entry has a comment.
 """
 
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
 from ..model import DEFAULT_LOCALE, Catalog, Row
 
@@ -15,7 +15,7 @@ VALUE_HEADER = "VALUE"
 COMMENT_HEADER = "COMMENT"
 
 
-def to_table(catalog: Catalog, lowercase_headers: bool = False) -> List[List[str]]:
+def to_table(catalog: Catalog, lowercase_headers: bool = False) -> list[list[str]]:
     """
     Returns the header followed by a row of strings for each flattened entry.
 
@@ -24,7 +24,7 @@ def to_table(catalog: Catalog, lowercase_headers: bool = False) -> List[List[str
     :param lowercase_headers: True to write `name`, `value` and `comment` in lowercase
     :type lowercase_headers: bool
     :return: The header and the rows of the table
-    :rtype: List[List[str]]
+    :rtype: list[list[str]]
     """
 
     locales = catalog.locales or [DEFAULT_LOCALE]
@@ -52,7 +52,7 @@ def to_table(catalog: Catalog, lowercase_headers: bool = False) -> List[List[str
 
 
 def from_table(
-    header: Optional[Sequence], rows: Sequence[Sequence], locale: str
+    header: Sequence | None, rows: Sequence[Sequence], locale: str
 ) -> Catalog:
     """
     Creates a catalog from a table. Rows without a name are skipped, as well as columns
@@ -60,7 +60,7 @@ def from_table(
 
     :param header: Cells of the header row. If None, the table is assumed to have a
         name and a value column.
-    :type header: Optional[Sequence]
+    :type header: Sequence | None
     :param rows: Cells of each row, without the header
     :type rows: Sequence[Sequence]
     :param locale: Locale of the `VALUE` column
@@ -84,7 +84,7 @@ def from_table(
         elif label:
             columns[label] = i
 
-    def cell_at(row: Sequence, i: Optional[int]) -> str:
+    def cell_at(row: Sequence, i: int | None) -> str:
         return _to_str(row[i]) if i is not None and i < len(row) else ""
 
     catalog_rows = []
@@ -103,5 +103,5 @@ def from_table(
     return Catalog.from_rows(catalog_rows)
 
 
-def _to_str(cell) -> str:
+def _to_str(cell: object) -> str:
     return "" if cell is None else str(cell)

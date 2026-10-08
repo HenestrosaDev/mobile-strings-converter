@@ -34,11 +34,11 @@ def serialize(catalog: Catalog) -> bytes:
     return "".join(f"{line}\n" for line in lines).encode("utf-8")
 
 
-def _split_row(row: str):
+def _split_row(row: str) -> list[str]:
     return [_unescape(cell.strip()) for cell in _SPLIT_PATTERN.split(row)[1:-1]]
 
 
-def _join_row(cells) -> str:
+def _join_row(cells: list[str]) -> str:
     return f"{DELIMITER} {f' {DELIMITER} '.join(cells)} {DELIMITER}"
 
 

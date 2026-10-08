@@ -11,7 +11,10 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
 
     workbook = openpyxl.load_workbook(io.BytesIO(data), read_only=True)
     try:
-        rows = list(workbook.active.iter_rows(values_only=True))
+        sheet = workbook.active
+        if sheet is None:
+            raise ValueError("The file provided has no sheets.")
+        rows = list(sheet.iter_rows(values_only=True))
     finally:
         workbook.close()
 
@@ -20,7 +23,7 @@ def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
 
 def serialize(catalog: Catalog) -> bytes:
     workbook = openpyxl.Workbook()
-    sheet = workbook.active
+    sheet = workbook.worksheets[0]
 
     for row in table.to_table(catalog):
         sheet.append(row)

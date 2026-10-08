@@ -8,12 +8,18 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: mixed-line-ending
-  - repo: https://github.com/psf/black
-    rev: 26.10.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
     hooks:
-      - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 9.0.2
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: local
     hooks:
-      - id: isort
-        args: ["--profile", "black"]
+      # Runs in the project environment so that mypy sees the dependencies
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false

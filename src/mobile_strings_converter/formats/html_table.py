@@ -1,6 +1,5 @@
 import html
 from html.parser import HTMLParser
-from typing import List, Optional
 
 from ..model import Catalog
 from . import table
@@ -56,11 +55,11 @@ class _HTMLTableParser(HTMLParser):
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.header: Optional[List[str]] = None
-        self.rows: List[List[str]] = []
-        self._row = None
+        self.header: list[str] | None = None
+        self.rows: list[list[str]] = []
+        self._row: list[str] | None = None
         self._row_is_header = False
-        self._cell = None
+        self._cell: list[str] | None = None
 
     def handle_starttag(self, tag, attrs):
         if tag == "tr":
@@ -71,7 +70,7 @@ class _HTMLTableParser(HTMLParser):
             self._row_is_header = self._row_is_header or tag == "th"
 
     def handle_endtag(self, tag):
-        if tag in ("td", "th") and self._cell is not None:
+        if tag in ("td", "th") and self._row is not None and self._cell is not None:
             self._row.append("".join(self._cell))
             self._cell = None
         elif tag == "tr" and self._row is not None:

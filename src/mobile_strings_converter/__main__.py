@@ -107,8 +107,8 @@ def build_parser():
         "--print-comments",
         required=False,
         action="store_true",
-        help="Print commented strings from the input file to the output file. "
-        "Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
+        help="Print commented strings from the input file to the output file. Only "
+        "valid for `.xml` or `.strings` input file types, otherwise it is ignored.",
     )
     parser.add_argument(
         "-s",
@@ -295,9 +295,9 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
         if catalog.is_multi_locale and not is_multi_locale(target_type):
             # Write `values-es/strings.xml`, `es.lproj/Localizable.strings`... next to
             # where the converted file would be
-            output_filepaths = save_split(
-                catalog, output_filepath.parent, target_type
-            ).values()
+            output_filepaths = list(
+                save_split(catalog, output_filepath.parent, target_type).values()
+            )
         else:
             save(catalog, output_filepath, args.source_language)
             output_filepaths = [output_filepath]

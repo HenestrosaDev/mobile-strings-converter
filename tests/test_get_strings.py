@@ -35,7 +35,9 @@ class TestGetStringsAndroid(BaseTests.GetStringsTest):
 
 
 class TestAndroidParsing(unittest.TestCase):
-    def _get_strings(self, data: str, with_comments: bool = False):
+    def _get_strings(
+        self, data: str, with_comments: bool = False
+    ) -> list[tuple[str, str]]:
         with NamedTemporaryFile(
             suffix=".xml", mode="w", delete=False, encoding="utf-8"
         ) as f:
@@ -79,7 +81,9 @@ class TestAndroidParsing(unittest.TestCase):
 
 
 class TestIosParsing(unittest.TestCase):
-    def _get_strings(self, data: str, with_comments: bool = False):
+    def _get_strings(
+        self, data: str, with_comments: bool = False
+    ) -> list[tuple[str, str]]:
         with NamedTemporaryFile(
             suffix=".strings", mode="w", delete=False, encoding="utf-8"
         ) as f:
@@ -116,7 +120,7 @@ class TestIosParsing(unittest.TestCase):
 
 
 class TestReaders(unittest.TestCase):
-    def _get_strings(self, data: str, extension: str):
+    def _get_strings(self, data: str, extension: str) -> list[tuple[str, str]]:
         with NamedTemporaryFile(
             suffix=extension, mode="w", delete=False, encoding="utf-8"
         ) as f:
@@ -155,9 +159,9 @@ class TestReaders(unittest.TestCase):
 
     def test_xlsx_with_numbers_and_blank_rows(self):
         workbook = openpyxl.Workbook()
-        sheet = workbook.active
+        sheet = workbook.worksheets[0]
         for row in [("NAME", "VALUE"), ("count", 3), (None, None), ("empty", None)]:
-            sheet.append(row)
+            sheet.append(list(row))
 
         with TemporaryDirectory() as temp_dir:
             filepath = Path(temp_dir) / "strings.xlsx"

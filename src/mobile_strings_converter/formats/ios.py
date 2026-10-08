@@ -10,7 +10,6 @@ ones (e.g. `%@`) when writing.
 
 import re
 import warnings
-from typing import List
 
 from .. import placeholders
 from ..exceptions import ConversionWarning
@@ -67,12 +66,13 @@ def serialize(catalog: Catalog) -> bytes:
             f"hold them: {', '.join(skipped)}. Plurals can be written to .stringsdict "
             f"or .xcstrings files.",
             ConversionWarning,
+            stacklevel=2,
         )
 
     return "".join(f"{line}\n" for line in lines).encode("utf-8")
 
 
-def _parse_entries(data: str, locale: str, with_comments: bool) -> List[Entry]:
+def _parse_entries(data: str, locale: str, with_comments: bool) -> list[Entry]:
     entries = []
     comment = None
     previous_end = None

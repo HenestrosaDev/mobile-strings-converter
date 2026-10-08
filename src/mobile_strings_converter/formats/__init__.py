@@ -4,7 +4,6 @@ files (bytes), not with paths, so they can be used without a file system.
 """
 
 from types import ModuleType
-from typing import Dict, Optional
 
 from ..model import DEFAULT_LOCALE, Catalog
 from . import (
@@ -22,7 +21,7 @@ from . import (
     yamlfile,
 )
 
-FORMATS: Dict[str, ModuleType] = {
+FORMATS: dict[str, ModuleType] = {
     ".csv": csvfile,
     ".xlsx": xlsx,
     ".ods": ods,
@@ -88,11 +87,12 @@ def parse(
             f"{normalize_file_type(file_type)} files can only be written, not read."
         )
 
-    return file_format.parse(data, locale, with_comments)
+    catalog: Catalog = file_format.parse(data, locale, with_comments)
+    return catalog
 
 
 def serialize(
-    catalog: Catalog, file_type: str, source_language: Optional[str] = None
+    catalog: Catalog, file_type: str, source_language: str | None = None
 ) -> bytes:
     """
     Writes the strings to the content of a file.
@@ -107,7 +107,7 @@ def serialize(
     :type file_type: str
     :param source_language: Code of the language of the default strings (e.g. `en`).
         Required by `.xcstrings` files, and ignored by any other file type.
-    :type source_language: Optional[str]
+    :type source_language: str | None
     :return: The content of the file
     :rtype: bytes
     """
@@ -116,16 +116,17 @@ def serialize(
     if file_format is xcstrings:
         return xcstrings.serialize(catalog, source_language)
 
-    return file_format.serialize(catalog)
+    data: bytes = file_format.serialize(catalog)
+    return data
 
 
 def _get_format(file_type: str) -> ModuleType:
     file_type = normalize_file_type(file_type)
     if file_type not in FORMATS:
         raise ValueError(
-            f"File type not supported: {file_type}. Feel free to create an issue here "
-            f"(https://github.com/HenestrosaDev/mobile-strings-converter/issues) if you "
-            f"want the file type to be supported by the package."
+            f"File type not supported: {file_type}. Feel free to create an issue "
+            f"(https://github.com/HenestrosaDev/mobile-strings-converter/issues) if "
+            f"you want the file type to be supported by the package."
         )
 
     return FORMATS[file_type]
