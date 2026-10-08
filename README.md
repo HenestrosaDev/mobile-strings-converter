@@ -169,9 +169,9 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 │   .gitignore
 │   .pre-commit-config.yaml
 │   LICENSE
-│   poetry.lock
 │   pyproject.toml
 │   README.md
+│   uv.lock
 │
 ├───.github
 │   │   CONTRIBUTING.md
