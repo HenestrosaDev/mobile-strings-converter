@@ -8,3 +8,14 @@ class UnsupportedCharactersWarning(ConversionWarning):
     def __init__(self, values: list[str]):
         self.values = values
         super().__init__(f"{len(values)} string(s) could not be rendered in the PDF.")
+
+
+class MissingDependencyError(ImportError):
+    """A feature needs an optional dependency that is not installed."""
+
+    def __init__(self, feature: str, extra: str):
+        self.extra = extra
+        super().__init__(
+            f"{feature} needs optional dependencies. Install them with "
+            f"`pip install 'mobile-strings-converter[{extra}]'`."
+        )

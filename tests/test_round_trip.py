@@ -3,8 +3,9 @@ import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from base_tests import convert_strings, get_strings
+
 from mobile_strings_converter import INPUT_FILE_TYPES, Catalog, save
-from mobile_strings_converter.converter import convert_strings, get_strings
 
 # fmt: off
 TRICKY_STRINGS = [

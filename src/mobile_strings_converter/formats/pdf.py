@@ -10,15 +10,14 @@ import unicodedata
 import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from arabic_reshaper import reshape
-from bidi.algorithm import get_display
-from fpdf import FPDF
-from fpdf.fonts import TTFFont
-
-from ..exceptions import UnsupportedCharactersWarning
+from ..exceptions import MissingDependencyError, UnsupportedCharactersWarning
 from ..model import Catalog
 from . import table
+
+if TYPE_CHECKING:
+    from fpdf import FPDF
 
 FONTS_PATH = Path(__file__).parent.parent / "assets/fonts"
 
@@ -41,6 +40,13 @@ CELL_HEIGHT = 10
 
 
 def serialize(catalog: Catalog) -> bytes:
+    try:
+        from arabic_reshaper import reshape
+        from bidi.algorithm import get_display
+        from fpdf import FPDF
+    except ImportError:
+        raise MissingDependencyError("Writing PDF files", "pdf") from None
+
     header, *rows = table.to_table(catalog)
 
     pdf = FPDF(orientation="P", format="A4")
@@ -119,7 +125,7 @@ def _is_rtl(text: str) -> bool:
 class _FontPicker:
     """Loads the fonts on demand and picks the one that can render a text."""
 
-    def __init__(self, pdf: FPDF):
+    def __init__(self, pdf: "FPDF"):
         self._pdf = pdf
         self._cmaps: dict[str, set[int]] = {}
 
@@ -144,6 +150,8 @@ class _FontPicker:
         return best_missing == 0
 
     def _get_cmap(self, font: str) -> set[int]:
+        from fpdf.fonts import TTFFont
+
         if font not in self._cmaps:
             self._pdf.add_font(fname=str(FONTS_PATH / f"{font}.ttf"))
             self._pdf.set_font(font, size=FONT_SIZE)

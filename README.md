@@ -107,9 +107,10 @@
             - [Options](#options)
 	- [Working With Several Languages](#working-with-several-languages)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
-	- [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets)
+	- [Google Sheets](#google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
-		- [Using the `to_google_sheets` Function in Your Project](#using-the-to_google_sheets-function-in-your-project)
+		- [Writing to and Reading From a Spreadsheet](#writing-to-and-reading-from-a-spreadsheet)
+		- [Using Google Sheets in Your Project](#using-google-sheets-in-your-project)
 - [Notes](#notes)
 	- [Android Resources](#android-resources)
 	- [Plurals and Arrays](#plurals-and-arrays)
@@ -135,7 +136,7 @@ I have tried to do the whole process of converting a strings resource file into 
 it is a waste of time to generate the spreadsheet manually. Also, you are limited to spreadsheet files only. For this reason, I decided to create a time-efficient solution that consists of running
 a Python script to do this with any file type.
 
-In addition to being able to run this script on its own, it can also be installed as a package via **PyPI** (more information on how to install it [here](#use-the-package-in-your-project)).
+In addition to being able to run this script on its own, it can also be installed as a package via **PyPI** (more information on how to install it [here](#package-installation)).
 
 <!-- FILE TYPES SUPPORTED -->
 
@@ -143,7 +144,7 @@ In addition to being able to run this script on its own, it can also be installe
 
 - Android strings format (`*.xml`)
 - CSV
-- Google Sheets support
+- Google Sheets (read and write, requires the `sheets` extra)
 - HTML
 - iOS strings format (`*.strings`)
 - iOS plurals format (`*.stringsdict`)
@@ -151,7 +152,7 @@ In addition to being able to run this script on its own, it can also be installe
 - JSON
 - MD
 - ODS
-- PDF (output only)
+- PDF (output only, requires the `pdf` extra)
 - XLSX
 - YAML
 
@@ -194,9 +195,9 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 ├───src
 │   └───mobile_strings_converter
 │       │   console_style.py
-│       │   converter.py
 │       │   exceptions.py
 │       │   files.py
+│       │   google_sheets.py
 │       │   model.py
 │       │   placeholders.py
 │       │   py.typed
@@ -239,15 +240,15 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
     │   test_cli.py
     │   test_files.py
     │   test_formats.py
-    │   test_get_strings.py
-    │   test_placeholders.py
     │   test_google_sheets.py
     │   test_html.py
     │   test_ios.py
     │   test_json.py
     │   test_md.py
     │   test_ods.py
+    │   test_parsing.py
     │   test_pdf.py
+    │   test_placeholders.py
     │   test_round_trip.py
     │   test_stringsdict.py
     │   test_xcstrings.py
@@ -291,11 +292,10 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 - [openpyxl](https://pypi.org/project/openpyxl/) to generate XLSX files.
 - [ezodf](https://pypi.org/project/ezodf/) to generate ODS files.
 - [lxml](https://pypi.org/project/lxml/) to parse Android `.xml` files.
-- [gspread](https://pypi.org/project/gspread/) to generate spreadsheets in Google Sheets.
-- [protobuf](https://pypi.org/project/oauth2client/) is used by `google.oauth2.credentials` to authenticate to the user's Google account in order to create the spreadsheet in Google Sheets.
 - [PyYAML](https://pypi.org/project/PyYAML/) to generate YAML files.
-- [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/) to add arabic characters support for PDF files.
-- [fpdf2](https://pypi.org/project/fpdf2/) to generate PDF files.
+- [gspread](https://pypi.org/project/gspread/) to read and write spreadsheets in Google Sheets (`sheets` extra).
+- [fpdf2](https://pypi.org/project/fpdf2/) to generate PDF files (`pdf` extra).
+- [arabic-reshaper](https://pypi.org/project/arabic-reshaper/) and [python-bidi](https://pypi.org/project/python-bidi/) to add arabic characters support for PDF files (`pdf` extra).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -320,11 +320,23 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 	 source venv/bin/activate
 	 ```
 
-4. Open the command line and run `pip install path/to/project/root` to install the required packages and the `mobile-strings-converter` command.
+4. Open the command line and run `pip install "path/to/project/root[all]"` to install the required packages and the `mobile-strings-converter` command.
 
 ### Package Installation
 
 Install the PyPI package by running `pip install mobile-strings-converter`. It requires Python 3.10 or later and installs the `mobile-strings-converter` command.
+
+Writing PDF files and using Google Sheets need optional dependencies, which you can install as extras:
+
+| EXTRA    | ENABLES                                          | COMMAND                                           |
+|:---------|:-------------------------------------------------|:--------------------------------------------------|
+| `pdf`    | Writing `.pdf` files                             | `pip install "mobile-strings-converter[pdf]"`     |
+| `sheets` | Reading and writing Google Sheets (`-g` and `-G`) | `pip install "mobile-strings-converter[sheets]"`  |
+| `all`    | Both of the above                                | `pip install "mobile-strings-converter[all]"`     |
+
+If you use a feature without its extra, the program tells you which one to install.
+
+To install the command in its own environment, use [`uv tool`](https://docs.astral.sh/uv/concepts/tools/) or [`pipx`](https://pipx.pypa.io/), e.g. `uv tool install "mobile-strings-converter[all]"`.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -376,7 +388,7 @@ mobile-strings-converter [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3
 
 For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`. When converting a directory, its subdirectory structure is kept in the output directory, so `res/values-es/strings.xml` and `res/values-fr/strings.xml` become `[OUTPUT_DIR_PATH]/values-es/strings.[TARGET_TYPE]` and `[OUTPUT_DIR_PATH]/values-fr/strings.[TARGET_TYPE]`.
 
-See the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section to create a spreadsheet in your Google account.
+See the [Google Sheets](#google-sheets) section to read and write spreadsheets in your Google account.
 
 ---
 
@@ -388,7 +400,7 @@ A full list of the program command's options are as follows:
 
 | POSITIONAL ARGUMENT | DESCRIPTION                                                                                                            |
 |:--------------------|:-----------------------------------------------------------------------------------------------------------------------|
-| `input_paths`       | Files or directory paths of supported files to convert. See [the list of supported file types](#file-types-supported). |
+| `input_paths`       | Files or directory paths of supported files to convert. See [the list of supported file types](#file-types-supported). Not needed with `-G`. |
 
 ##### Options
 
@@ -399,7 +411,9 @@ A full list of the program command's options are as follows:
 | `-f FILE_PATH, --output-file FILE_PATH`                 | File path to save the converted file. Only works if only one input file is provided. See [the list of supported file types](#file-types-supported).                                                                                                            |
 | `-d DIR_PATH, --output-dir DIR_PATH`                    | Directory path where the converted files will be saved. Compatible with single and multiple input files as well as directories. The specified directory will be created if it does not already exist.                                                          |
 | `-t FILE_TYPE, --target-type FILE_TYPE`                 | Target file type to convert the files (e.g. `json` or `.json`). Required when using `--output-dir`. See [the list of supported file types](#file-types-supported).                                                                                          |
-| `-g CREDENTIALS_PATH, --google-sheets CREDENTIALS_PATH` | Write the strings to the Google spreadsheet named after each input file (without its extension) in your Google account. You must specify the `service_account.json` path. You can learn how to generate it in the [Generating a Spreadsheet in Google Sheets](#generating-a-spreadsheet-in-google-sheets) section. |
+| `-g SPREADSHEET_NAME, --to-google-sheets SPREADSHEET_NAME` | Write the strings to the first sheet of a Google spreadsheet, replacing its content. Only works if only one input file is provided, or with `-m`. See [Google Sheets](#google-sheets). |
+| `-G SPREADSHEET_NAME, --from-google-sheets SPREADSHEET_NAME` | Read the strings from the first sheet of a Google spreadsheet instead of input files. See [Google Sheets](#google-sheets). |
+| `-c CREDENTIALS_PATH, --credentials CREDENTIALS_PATH`   | Path of the `service_account.json` file used to access Google Sheets. Defaults to `~/.config/gspread/service_account.json`. See [Setting Up a Google Account](#setting-up-a-google-account). |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
 | `-s LANGUAGE_CODE, --source-language LANGUAGE_CODE`     | Code of the language of the default strings (e.g., `en`), such as the ones in Android's `values` directory or iOS' `Base.lproj` directory. Required to write `.xcstrings` files. See [String Catalogs](#string-catalogs). |
 | `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
@@ -445,16 +459,7 @@ The `-s` (or `--source-language`) option sets the language of the `VALUE` column
 
 ### Using the Package in Your Project
 
-After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use:
-
-```python
-# Using the `get_strings` function
-from pathlib import Path
-
-from mobile_strings_converter import get_strings
-
-get_strings(input_filepath=Path("strings.xml"), with_comments=True)
-```
+After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use.
 
 The strings are read into a `Catalog`, which holds the value of each string in each language. `load` and `save` work with files, while `parse` and `serialize` work with their content, so you don't need a file system:
 
@@ -462,6 +467,9 @@ The strings are read into a `Catalog`, which holds the value of each string in e
 from pathlib import Path
 
 from mobile_strings_converter import Catalog, load, parse, save, save_split, serialize
+
+# Read a file, including its commented out strings
+catalog = load(Path("strings.xml"), with_comments=True)
 
 # Merge the languages of an Android project into a single spreadsheet
 catalog = Catalog.merge(
@@ -478,7 +486,9 @@ data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")
 
 The package ships type hints, so type checkers such as mypy can check your code against it.
 
-### Generating a Spreadsheet in Google Sheets
+### Google Sheets
+
+Google Sheets support requires the `sheets` extra (see [Package Installation](#package-installation)).
 
 #### Setting Up a Google Account
 
@@ -495,33 +505,44 @@ Before going further into running the commands to do this, note that you need to
 
 Alternatively, you can create an `.xlsx` file and open it in Google Sheets if you do not want to go through the hassle of generating the `service_account.json` file.
 
-Once you have the `service_account.json` file, create an empty spreadsheet in Google Sheets named after the input file without its extension (e.g., `strings` for `strings.xml`), share it with the `client_email` as described in step 8, and run the following command:
+Pass the path of the `service_account.json` file with the `-c` (or `--credentials`) option, or save it as `~/.config/gspread/service_account.json` to leave the option out.
+
+#### Writing to and Reading From a Spreadsheet
+
+Create an empty spreadsheet in Google Sheets, share it with the `client_email` as described in step 8, and write your strings to it with the `-g` (or `--to-google-sheets`) option followed by the name of the spreadsheet. The content of its first sheet is replaced by the strings:
 
 ```
-mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -g path/to/service_account.json
+mobile-strings-converter app/src/main/res -m -g "MyApp translations" -c path/to/service_account.json
 ```
 
-If you want to generate an output file along with the spreadsheet, run this:
+Once the translators have filled in the spreadsheet, read it back with the `-G` (or `--from-google-sheets`) option instead of input files:
 
 ```
-mobile-strings-converter *.[SUPPORTED_FILE_TYPE] -g path/to/service_account.json -f *.[SUPPORTED_FILE_TYPE]
+mobile-strings-converter -G "MyApp translations" -d app/src/main/res -t xml -c path/to/service_account.json
 ```
 
-The content of the first sheet of the spreadsheet will be replaced by the strings.
+The spreadsheet is read like any other table, so the `VALUE` column holds the default strings and the other columns are named after their language (see [Working With Several Languages](#working-with-several-languages)). You can also generate an output file along with the spreadsheet by adding `-f`.
 
-#### Using the `to_google_sheets` Function in Your Project
+#### Using Google Sheets in Your Project
 
 ```python
 from pathlib import Path
 
-from mobile_strings_converter import to_google_sheets
-
-to_google_sheets(
-    input_filepath=Path("path/to/strings-file"),
-    sheet_name="MyProject strings",
-    credentials_filepath=Path("path/to/service_account.json"),
-    with_comments=True,
+from mobile_strings_converter import (
+    load,
+    read_google_sheets,
+    save_split,
+    write_google_sheets,
 )
+
+credentials_filepath = Path("path/to/service_account.json")
+
+write_google_sheets(
+    load(Path("strings.xml")), "MyApp translations", credentials_filepath
+)
+
+catalog = read_google_sheets("MyApp translations", credentials_filepath)
+save_split(catalog, Path("app/src/main/res"), ".xml")
 ```
 
 <!-- NOTES -->
@@ -578,7 +599,7 @@ Strings, plurals, comments and `shouldTranslate` are converted. Device variation
 
 ### PDF Files
 
-PDF files can only be written, as they are meant to be read by people. Convert your strings to another file type (e.g., `.xlsx`) if you need to convert them back later.
+Writing PDF files requires the `pdf` extra (see [Package Installation](#package-installation)). PDF files can only be written, as they are meant to be read by people. Convert your strings to another file type (e.g., `.xlsx`) if you need to convert them back later.
 
 Each cell is written with the first bundled font that has all of its characters. The strings that no font can render are listed in a `[FILE_NAME]-errors.txt` file next to the PDF.
 
@@ -669,7 +690,7 @@ Please, read the [CONTRIBUTING.md](https://github.com/HenestrosaDev/mobile-strin
 The project uses [uv](https://docs.astral.sh/uv/). To set up your environment and run the checks of the CI:
 
 ```bash
-uv sync                          # Install the package and the dev tools
+uv sync                          # Install the package with every extra and the dev tools
 uv run pre-commit install        # Run Ruff and mypy before each commit
 uv run python -m unittest discover tests
 uv run ruff check && uv run ruff format --check

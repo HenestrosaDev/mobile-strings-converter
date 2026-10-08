@@ -8,9 +8,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
 
-from mobile_strings_converter import load
+from base_tests import get_strings
+
+from mobile_strings_converter import DEFAULT_LOCALE, Catalog, Entry, load
 from mobile_strings_converter.__main__ import main
-from mobile_strings_converter.converter import get_strings
 
 FILES_PATH = Path(__file__).parent / "files"
 ANDROID_FILEPATH = FILES_PATH / "input/strings.xml"
@@ -125,21 +126,85 @@ class TestCli(unittest.TestCase):
         self.assertEqual(1, exit_code)
         self.assertIn("Could not convert", stderr)
 
-    def test_google_sheets(self):
+    def test_to_google_sheets(self):
         credentials_filepath = self.output_dir / "service_account.json"
         credentials_filepath.write_text("{}")
 
         with mock.patch(
             "mobile_strings_converter.__main__.write_google_sheets"
         ) as write_google_sheets:
-            exit_code, _, _ = self._run(ANDROID_FILEPATH, "-g", credentials_filepath)
+            exit_code, _, _ = self._run(
+                ANDROID_FILEPATH, "-g", "My strings", "-c", credentials_filepath
+            )
 
         self.assertEqual(0, exit_code)
         write_google_sheets.assert_called_once_with(
-            load(ANDROID_FILEPATH),
-            sheet_name="strings",
-            credentials_filepath=credentials_filepath,
+            load(ANDROID_FILEPATH), "My strings", credentials_filepath
         )
+
+    def test_to_google_sheets_with_multiple_files(self):
+        exit_code, _, stderr = self._run(
+            ANDROID_FILEPATH, IOS_FILEPATH, "-g", "My strings"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("--merge", stderr)
+
+    def test_from_google_sheets(self):
+        catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"})])
+        output_dir = self.output_dir / "res"
+
+        with mock.patch(
+            "mobile_strings_converter.__main__.read_google_sheets",
+            return_value=catalog,
+        ) as read_google_sheets:
+            exit_code, _, _ = self._run(
+                "-G", "My/strings", "-d", output_dir, "-t", "xml"
+            )
+
+        self.assertEqual(0, exit_code)
+        read_google_sheets.assert_called_once_with("My/strings", None)
+        self.assertEqual(
+            [("hello", "Hola")], get_strings(output_dir / "values-es/strings.xml")
+        )
+
+    def test_from_google_sheets_to_output_dir(self):
+        catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello"})])
+
+        with mock.patch(
+            "mobile_strings_converter.__main__.read_google_sheets",
+            return_value=catalog,
+        ):
+            exit_code, _, _ = self._run(
+                "-G", "My/strings", "-d", self.output_dir, "-t", "json"
+            )
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual(
+            [("hello", "Hello")], get_strings(self.output_dir / "My_strings.json")
+        )
+
+    def test_input_paths_and_from_google_sheets(self):
+        exit_code, _, stderr = self._run(
+            ANDROID_FILEPATH, "-G", "My strings", "-f", self.output_dir / "a.json"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("not both", stderr)
+
+    def test_input_is_required(self):
+        exit_code, _, stderr = self._run("-f", self.output_dir / "strings.json")
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("input paths", stderr)
+
+    def test_credentials_not_found(self):
+        exit_code, _, stderr = self._run(
+            ANDROID_FILEPATH, "-g", "My strings", "-c", self.output_dir / "missing.json"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("credentials file not found", stderr)
 
     def _write_android_project(self):
         res_dir = self.output_dir / "res"

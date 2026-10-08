@@ -2,18 +2,16 @@ import unittest
 import warnings
 from pathlib import Path
 
-from base_tests import BaseTests
+from base_tests import BaseTests, convert_strings, get_strings
 
 from mobile_strings_converter import (
     DEFAULT_LOCALE,
     INPUT_FILE_TYPES,
     Catalog,
     Entry,
-    get_strings,
     parse,
     serialize,
 )
-from mobile_strings_converter.converter import convert_strings
 
 
 class TestToPdf(BaseTests.ConvertToTest):
