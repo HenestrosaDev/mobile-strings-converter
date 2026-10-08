@@ -106,6 +106,7 @@
 			- [Positional Arguments](#positional-arguments)
             - [Options](#options)
 	- [Working With Several Languages](#working-with-several-languages)
+	- [Checking Translations](#checking-translations)
 	- [Using the Package in Your Project](#using-the-package-in-your-project)
 	- [Google Sheets](#google-sheets)
 		- [Setting Up a Google Account](#setting-up-a-google-account)
@@ -194,6 +195,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 │
 ├───src
 │   └───mobile_strings_converter
+│       │   check.py
 │       │   console_style.py
 │       │   exceptions.py
 │       │   files.py
@@ -236,6 +238,7 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 └───tests
     │   base_tests.py
     │   test_android.py
+    │   test_check.py
     │   test_csv.py
     │   test_cli.py
     │   test_files.py
@@ -388,7 +391,7 @@ mobile-strings-converter [INPUT_DIR_PATH_1] [INPUT_DIR_PATH_2] [INPUT_DIR_PATH_3
 
 For multiple file inputs and directories, the name of the files will be the same as the input file. For example, if there is a file named `spanish.xml` in a directory, the output file name will be `spanish.[TARGET_TYPE]`. When converting a directory, its subdirectory structure is kept in the output directory, so `res/values-es/strings.xml` and `res/values-fr/strings.xml` become `[OUTPUT_DIR_PATH]/values-es/strings.[TARGET_TYPE]` and `[OUTPUT_DIR_PATH]/values-fr/strings.[TARGET_TYPE]`.
 
-See the [Google Sheets](#google-sheets) section to read and write spreadsheets in your Google account.
+See the [Google Sheets](#google-sheets) section to read and write spreadsheets in your Google account, and [Checking Translations](#checking-translations) to find missing translations and mismatched placeholders.
 
 ---
 
@@ -414,6 +417,7 @@ A full list of the program command's options are as follows:
 | `-g SPREADSHEET_NAME, --to-google-sheets SPREADSHEET_NAME` | Write the strings to the first sheet of a Google spreadsheet, replacing its content. Only works if only one input file is provided, or with `-m`. See [Google Sheets](#google-sheets). |
 | `-G SPREADSHEET_NAME, --from-google-sheets SPREADSHEET_NAME` | Read the strings from the first sheet of a Google spreadsheet instead of input files. See [Google Sheets](#google-sheets). |
 | `-c CREDENTIALS_PATH, --credentials CREDENTIALS_PATH`   | Path of the `service_account.json` file used to access Google Sheets. Defaults to `~/.config/gspread/service_account.json`. See [Setting Up a Google Account](#setting-up-a-google-account). |
+| `--check`                                               | Check the translations instead of converting them. Exits with code 1 if any issue is found. See [Checking Translations](#checking-translations). |
 | `-p, --print-comments`                                  | Print commented strings from the input file to the output file. Only valid for `.xml` or `.strings` input file types, otherwise it is ignored.                                                                                                                 |
 | `-s LANGUAGE_CODE, --source-language LANGUAGE_CODE`     | Code of the language of the default strings (e.g., `en`), such as the ones in Android's `values` directory or iOS' `Base.lproj` directory. Required to write `.xcstrings` files. See [String Catalogs](#string-catalogs). |
 | `-m, --merge`                                           | Merge the input files into a single output with a column per language. The language of each file is taken from its directory (e.g., `values-es` or `es.lproj`). Use it with `-f` or `-g`. See [Working With Several Languages](#working-with-several-languages). |
@@ -457,6 +461,32 @@ mobile-strings-converter translations.xlsx -f MyApp/Localizable.xcstrings -s en
 
 The `-s` (or `--source-language`) option sets the language of the `VALUE` column, as String Catalogs need its code. See [String Catalogs](#string-catalogs).
 
+### Checking Translations
+
+To check the translations of your app, pass its files with the `--check` option. Nothing is written:
+
+```
+mobile-strings-converter app/src/main/res --check
+mobile-strings-converter translations.xlsx --check
+```
+
+Every language is compared with the default strings (`values`, `Base.lproj` or the `VALUE` column), or with the first language if there are no default strings. These issues are reported:
+
+- **Missing translations**: strings that have no value in a language. Strings with `translatable="false"` are skipped.
+- **Obsolete translations**: strings that have a value in a language, but no default value.
+- **Placeholders that differ from the default value**, e.g. `Hello, %s` translated as `Hola, %d`. Android and iOS placeholders are compared as equivalent (e.g. `%s` and `%@`), and positional placeholders can be reordered (e.g. `%1$s has %2$d` and `%2$d %1$s`). The number of a plural can be left out of some quantities (e.g. `One song`).
+- **Plurals, arrays and strings that are a different kind of value** than the default value, and arrays with a different number of items.
+- **Names defined more than once** in the same file.
+
+The command exits with code 1 if any issue is found, so you can use it in your CI pipeline:
+
+```
+[es] greeting: has the placeholders %1$d, but the default value has %1$s
+[es] bye: missing translation
+[fr] songs: is a string, but the default value is a plural
+3 issue(s) found
+```
+
 ### Using the Package in Your Project
 
 After following the steps in the [Getting Started](#getting-started) section, import the package and the function(s) you want to use.
@@ -482,6 +512,17 @@ save_split(load(Path("translations.xlsx")), Path("MyApp"), ".strings")
 
 # Convert the content of a file without touching the disk
 data = serialize(parse(b'"hello" = "Hello";', ".strings"), ".json")
+```
+
+To check the translations, use `check`, and `find_duplicates` for the strings of a single file:
+
+```python
+from pathlib import Path
+
+from mobile_strings_converter import check, load
+
+for issue in check(load(Path("translations.xlsx"))):
+    print(issue.locale, issue.name, issue.message)
 ```
 
 The package ships type hints, so type checkers such as mypy can check your code against it.
@@ -521,7 +562,7 @@ Once the translators have filled in the spreadsheet, read it back with the `-G` 
 mobile-strings-converter -G "MyApp translations" -d app/src/main/res -t xml -c path/to/service_account.json
 ```
 
-The spreadsheet is read like any other table, so the `VALUE` column holds the default strings and the other columns are named after their language (see [Working With Several Languages](#working-with-several-languages)). You can also generate an output file along with the spreadsheet by adding `-f`.
+The spreadsheet is read like any other table, so the `VALUE` column holds the default strings and the other columns are named after their language (see [Working With Several Languages](#working-with-several-languages)). You can also generate an output file along with the spreadsheet by adding `-f`, or check the translations of the spreadsheet with `--check`.
 
 #### Using Google Sheets in Your Project
 

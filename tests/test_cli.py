@@ -229,6 +229,48 @@ class TestCli(unittest.TestCase):
         self.assertEqual(2, exit_code)
         self.assertIn("credentials file not found", stderr)
 
+    def test_check(self):
+        res_dir = self.output_dir / "res"
+        files = {
+            "values": '<string name="greeting">Hello, %s</string>'
+            '<string name="bye">Bye</string>'
+            '<string name="name" translatable="false">App</string>',
+            "values-es": '<string name="greeting">Hola, %d</string>'
+            '<string name="old">Viejo</string>'
+            '<string name="old">Viejo</string>',
+        }
+        for directory, resources in files.items():
+            (res_dir / directory).mkdir(parents=True)
+            (res_dir / directory / "strings.xml").write_text(
+                f"<resources>{resources}</resources>", encoding="utf-8"
+            )
+
+        exit_code, stdout, _ = self._run(res_dir, "--check")
+
+        self.assertEqual(1, exit_code)
+        self.assertIn("strings.xml: [es] old: defined 2 times", stdout)
+        self.assertIn("[es] greeting: has the placeholders %1$d", stdout)
+        self.assertIn("[es] bye: missing translation", stdout)
+        self.assertIn("[es] old: obsolete translation", stdout)
+        self.assertNotIn("[es] name:", stdout)
+        self.assertIn("4 issue(s) found", stdout)
+
+    def test_check_without_issues(self):
+        res_dir = self._write_android_project()
+
+        exit_code, stdout, _ = self._run(res_dir, "--check")
+
+        self.assertEqual(0, exit_code)
+        self.assertIn("No issues found", stdout)
+
+    def test_check_with_output(self):
+        exit_code, _, stderr = self._run(
+            ANDROID_FILEPATH, "--check", "-f", self.output_dir / "strings.json"
+        )
+
+        self.assertEqual(2, exit_code)
+        self.assertIn("--check", stderr)
+
     def _write_android_project(self):
         res_dir = self.output_dir / "res"
         for directory, value in [("values", "Hello"), ("values-es", "Hola")]:

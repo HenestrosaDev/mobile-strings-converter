@@ -75,3 +75,32 @@ def _build(match: re.Match[str], **overrides: str) -> str:
             "conversion",
         )
     )
+
+
+def signature(value: str) -> list[tuple[int, str]]:
+    """
+    Returns the (position, conversion) of each placeholder of the value, sorted by
+    position, so that values with the same arguments have the same signature on both
+    platforms, e.g. `%1$@ has %2$ld` and `%s has %d` -> `[(1, "s"), (2, "d")]`.
+    Flags, width and precision are ignored.
+    """
+
+    placeholders = []
+    for index, match in enumerate(
+        (
+            m
+            for m in _PLACEHOLDER_PATTERN.finditer(value)
+            if m.group("conversion") != "%"
+        ),
+        start=1,
+    ):
+        position = match.group("position")
+        conversion = match.group("conversion")
+        placeholders.append(
+            (
+                int(position[:-1]) if position else index,
+                _TO_ANDROID_CONVERSIONS.get(conversion, conversion),
+            )
+        )
+
+    return sorted(placeholders)
