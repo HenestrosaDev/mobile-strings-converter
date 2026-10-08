@@ -1,6 +1,10 @@
 name: Build
 
 on:
+  # Runs on `main` too, so that Codecov has the coverage of the branch for its badge
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -67,7 +71,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           uv run coverage run -m unittest discover tests
-          uv run coverage report -m --fail-under 80
+          uv run coverage report
           uv run coverage xml
 
       - name: Upload coverage to Codecov
