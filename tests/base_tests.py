@@ -228,6 +228,8 @@ class BaseTests:
         def setUp(self):
             self.data: str = ""
             self.extension: str = ""
+            # Android trims the whitespace around values
+            self.expected_chinese = "  欢迎来到我的申请  "
 
         def test_valid_file_without_printing_comments(self):
             # Create a temporary file with valid data
@@ -263,7 +265,7 @@ class BaseTests:
 
             # fmt: off
             expected_output = [
-                ("chinese", "  欢迎来到我的申请  "),
+                ("chinese", self.expected_chinese),
                 ("escaped_quote", 'MyA"pp'),
                 ("hindi", "मेरे ऐप का आनंद लें"),
                 ("korean", "내 앱을 즐기세요")

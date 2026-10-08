@@ -21,6 +21,13 @@ MULTI_LOCALE = False
 
 _ANDROID_ESCAPES = {"n": "\n", "t": "\t"}
 
+# Matches, in order of appearance, escape sequences, double quotes, whitespace and any
+# other text
+_ANDROID_TOKEN_PATTERN = re.compile(
+    r'\\(?P<escaped>u[0-9a-fA-F]{4}|.)|(?P<quote>")|(?P<space>\s+)|[^\\"\s]+|\\',
+    re.DOTALL,
+)
+
 
 def parse(data: bytes, locale: str, with_comments: bool = False) -> Catalog:
     try:
@@ -172,17 +179,39 @@ def _get_android_value(element: etree._Element) -> str:
 
 
 def _unescape_android(value: str) -> str:
-    # Values wrapped in unescaped double quotes are taken literally
-    if len(value) >= 2 and value[0] == '"' and value[-1] == '"' and value[-2] != "\\":
-        value = value[1:-1]
+    """
+    Decodes a value as Android does: whitespace outside double quotes is collapsed into
+    a single space and trimmed, unescaped double quotes are removed, and escape
+    sequences (e.g. `\\n` or `\\'`) are decoded.
+    """
 
-    def replace(match):
-        escaped = match.group(1)
-        if escaped[0] == "u" and len(escaped) > 1:
-            return chr(int(escaped[1:], 16))
-        return _ANDROID_ESCAPES.get(escaped, escaped)
+    # Text and whether it's whitespace that can be collapsed and trimmed
+    parts: list[tuple[str, bool]] = []
+    quoted = False
 
-    return re.sub(r"\\(u[0-9a-fA-F]{4}|.)", replace, value, flags=re.DOTALL)
+    for match in _ANDROID_TOKEN_PATTERN.finditer(value):
+        if match.group("escaped") is not None:
+            escaped = match.group("escaped")
+            if escaped[0] == "u" and len(escaped) > 1:
+                text = chr(int(escaped[1:], 16))
+            else:
+                text = _ANDROID_ESCAPES.get(escaped, escaped)
+            parts.append((text, False))
+        elif match.group("quote") is not None:
+            quoted = not quoted
+        elif match.group("space") is not None and not quoted:
+            # Whitespace split by quotes (e.g. `a "" b`) is collapsed as well
+            if not (parts and parts[-1][1]):
+                parts.append((" ", True))
+        else:
+            parts.append((match.group(0), False))
+
+    while parts and parts[0][1]:
+        parts.pop(0)
+    while parts and parts[-1][1]:
+        parts.pop()
+
+    return "".join(text for text, _ in parts)
 
 
 def _escape_android(value: str) -> str:
@@ -197,6 +226,10 @@ def _escape_android(value: str) -> str:
     # `@` and `?` at the start of a value are resource references
     if value.startswith(("@", "?")):
         value = "\\" + value
+
+    # Android collapses and trims whitespace outside double quotes
+    if value != value.strip(" ") or "  " in value:
+        value = f'"{value}"'
 
     return html.escape(value, quote=False)
 

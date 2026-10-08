@@ -595,6 +595,7 @@ save_split(catalog, Path("app/src/main/res"), ".xml")
 - `<string>`, `<plurals>` and `<string-array>` resources are converted. See [Plurals and Arrays](#plurals-and-arrays).
 - `translatable="false"` is kept when converting `.xml` files to `.xml` files, but other file types don't hold it.
 - XML entities (e.g., `&amp;`) and Android escape sequences (e.g., `\'` or `\n`) are decoded when reading `.xml` files and encoded when writing them, so other file types contain the actual text (e.g., `I'm` instead of `I\'m`).
+- Whitespace is read as Android does: outside double quotes, spaces, tabs and line breaks are collapsed into a single space, and the whitespace at the start and end of the string is removed. Strings whose whitespace would be lost (e.g., `"  indented"`) are written in double quotes.
 - Strings with inline markup (e.g., `Hello <b>World</b>`) are kept verbatim.
 
 ### Plurals and Arrays
