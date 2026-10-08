@@ -216,6 +216,37 @@ class TestTables(unittest.TestCase):
 
         self.assertEqual(["es", "fr"], catalog.locales)
 
+    def test_values_of_another_kind_are_skipped_with_a_warning(self):
+        catalog = Catalog(
+            [
+                Entry(
+                    "songs",
+                    {
+                        DEFAULT_LOCALE: {"one": "1 song", "other": "%d songs"},
+                        "es": "Canciones",
+                        "fr": {"one": "1 chanson", "other": "%d chansons"},
+                    },
+                ),
+                Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"}),
+            ]
+        )
+
+        with self.assertWarnsRegex(ConversionWarning, r"songs \(es\)"):
+            data = serialize(catalog, ".csv")
+
+        self.assertEqual(
+            "name,value,es,fr\n"
+            "songs[one],1 song,,1 chanson\n"
+            "songs[other],%d songs,,%d chansons\n"
+            "hello,Hello,Hola,\n",
+            data.decode().replace("\r\n", "\n"),
+        )
+
+    def test_values_of_the_same_kind_have_no_warning(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            serialize(MULTI_LOCALE_CATALOG, ".csv")
+
     def test_html_without_header(self):
         data = b"<table><tr><td>hello</td><td>Hello</td></tr></table>"
 
