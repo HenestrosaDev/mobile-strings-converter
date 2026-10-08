@@ -436,21 +436,31 @@ class TestCli(unittest.TestCase):
             encoding="utf-8",
         )
 
-        exit_code, stdout, _ = self._run(input_filepath, "-f", output_filepath)
+        exit_code, _, stderr = self._run(input_filepath, "-f", output_filepath)
 
         self.assertEqual(0, exit_code)
-        self.assertIn("Skipped 1 plural(s)/array(s)", stdout)
+        self.assertIn("Skipped 1 plural(s)/array(s)", stderr)
+
+    def test_redirected_output_has_no_colors(self):
+        with mock.patch.dict("os.environ", clear=True):
+            exit_code, stdout, _ = self._run(
+                ANDROID_FILEPATH, "-f", self.output_dir / "strings.json"
+            )
+
+        self.assertEqual(0, exit_code)
+        self.assertIn("Data successfully written", stdout)
+        self.assertNotIn("\033[", stdout)
 
     def test_pdf_input(self):
         input_filepath = self.output_dir / "strings.pdf"
         input_filepath.write_bytes(b"%PDF-1.4")
 
-        exit_code, stdout, stderr = self._run(
+        exit_code, _, stderr = self._run(
             input_filepath, "-f", self.output_dir / "strings.json"
         )
 
         self.assertEqual(2, exit_code)
-        self.assertIn("Skipping unsupported file", stdout)
+        self.assertIn("Skipping unsupported file", stderr)
         self.assertIn("no supported input files", stderr)
 
     def test_module_entry_point(self):
