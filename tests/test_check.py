@@ -2,6 +2,7 @@ import unittest
 
 from mobile_strings_converter import (
     DEFAULT_LOCALE,
+    ISSUE_CODES,
     Catalog,
     Entry,
     Issue,
@@ -128,6 +129,101 @@ class TestCheck(unittest.TestCase):
                 reference_locale="en",
             ),
         )
+
+    def test_unknown_reference_locale(self):
+        with self.assertRaisesRegex(ValueError, "default, es"):
+            self._check(
+                Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"}),
+                reference_locale="fr",
+            )
+
+    def test_empty_translation(self):
+        self.assertEqual(
+            [
+                Issue(
+                    "es",
+                    "bye",
+                    "is empty, but the default value is not",
+                    "empty",
+                ),
+                Issue(
+                    "es",
+                    "songs",
+                    "is empty, but the default value is not",
+                    "empty",
+                ),
+            ],
+            self._check(
+                Entry("bye", {DEFAULT_LOCALE: "Bye", "es": ""}),
+                Entry("blank", {DEFAULT_LOCALE: "", "es": ""}),
+                Entry(
+                    "app_name", {DEFAULT_LOCALE: "App", "es": ""}, translatable=False
+                ),
+                Entry(
+                    "songs",
+                    {
+                        DEFAULT_LOCALE: {"one": "1 song", "other": "%d songs"},
+                        "es": {"one": "", "other": ""},
+                    },
+                ),
+                # Some quantities can be empty, as long as the plural is not
+                Entry(
+                    "files",
+                    {
+                        DEFAULT_LOCALE: {"one": "1 file", "other": "%d files"},
+                        "es": {"one": "", "other": "%d archivos"},
+                    },
+                ),
+            ),
+        )
+
+    def test_untranslated(self):
+        entries = [
+            Entry("settings", {DEFAULT_LOCALE: "Settings", "es": "Settings"}),
+            Entry("count", {DEFAULT_LOCALE: "%1$d / %2$s", "es": "%1$d / %2$s"}),
+            Entry("app", {DEFAULT_LOCALE: "App", "es": "App"}, translatable=False),
+            Entry("hello", {DEFAULT_LOCALE: "Hello", "es": "Hola"}),
+            Entry(
+                "planets",
+                {DEFAULT_LOCALE: ["Mars", "Venus"], "es": ["Mars", "Venus"]},
+            ),
+        ]
+
+        self.assertEqual([], check(Catalog(entries)))
+        self.assertEqual(
+            [
+                Issue(
+                    "es",
+                    "settings",
+                    "is the same as the default value",
+                    "untranslated",
+                ),
+                Issue(
+                    "es",
+                    "planets",
+                    "is the same as the default value",
+                    "untranslated",
+                ),
+            ],
+            check(Catalog(entries), untranslated=True),
+        )
+
+    def test_codes(self):
+        issues = self._check(
+            Entry("bye", {DEFAULT_LOCALE: "Bye"}),
+            Entry("old", {"es": "Viejo"}),
+            Entry("hello", {DEFAULT_LOCALE: "Hello %s", "es": "Hola %d"}),
+            Entry("songs", {DEFAULT_LOCALE: {"other": "Songs"}, "es": "Canciones"}),
+            Entry("planets", {DEFAULT_LOCALE: ["A", "B"], "es": ["A"]}),
+            Entry("title", {DEFAULT_LOCALE: "Title", "es": ""}),
+        )
+
+        self.assertEqual(
+            ["missing", "obsolete", "placeholders", "kind", "kind", "empty"],
+            [issue.code for issue in issues],
+        )
+        for issue in issues:
+            self.assertIn(issue.code, ISSUE_CODES)
 
     def test_first_locale_is_the_reference_without_default_locale(self):
         self.assertEqual(
