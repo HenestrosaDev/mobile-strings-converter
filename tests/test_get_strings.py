@@ -1,10 +1,12 @@
 import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from unittest import mock
 
 import openpyxl
 from base_tests import BaseTests
 
+from mobile_strings_converter import ConversionWarning, parse
 from mobile_strings_converter.converter import get_strings
 
 
@@ -168,6 +170,25 @@ class TestReaders(unittest.TestCase):
             workbook.save(filepath)
 
             self.assertEqual([("count", "3"), ("empty", "")], get_strings(filepath))
+
+    def test_xlsx_without_sheets(self):
+        with (
+            mock.patch("openpyxl.load_workbook") as load_workbook,
+            self.assertRaisesRegex(ValueError, "no sheets"),
+        ):
+            load_workbook.return_value.active = None
+            parse(b"", ".xlsx")
+
+    def test_unsupported_android_resources(self):
+        data = (
+            b'<resources><integer-array name="numbers"><item>1</item></integer-array>'
+            b'<string name="hello">Hello</string></resources>'
+        )
+
+        with self.assertWarnsRegex(ConversionWarning, "integer-array"):
+            catalog = parse(data, ".xml")
+
+        self.assertEqual([("hello", "Hello")], catalog.to_pairs())
 
     def test_uppercase_extension(self):
         self.assertEqual(
