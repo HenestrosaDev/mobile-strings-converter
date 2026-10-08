@@ -32,15 +32,32 @@ _TO_IOS_CONVERSIONS = {"s": "@", "S": "@"}
 def to_android(value: str) -> str:
     """
     Converts iOS placeholders to Android ones, e.g. `%1$@` -> `%1$s` and `%ld` -> `%d`.
+
+    Android doesn't build strings with several placeholders unless they have positions,
+    so values with more than one placeholder get them, e.g. `%@ has %ld` ->
+    `%1$s has %2$d`.
     """
 
-    def replace(match):
+    count = sum(
+        m.group("conversion") != "%" for m in _PLACEHOLDER_PATTERN.finditer(value)
+    )
+    # Placeholders without position take the next argument, as in Java
+    next_position = 0
+
+    def replace(match: re.Match[str]) -> str:
+        nonlocal next_position
         if match.group("conversion") == "%":
             return match.group(0)
+
+        position = match.group("position")
+        if position is None and count > 1:
+            next_position += 1
+            position = f"{next_position}$"
 
         conversion = match.group("conversion")
         return _build(
             match,
+            position=position or "",
             # Java doesn't have length modifiers
             length="",
             conversion=_TO_ANDROID_CONVERSIONS.get(conversion, conversion),

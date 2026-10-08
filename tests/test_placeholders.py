@@ -24,7 +24,7 @@ class TestPlaceholders(unittest.TestCase):
         cases = {
             "Hello %@": "Hello %s",
             "%1$@ has %2$ld songs": "%1$s has %2$d songs",
-            "%lld %llu %u %i %D": "%d %d %d %d %d",
+            "%lld %llu %u %i %D": "%1$d %2$d %3$d %4$d %5$d",
             "%.2lf": "%.2f",
             "100%% done": "100%% done",
             "%%@ is not a placeholder": "%%@ is not a placeholder",
@@ -61,7 +61,7 @@ class TestPlaceholdersInFiles(unittest.TestCase):
         catalog = parse(b'"greeting" = "Hello %@, you have %ld songs";', ".strings")
 
         self.assertIn(
-            '<string name="greeting">Hello %s, you have %d songs</string>',
+            '<string name="greeting">Hello %1$s, you have %2$d songs</string>',
             serialize(catalog, ".xml").decode(),
         )
 
