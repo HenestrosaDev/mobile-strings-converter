@@ -122,3 +122,11 @@ disallow_untyped_defs = true
 [[tool.mypy.overrides]]
 module = ["ezodf", "ezodf.*", "arabic_reshaper", "bidi.*"]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source_pkgs = ["mobile_strings_converter"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
