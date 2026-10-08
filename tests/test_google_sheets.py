@@ -106,6 +106,16 @@ class TestMissingDependencies(unittest.TestCase):
         ):
             serialize(catalog, ".pdf")
 
+    def test_pdf_fonts(self):
+        from mobile_strings_converter import serialize
+
+        catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello"})])
+        with (
+            mock.patch.dict(sys.modules, {"mobile_strings_converter_fonts": None}),
+            self.assertRaisesRegex(MissingDependencyError, r"\[pdf\]"),
+        ):
+            serialize(catalog, ".pdf")
+
 
 if __name__ == "__main__":
     unittest.main()
