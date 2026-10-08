@@ -5,10 +5,11 @@ import sys
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
+from typing import TextIO
 
 from . import __version__
 from .check import check, find_duplicates
-from .console_style import ConsoleStyle
+from .console_style import ConsoleStyle, colorize
 from .exceptions import NoStringsError
 from .files import load, save, save_split
 from .formats import (
@@ -231,9 +232,10 @@ def main(argv: list[str] | None = None) -> int:
             # If it's a supported file type, add it to the list
             input_files.append((Path(path), Path(path).parent))
         else:
-            print(
-                f"{ConsoleStyle.YELLOW}Skipping unsupported file or path: {path}"
-                f"{ConsoleStyle.END}"
+            _print(
+                f"Skipping unsupported file or path: {path}",
+                ConsoleStyle.YELLOW,
+                sys.stderr,
             )
 
     if not input_files:
@@ -274,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     def fail(message: str) -> None:
         nonlocal exit_code
         exit_code = 1
-        print(f"{ConsoleStyle.RED}{message}{ConsoleStyle.END}", file=sys.stderr)
+        _print(message, ConsoleStyle.RED, sys.stderr)
 
     def read(input_filepath: Path) -> Catalog:
         with _print_warnings():
@@ -325,9 +327,10 @@ def main(argv: list[str] | None = None) -> int:
                     write_google_sheets(
                         catalog, args.to_google_sheets, _credentials(args)
                     )
-                print(
-                    f"{ConsoleStyle.GREEN}Data successfully written to the "
-                    f"'{args.to_google_sheets}' Google spreadsheet{ConsoleStyle.END}"
+                _print(
+                    f"Data successfully written to the '{args.to_google_sheets}' "
+                    f"Google spreadsheet",
+                    ConsoleStyle.GREEN,
                 )
             except Exception as e:
                 fail(f"Could not write {input_filepath} to Google Sheets: {e}")
@@ -350,13 +353,13 @@ def _check(catalogs: list[tuple[Path, Catalog]]) -> int:
     issues += [str(issue) for issue in check(Catalog.merge(c for _, c in catalogs))]
 
     for issue in issues:
-        print(f"{ConsoleStyle.YELLOW}{issue}{ConsoleStyle.END}")
+        _print(issue, ConsoleStyle.YELLOW)
 
     if issues:
-        print(f"{ConsoleStyle.RED}{len(issues)} issue(s) found{ConsoleStyle.END}")
+        _print(f"{len(issues)} issue(s) found", ConsoleStyle.RED)
         return 1
 
-    print(f"{ConsoleStyle.GREEN}No issues found{ConsoleStyle.END}")
+    _print("No issues found", ConsoleStyle.GREEN)
     return 0
 
 
@@ -392,10 +395,18 @@ def _write_outputs(args, catalog, input_filepath, base_dir):
             output_filepaths = [output_filepath]
 
     for output_filepath in output_filepaths:
-        print(
-            f"{ConsoleStyle.GREEN}Data successfully written to {output_filepath}"
-            f"{ConsoleStyle.END}"
-        )
+        _print(f"Data successfully written to {output_filepath}", ConsoleStyle.GREEN)
+
+
+def _print(message: str, color: str, stream: TextIO | None = None) -> None:
+    """
+    Prints the message in the color, if the stream supports colors. Results go to
+    stdout (the default), and warnings and errors to stderr.
+    """
+
+    # Resolved here so that redirected streams (e.g. in tests) are used
+    stream = stream or sys.stdout
+    print(colorize(message, color, stream), file=stream)
 
 
 @contextmanager
@@ -408,7 +419,7 @@ def _print_warnings():
             yield
         finally:
             for caught in caught_warnings:
-                print(f"{ConsoleStyle.YELLOW}{caught.message}{ConsoleStyle.END}")
+                _print(str(caught.message), ConsoleStyle.YELLOW, sys.stderr)
 
 
 if __name__ == "__main__":

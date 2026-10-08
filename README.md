@@ -393,6 +393,8 @@ For multiple file inputs and directories, the name of the files will be the same
 
 See the [Google Sheets](#google-sheets) section to read and write spreadsheets in your Google account, and [Checking Translations](#checking-translations) to find missing translations and mismatched placeholders.
 
+Results are printed to stdout, and warnings and errors to stderr. Messages are only colored in a terminal, so piped output and CI logs have no escape codes. Set the `NO_COLOR` environment variable to disable colors, or `FORCE_COLOR` to use them anyway.
+
 ---
 
 #### Script Arguments
