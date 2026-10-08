@@ -1130,14 +1130,26 @@ name = "mobile-strings-converter"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
-    { name = "arabic-reshaper" },
     { name = "ezodf" },
-    { name = "fpdf2" },
-    { name = "gspread" },
     { name = "lxml" },
     { name = "openpyxl" },
-    { name = "python-bidi" },
     { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "arabic-reshaper" },
+    { name = "fpdf2" },
+    { name = "gspread" },
+    { name = "python-bidi" },
+]
+pdf = [
+    { name = "arabic-reshaper" },
+    { name = "fpdf2" },
+    { name = "python-bidi" },
+]
+sheets = [
+    { name = "gspread" },
 ]
 
 [package.dev-dependencies]
@@ -1151,19 +1163,22 @@ dev = [
 ]
 test = [
     { name = "coverage" },
+    { name = "mobile-strings-converter", extra = ["all"] },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "arabic-reshaper", specifier = ">=3.0.1,<4.0.0" },
+    { name = "arabic-reshaper", marker = "extra == 'pdf'", specifier = ">=3.0.1,<4.0.0" },
     { name = "ezodf", specifier = ">=0.3.2,<0.4.0" },
-    { name = "fpdf2", specifier = ">=2.8.9,<3.0.0" },
-    { name = "gspread", specifier = ">=6.2.1,<7.0.0" },
+    { name = "fpdf2", marker = "extra == 'pdf'", specifier = ">=2.8.9,<3.0.0" },
+    { name = "gspread", marker = "extra == 'sheets'", specifier = ">=6.2.1,<7.0.0" },
     { name = "lxml", specifier = ">=6.1.3,<7.0.0" },
+    { name = "mobile-strings-converter", extras = ["pdf", "sheets"], marker = "extra == 'all'" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
-    { name = "python-bidi", specifier = ">=0.6.11,<0.7.0" },
+    { name = "python-bidi", marker = "extra == 'pdf'", specifier = ">=0.6.11,<0.7.0" },
     { name = "pyyaml", specifier = ">=6.0.2,<7.0.0" },
 ]
+provides-extras = ["pdf", "sheets", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1174,7 +1189,10 @@ dev = [
     { name = "types-openpyxl" },
     { name = "types-pyyaml" },
 ]
-test = [{ name = "coverage", specifier = ">=7.16.2,<8.0.0" }]
+test = [
+    { name = "coverage", specifier = ">=7.16.2,<8.0.0" },
+    { name = "mobile-strings-converter", extras = ["all"] },
+]
 
 [[package]]
 name = "mypy"

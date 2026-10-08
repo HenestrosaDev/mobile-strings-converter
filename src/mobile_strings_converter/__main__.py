@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import sys
 import warnings
 from contextlib import contextmanager
@@ -7,7 +8,6 @@ from pathlib import Path
 
 from . import __version__
 from .console_style import ConsoleStyle
-from .converter import write_google_sheets
 from .files import load, save, save_split
 from .formats import (
     INPUT_FILE_TYPES,
@@ -15,7 +15,12 @@ from .formats import (
     is_multi_locale,
     normalize_file_type,
 )
+from .google_sheets import read_google_sheets, write_google_sheets
 from .model import Catalog
+
+# Suffix of the name of the input that stands for the spreadsheet of
+# `--from-google-sheets`
+_GOOGLE_SHEETS_SUFFIX = ".gsheet"
 
 
 def get_filepaths_from_dir(directory, extensions):
@@ -31,7 +36,7 @@ def get_filepaths_from_dir(directory, extensions):
     return matched_files
 
 
-def build_parser():
+def build_parser() -> argparse.ArgumentParser:
     supported_file_types_str = "\n".join(
         f"  - {ext}" + ("" if ext in INPUT_FILE_TYPES else " (output only)")
         for ext in SUPPORTED_FILE_TYPES
@@ -48,9 +53,9 @@ def build_parser():
     parser.add_argument(
         "input_paths",
         type=str,
-        nargs="+",  # Accept one or more values
+        nargs="*",
         help="Files or directory paths of supported files to convert. Check the list "
-        "of the supported file types above.",
+        "of the supported file types above. Not needed with `--from-google-sheets`.",
     )
     parser.add_argument(
         "-v",
@@ -93,14 +98,32 @@ def build_parser():
     )
     parser.add_argument(
         "-g",
-        "--google-sheets",
+        "--to-google-sheets",
+        required=False,
+        type=str,
+        metavar="SPREADSHEET_NAME",
+        help="Write the strings to the first sheet of a Google spreadsheet, replacing "
+        "its content. Only works if only one input file is specified, or with "
+        "`--merge`. See `--credentials`.",
+    )
+    parser.add_argument(
+        "-G",
+        "--from-google-sheets",
+        required=False,
+        type=str,
+        metavar="SPREADSHEET_NAME",
+        help="Read the strings from the first sheet of a Google spreadsheet instead of "
+        "input files. See `--credentials`.",
+    )
+    parser.add_argument(
+        "-c",
+        "--credentials",
         required=False,
         type=str,
         metavar="CREDENTIALS_PATH",
-        help="Write the strings to the Google spreadsheet named after each input file "
-        "(without its extension) in your Google account. You must specify the "
-        "`service_account.json` path. You can learn how to generate it in the "
-        "Generating a Spreadsheet in Google Sheets section in the README.",
+        help="Path of the `service_account.json` file used to access Google Sheets. "
+        "Defaults to `~/.config/gspread/service_account.json`. You can learn how to "
+        "generate it in the Google Sheets section in the README.",
     )
     parser.add_argument(
         "-p",
@@ -128,17 +151,23 @@ def build_parser():
         action="store_true",
         help="Merge the input files into a single output with a column per locale. The "
         "locale of each file is taken from its directory (e.g. `values-es` or "
-        "`es.lproj`). Use it with `--output-file` or `--google-sheets`.",
+        "`es.lproj`). Use it with `--output-file` or `--to-google-sheets`.",
     )
 
     return parser
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if not (args.output_file or args.output_dir or args.google_sheets):
+    if args.input_paths and args.from_google_sheets:
+        parser.error("pass input paths or -G/--from-google-sheets, not both.")
+
+    if not (args.input_paths or args.from_google_sheets):
+        parser.error("you must specify input paths or -G/--from-google-sheets.")
+
+    if not (args.output_file or args.output_dir or args.to_google_sheets):
         parser.error("you must specify an output with -f, -d or -g.")
 
     if args.output_file and args.output_dir:
@@ -163,15 +192,17 @@ def main(argv=None):
         if target_type not in SUPPORTED_FILE_TYPES:
             parser.error(f"unsupported target type: {args.target_type}")
 
-    if args.google_sheets and not os.path.isfile(args.google_sheets):
-        parser.error(
-            "you need to pass the path of the `service_account.json` file to generate "
-            "a Sheet."
-        )
+    if args.credentials and not os.path.isfile(args.credentials):
+        parser.error(f"credentials file not found: {args.credentials}")
 
-    # Each input file is paired with the base directory used to mirror its relative
-    # path inside the output directory
+    # Each input is paired with the base directory used to mirror its relative path
+    # inside the output directory
     input_files = []
+
+    if args.from_google_sheets:
+        # Named like a file so that `-d` writes `[SPREADSHEET_NAME].[TARGET_TYPE]`
+        safe_name = re.sub(r"[\\/]", "_", args.from_google_sheets)
+        input_files.append((Path(f"{safe_name}{_GOOGLE_SHEETS_SUFFIX}"), Path()))
 
     for path in args.input_paths:
         if os.path.isdir(path):
@@ -190,11 +221,17 @@ def main(argv=None):
     if not input_files:
         parser.error("no supported input files found.")
 
-    if args.output_file and len(input_files) > 1 and not args.merge:
-        parser.error(
-            "cannot use -f/--output-file with multiple input files. Use "
-            "-d/--output-dir or -m/--merge instead."
-        )
+    if len(input_files) > 1 and not args.merge:
+        if args.output_file:
+            parser.error(
+                "cannot use -f/--output-file with multiple input files. Use "
+                "-d/--output-dir or -m/--merge instead."
+            )
+        if args.to_google_sheets:
+            parser.error(
+                "cannot use -g/--to-google-sheets with multiple input files. Use "
+                "-m/--merge instead."
+            )
 
     if args.output_dir:
         # Different input files may have the same name (e.g. `values-es/strings.xml`
@@ -216,10 +253,16 @@ def main(argv=None):
 
     exit_code = 0
 
-    def fail(message):
+    def fail(message: str) -> None:
         nonlocal exit_code
         exit_code = 1
         print(f"{ConsoleStyle.RED}{message}{ConsoleStyle.END}", file=sys.stderr)
+
+    def read(input_filepath: Path) -> Catalog:
+        with _print_warnings():
+            if input_filepath.suffix == _GOOGLE_SHEETS_SUFFIX:
+                return read_google_sheets(args.from_google_sheets, _credentials(args))
+            return load(input_filepath, None, args.print_comments)
 
     # Each source is converted to the outputs: a single one with all the input files
     # when merging, or one per input file
@@ -227,8 +270,7 @@ def main(argv=None):
         catalogs = []
         for input_filepath, _ in input_files:
             try:
-                with _print_warnings():
-                    catalogs.append(load(input_filepath, None, args.print_comments))
+                catalogs.append(read(input_filepath))
             except Exception as e:
                 fail(f"Could not read {input_filepath}: {e}")
 
@@ -237,10 +279,7 @@ def main(argv=None):
         sources = []
         for input_file in input_files:
             try:
-                with _print_warnings():
-                    sources.append(
-                        (input_file, load(input_file[0], None, args.print_comments))
-                    )
+                sources.append((input_file, read(input_file[0])))
             except Exception as e:
                 fail(f"Could not convert {input_file[0]}: {e}")
 
@@ -252,23 +291,24 @@ def main(argv=None):
             except Exception as e:
                 fail(f"Could not convert {input_filepath}: {e}")
 
-        if args.google_sheets:
-            sheet_name = Path(args.output_file or input_filepath).stem
+        if args.to_google_sheets:
             try:
                 with _print_warnings():
                     write_google_sheets(
-                        catalog,
-                        sheet_name=sheet_name,
-                        credentials_filepath=Path(args.google_sheets),
+                        catalog, args.to_google_sheets, _credentials(args)
                     )
                 print(
                     f"{ConsoleStyle.GREEN}Data successfully written to the "
-                    f"'{sheet_name}' Google spreadsheet{ConsoleStyle.END}"
+                    f"'{args.to_google_sheets}' Google spreadsheet{ConsoleStyle.END}"
                 )
             except Exception as e:
                 fail(f"Could not write {input_filepath} to Google Sheets: {e}")
 
     return exit_code
+
+
+def _credentials(args: argparse.Namespace) -> Path | None:
+    return Path(args.credentials) if args.credentials else None
 
 
 def _output_dir_filepath(output_dir, input_filepath, base_dir, target_type):

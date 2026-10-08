@@ -75,3 +75,27 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           fail_ci_if_error: true
+
+  # The package must work without the optional dependencies (`pdf` and `sheets`)
+  test-without-extras:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+
+      - name: Convert a file
+        run: |
+          uv run --isolated --no-project --with . mobile-strings-converter \
+            tests/files/input/strings.xml -f "$RUNNER_TEMP/strings.xlsx"
+
+      - name: Fail with a helpful message when an extra is missing
+        run: |
+          ! uv run --isolated --no-project --with . mobile-strings-converter \
+            tests/files/input/strings.xml -f "$RUNNER_TEMP/strings.pdf" 2> errors.txt
+          grep "mobile-strings-converter\[pdf\]" errors.txt

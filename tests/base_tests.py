@@ -2,9 +2,26 @@ import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-from mobile_strings_converter.converter import convert_strings, get_strings
+from mobile_strings_converter import load, save
 
 FILES_PATH = Path(__file__).parent / "files"
+
+
+def convert_strings(
+    input_filepath: Path,
+    output_filepath: Path,
+    with_comments: bool = False,
+    source_language: str | None = None,
+) -> None:
+    save(
+        load(input_filepath, with_comments=with_comments),
+        output_filepath,
+        source_language,
+    )
+
+
+def get_strings(filepath: Path, with_comments: bool = False) -> list[tuple[str, str]]:
+    return load(filepath, with_comments=with_comments).to_pairs()
 
 
 # This is a wrapper class that prevents its nested classes from running as tests.

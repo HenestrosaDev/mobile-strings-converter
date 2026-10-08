@@ -4,14 +4,14 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
 
 import openpyxl
-from base_tests import BaseTests
+from base_tests import BaseTests, get_strings
 
 from mobile_strings_converter import ConversionWarning, parse
-from mobile_strings_converter.converter import get_strings
 
 
 class TestGetStringsIos(BaseTests.GetStringsTest):
     def setUp(self):
+        super().setUp()
         self.data = """
         //      "chinese" = "  欢迎来到我的申请  "   ;
             //"escaped_quote"="MyA\\\"pp";
@@ -23,6 +23,7 @@ class TestGetStringsIos(BaseTests.GetStringsTest):
 
 class TestGetStringsAndroid(BaseTests.GetStringsTest):
     def setUp(self):
+        super().setUp()
         self.data = """
         <?xml version="1.0" encoding="UTF-8"?>
         <resources>
