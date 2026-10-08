@@ -106,7 +106,7 @@ def _parse_entries(data: str, locale: str, with_comments: bool) -> list[Entry]:
 
 
 def _unescape_ios(value: str) -> str:
-    def replace(match):
+    def replace(match: re.Match[str]) -> str:
         escaped = match.group(1)
         if escaped[0] in "uU" and len(escaped) > 1:
             return chr(int(escaped[1:], 16))

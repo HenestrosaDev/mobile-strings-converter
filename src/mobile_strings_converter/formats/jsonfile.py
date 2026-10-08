@@ -76,6 +76,6 @@ def serialize(catalog: Catalog) -> bytes:
     return (json.dumps(records, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
 
 
-def _values(values):
+def _values(values: dict[str, Value | None]) -> dict[str, Value]:
     """Removes the missing values."""
     return {locale: value for locale, value in values.items() if value is not None}
