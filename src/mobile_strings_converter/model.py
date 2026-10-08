@@ -7,8 +7,11 @@ array (a list of strings).
 """
 
 import re
+import warnings
 from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
+
+from .exceptions import ConversionWarning
 
 # Locale of the strings that are not tied to any language, such as the ones in
 # Android's `values` directory or iOS' `Base.lproj` directory
@@ -152,12 +155,25 @@ class Catalog:
         """
         Flattens the entries into rows of strings. Plurals and arrays are written as one
         row per item, named `name[quantity]` or `name[index]` respectively.
+
+        Each entry is written as the kind of value (string, plural or array) of its
+        first locale. Values of another kind can't be written in the same rows, so
+        they are skipped with a `ConversionWarning`.
         """
 
         rows = []
+        skipped = []
 
         for entry in self.entries:
             values = list(entry.values.values())
+
+            other_kind_locales = [
+                locale
+                for locale, value in entry.values.items()
+                if type(value) is not type(values[0])
+            ]
+            if other_kind_locales:
+                skipped.append(f"{entry.name} ({', '.join(other_kind_locales)})")
 
             if values and isinstance(values[0], dict):
                 keys = _ordered_keys(v for v in values if isinstance(v, dict))
@@ -200,6 +216,15 @@ class Catalog:
             if entry_rows:
                 entry_rows[0].comment = entry.comment
             rows.extend(entry_rows)
+
+        if skipped:
+            warnings.warn(
+                f"Skipped the values of {len(skipped)} string(s) because they are a "
+                f"different kind (string, plural or array) than in the first language: "
+                f"{', '.join(skipped)}.",
+                ConversionWarning,
+                stacklevel=2,
+            )
 
         return rows
 
