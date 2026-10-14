@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -58,7 +58,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup uv with Python ${{ matrix.python-version }}
         uses: astral-sh/setup-uv@v7
@@ -88,7 +88,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -112,7 +112,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Check translations
         uses: ./
