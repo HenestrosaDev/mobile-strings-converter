@@ -24,8 +24,11 @@ jobs:
         with:
           python-version: "3.14"
 
+      # Builds the fonts package of the `pdf` extra too
       - name: Build
-        run: uv build
+        run: uv build --all-packages
 
+      # The fonts package rarely changes, so the version that is already on PyPI is
+      # skipped instead of failing the upload
       - name: Publish
-        run: uv publish
+        run: uv publish --check-url https://pypi.org/simple/

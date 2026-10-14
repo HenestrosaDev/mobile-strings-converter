@@ -9,6 +9,12 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+members = [
+    "mobile-strings-converter",
+    "mobile-strings-converter-fonts",
+]
+
 [[package]]
 name = "arabic-reshaper"
 version = "3.0.1"
@@ -1141,11 +1147,13 @@ all = [
     { name = "arabic-reshaper" },
     { name = "fpdf2" },
     { name = "gspread" },
+    { name = "mobile-strings-converter-fonts" },
     { name = "python-bidi" },
 ]
 pdf = [
     { name = "arabic-reshaper" },
     { name = "fpdf2" },
+    { name = "mobile-strings-converter-fonts" },
     { name = "python-bidi" },
 ]
 sheets = [
@@ -1174,6 +1182,7 @@ requires-dist = [
     { name = "gspread", marker = "extra == 'sheets'", specifier = ">=6.2.1,<7.0.0" },
     { name = "lxml", specifier = ">=6.1.3,<7.0.0" },
     { name = "mobile-strings-converter", extras = ["pdf", "sheets"], marker = "extra == 'all'" },
+    { name = "mobile-strings-converter-fonts", marker = "extra == 'pdf'", editable = "packages/mobile-strings-converter-fonts" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
     { name = "python-bidi", marker = "extra == 'pdf'", specifier = ">=0.6.11,<0.7.0" },
     { name = "pyyaml", specifier = ">=6.0.2,<7.0.0" },
@@ -1193,6 +1202,11 @@ test = [
     { name = "coverage", specifier = ">=7.16.2,<8.0.0" },
     { name = "mobile-strings-converter", extras = ["all"] },
 ]
+
+[[package]]
+name = "mobile-strings-converter-fonts"
+version = "1.0.0"
+source = { editable = "packages/mobile-strings-converter-fonts" }
 
 [[package]]
 name = "mypy"

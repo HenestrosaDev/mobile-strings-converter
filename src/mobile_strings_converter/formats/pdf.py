@@ -19,8 +19,6 @@ from . import table
 if TYPE_CHECKING:
     from fpdf import FPDF
 
-FONTS_PATH = Path(__file__).parent.parent / "assets/fonts"
-
 # Each cell is written with the first font that has glyphs for all its characters
 FONTS = [
     "DejaVuSansCondensed",  # Latin, Greek, Cyrillic, Arabic, Hebrew, Armenian...
@@ -44,6 +42,7 @@ def serialize(catalog: Catalog) -> bytes:
         from arabic_reshaper import reshape
         from bidi.algorithm import get_display
         from fpdf import FPDF
+        from mobile_strings_converter_fonts import FONTS_PATH
     except ImportError:
         raise MissingDependencyError("Writing PDF files", "pdf") from None
 
@@ -60,7 +59,7 @@ def serialize(catalog: Catalog) -> bytes:
         pdf.cell(cell_width, CELL_HEIGHT, label, border=1)
     pdf.ln()
 
-    fonts = _FontPicker(pdf)
+    fonts = _FontPicker(pdf, FONTS_PATH)
     # Used as an ordered set
     unsupported_values: dict[str, None] = {}
 
@@ -125,8 +124,9 @@ def _is_rtl(text: str) -> bool:
 class _FontPicker:
     """Loads the fonts on demand and picks the one that can render a text."""
 
-    def __init__(self, pdf: "FPDF"):
+    def __init__(self, pdf: "FPDF", fonts_path: Path):
         self._pdf = pdf
+        self._fonts_path = fonts_path
         self._cmaps: dict[str, set[int]] = {}
 
     def use_best_font_for(self, text: str) -> bool:
@@ -153,7 +153,7 @@ class _FontPicker:
         from fpdf.fonts import TTFFont
 
         if font not in self._cmaps:
-            self._pdf.add_font(fname=str(FONTS_PATH / f"{font}.ttf"))
+            self._pdf.add_font(fname=str(self._fonts_path / f"{font}.ttf"))
             self._pdf.set_font(font, size=FONT_SIZE)
             current_font = self._pdf.current_font
             assert isinstance(current_font, TTFFont)

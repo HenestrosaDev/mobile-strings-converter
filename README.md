@@ -195,6 +195,27 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 ├───docs
 │       icon.png
 │
+├───packages
+│   └───mobile-strings-converter-fonts
+│       │   pyproject.toml
+│       │   README.md
+│       │
+│       └───src
+│           └───mobile_strings_converter_fonts
+│               │   py.typed
+│               │   __init__.py
+│               │
+│               └───fonts
+│                       Aakar.ttf
+│                       AnekTelugu-VariableFont_wdth,wght.ttf
+│                       DejaVuSansCondensed.ttf
+│                       Eunjin.ttf
+│                       fireflysung.ttf
+│                       gargi.ttf
+│                       Gurvetica_a8_Heavy.ttf
+│                       Latha.ttf
+│                       Waree.ttf
+│
 ├───src
 │   └───mobile_strings_converter
 │       │   check.py
@@ -224,18 +245,6 @@ Every file type except `.xml`, `.strings` and `.stringsdict` can hold several la
 │       │       xlsx.py
 │       │       yamlfile.py
 │       │       __init__.py
-│       │
-│       └───assets
-│           └───fonts
-│                   Aakar.ttf
-│                   AnekTelugu-VariableFont_wdth,wght.ttf
-│                   DejaVuSansCondensed.ttf
-│                   Eunjin.ttf
-│                   fireflysung.ttf
-│                   gargi.ttf
-│                   Gurvetica_a8_Heavy.ttf
-│                   Latha.ttf
-│                   Waree.ttf
 │
 └───tests
     │   base_tests.py
@@ -335,7 +344,7 @@ Writing PDF files and using Google Sheets need optional dependencies, which you 
 
 | EXTRA    | ENABLES                                          | COMMAND                                           |
 |:---------|:-------------------------------------------------|:--------------------------------------------------|
-| `pdf`    | Writing `.pdf` files                             | `pip install "mobile-strings-converter[pdf]"`     |
+| `pdf`    | Writing `.pdf` files (downloads ~9 MB of fonts)  | `pip install "mobile-strings-converter[pdf]"`     |
 | `sheets` | Reading and writing Google Sheets (`-g` and `-G`) | `pip install "mobile-strings-converter[sheets]"`  |
 | `all`    | Both of the above                                | `pip install "mobile-strings-converter[all]"`     |
 
@@ -719,7 +728,7 @@ Strings, plurals, comments and `shouldTranslate` are converted. Device variation
 
 Writing PDF files requires the `pdf` extra (see [Package Installation](#package-installation)). PDF files can only be written, as they are meant to be read by people. Convert your strings to another file type (e.g., `.xlsx`) if you need to convert them back later.
 
-Each cell is written with the first bundled font that has all of its characters. The strings that no font can render are listed in a `[FILE_NAME]-errors.txt` file next to the PDF.
+Each cell is written with the first font of the [`mobile-strings-converter-fonts`](packages/mobile-strings-converter-fonts) package, which the `pdf` extra installs, that has all of its characters. The strings that no font can render are listed in a `[FILE_NAME]-errors.txt` file next to the PDF.
 
 ### Indic Languages Supported by PDF Files
 
