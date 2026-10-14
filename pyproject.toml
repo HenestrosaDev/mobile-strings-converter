@@ -57,6 +57,7 @@ all = ["mobile-strings-converter[pdf,sheets]"]
 
 [project.urls]
 repository = "https://github.com/HenestrosaDev/mobile-strings-converter"
+changelog = "https://github.com/HenestrosaDev/mobile-strings-converter/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mobile-strings-converter = "mobile_strings_converter.__main__:main"
