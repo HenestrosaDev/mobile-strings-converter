@@ -11,7 +11,7 @@ from unittest import mock
 from base_tests import get_strings
 
 from mobile_strings_converter import DEFAULT_LOCALE, Catalog, Entry, load
-from mobile_strings_converter.__main__ import main
+from mobile_strings_converter.cli import main
 
 FILES_PATH = Path(__file__).parent / "files"
 ANDROID_FILEPATH = FILES_PATH / "input/strings.xml"
@@ -211,7 +211,7 @@ class TestCli(unittest.TestCase):
         credentials_filepath.write_text("{}")
 
         with mock.patch(
-            "mobile_strings_converter.__main__.write_google_sheets"
+            "mobile_strings_converter.cli.write_google_sheets"
         ) as write_google_sheets:
             exit_code, _, _ = self._run(
                 ANDROID_FILEPATH, "-g", "My strings", "-c", credentials_filepath
@@ -224,7 +224,7 @@ class TestCli(unittest.TestCase):
 
     def test_to_google_sheets_error(self):
         with mock.patch(
-            "mobile_strings_converter.__main__.write_google_sheets",
+            "mobile_strings_converter.cli.write_google_sheets",
             side_effect=ValueError("Spreadsheet 'My strings' not found."),
         ):
             exit_code, _, stderr = self._run(ANDROID_FILEPATH, "-g", "My strings")
@@ -235,7 +235,7 @@ class TestCli(unittest.TestCase):
 
     def test_from_google_sheets_error(self):
         with mock.patch(
-            "mobile_strings_converter.__main__.read_google_sheets",
+            "mobile_strings_converter.cli.read_google_sheets",
             side_effect=ValueError("Spreadsheet 'My strings' not found."),
         ):
             exit_code, _, stderr = self._run(
@@ -258,7 +258,7 @@ class TestCli(unittest.TestCase):
         output_dir = self.output_dir / "res"
 
         with mock.patch(
-            "mobile_strings_converter.__main__.read_google_sheets",
+            "mobile_strings_converter.cli.read_google_sheets",
             return_value=catalog,
         ) as read_google_sheets:
             exit_code, _, _ = self._run(
@@ -275,7 +275,7 @@ class TestCli(unittest.TestCase):
         catalog = Catalog([Entry("hello", {DEFAULT_LOCALE: "Hello"})])
 
         with mock.patch(
-            "mobile_strings_converter.__main__.read_google_sheets",
+            "mobile_strings_converter.cli.read_google_sheets",
             return_value=catalog,
         ):
             exit_code, _, _ = self._run(
